@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -8,7 +9,14 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { LabsModule } from './labs/labs.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, CoursesModule, QuizzesModule, LabsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    UsersModule,
+    CoursesModule,
+    QuizzesModule,
+    LabsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
