@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function CoursesPage() {
   return (
@@ -15,17 +16,19 @@ export default function CoursesPage() {
         </div>
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300">
-            <img 
-              alt="User profile" 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ2NGhGaXrn6CU7oCDEowWr_0zoOYv4pTZfY-4aDRH_FLqS0kvplzpZbM0_ZVIbgWhxjz11Pnw6t2DM0-Mx6wDlLwR4tABOGWZgzyvFB_HNkvIlOD96C1nGaPt6lNP8hPjT-dI8GjTPb6m9xRt4RgvVwJeWyi8C4WU1JZGcNbEIW43x8O9Gc8MEEX4Q25jWGhevKxmI77BJyOgkTr3OPvZfnNS2wgFfANhzDOlCIAOgZSdt946cKYziqFjPUCUlpz2UO9zZmzTeUM" 
+            <Image
+              alt="User profile"
+              className="w-full h-full object-cover"
+              width={32}
+              height={32}
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ2NGhGaXrn6CU7oCDEowWr_0zoOYv4pTZfY-4aDRH_FLqS0kvplzpZbM0_ZVIbgWhxjz11Pnw6t2DM0-Mx6wDlLwR4tABOGWZgzyvFB_HNkvIlOD96C1nGaPt6lNP8hPjT-dI8GjTPb6m9xRt4RgvVwJeWyi8C4WU1JZGcNbEIW43x8O9Gc8MEEX4Q25jWGhevKxmI77BJyOgkTr3OPvZfnNS2wgFfANhzDOlCIAOgZSdt946cKYziqFjPUCUlpz2UO9zZmzTeUM"
             />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow w-full max-w-[1280px] mx-auto px-margin-page py-margin-page">
+      <main className="grow w-full max-w-[1280px] mx-auto px-margin-page py-margin-page">
         {/* Header Section */}
         <div className="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
           <div>
@@ -47,7 +50,6 @@ export default function CoursesPage() {
           {/* Lab Group: Thermodynamics Lab */}
           <LabGroup
             color="bg-primary"
-            icon="science"
             title="Thermodynamics Lab"
             modules={[
               'Module 1: Closed Systems Analysis',
@@ -58,7 +60,6 @@ export default function CoursesPage() {
           {/* Lab Group: Microbiology Basics */}
           <LabGroup
             color="bg-secondary"
-            icon="biotech"
             title="Microbiology Basics"
             modules={[
               'Module 1: Cellular Structures',
@@ -69,7 +70,6 @@ export default function CoursesPage() {
           {/* Lab Group: Organic Chemistry I */}
           <LabGroup
             color="bg-primary"
-            icon="science"
             title="Organic Chemistry I"
             modules={[
               'Module 1: Carbon-Containing Compounds',
@@ -80,7 +80,6 @@ export default function CoursesPage() {
           {/* Lab Group: Quantum Mechanics */}
           <LabGroup
             color="bg-tertiary"
-            icon="speed"
             title="Quantum Mechanics"
             modules={[
               'Module 1: Wave-Particle Duality',
@@ -91,7 +90,6 @@ export default function CoursesPage() {
           {/* Lab Group: Electromagnetism Lab */}
           <LabGroup
             color="bg-tertiary"
-            icon="bolt"
             title="Electromagnetism Lab"
             modules={[
               "Module 1: Maxwell's Equations",
@@ -102,7 +100,6 @@ export default function CoursesPage() {
           {/* Lab Group: Neurobiology Practicum */}
           <LabGroup
             color="bg-secondary"
-            icon="psychology"
             title="Neurobiology Practicum"
             modules={[
               'Module 1: Neural Pathways',
@@ -118,12 +115,10 @@ export default function CoursesPage() {
 
 function LabGroup({
   color,
-  icon,
   title,
   modules,
 }: {
   color: string;
-  icon: string;
   title: string;
   modules: string[];
 }) {

@@ -1,7 +1,26 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function WorkspacePage() {
+  const [demoViolations, setDemoViolations] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Allow messages from the same origin
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data?.type === 'DEMO_FINISHED') {
+        setDemoViolations(event.data.warnings);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <div className="bg-background text-on-background font-body-base min-h-screen flex flex-col">
       {/* Top NavBar */}
@@ -15,9 +34,11 @@ export default function WorkspacePage() {
         </div>
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300">
-            <img
+            <Image
               alt="User profile"
               className="w-full h-full object-cover"
+              width={32}
+              height={32}
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ2NGhGaXrn6CU7oCDEowWr_0zoOYv4pTZfY-4aDRH_FLqS0kvplzpZbM0_ZVIbgWhxjz11Pnw6t2DM0-Mx6wDlLwR4tABOGWZgzyvFB_HNkvIlOD96C1nGaPt6lNP8hPjT-dI8GjTPb6m9xRt4RgvVwJeWyi8C4WU1JZGcNbEIW43x8O9Gc8MEEX4Q25jWGhevKxmI77BJyOgkTr3OPvZfnNS2wgFfANhzDOlCIAOgZSdt946cKYziqFjPUCUlpz2UO9zZmzTeUM"
             />
           </div>
@@ -76,10 +97,20 @@ export default function WorkspacePage() {
                     <td className="py-4 px-6 text-on-surface-variant">Introductory Walkthrough</td>
                     <td className="py-4 px-6 text-on-surface font-semibold">A</td>
                     <td className="py-4 px-6 text-right">
-                      <button className="bg-primary text-on-primary px-4 py-1.5 rounded font-label-caps text-label-caps hover:bg-primary-container transition-colors flex items-center gap-2 ml-auto shadow-sm">
-                        Start Demo
-                        <span className="material-symbols-outlined text-[16px]">play_arrow</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-4">
+                        {demoViolations !== null && (
+                          <div className={`text-xs font-bold px-2 py-1 rounded ${demoViolations > 0 ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`}>
+                            {demoViolations > 0 ? `${demoViolations} Violations` : 'No Violations'}
+                          </div>
+                        )}
+                        <button 
+                          onClick={() => window.open('/workspace/demo', 'DemoWindow', `width=${window.screen.availWidth},height=${window.screen.availHeight},top=0,left=0,menubar=no,toolbar=no,location=no,status=no`)}
+                          className="bg-primary text-on-primary px-4 py-1.5 rounded font-label-caps text-label-caps hover:bg-primary-container transition-colors inline-flex items-center gap-2 shadow-sm"
+                        >
+                          Start Demo
+                          <span className="material-symbols-outlined text-[16px]">play_arrow</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
 
