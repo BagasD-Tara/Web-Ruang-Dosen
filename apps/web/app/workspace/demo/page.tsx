@@ -105,7 +105,7 @@ export default function DemoSimulationPage() {
     try {
       await document.documentElement.requestFullscreen();
       setIsExamStarted(true);
-    } catch (err) {
+    } catch {
       alert('Unable to enter fullscreen mode. Please ensure your browser allows fullscreen.');
     }
   };
@@ -151,7 +151,7 @@ export default function DemoSimulationPage() {
       }}
     >
       {!isExamStarted && (
-        <div className="absolute inset-0 bg-background z-[100] flex flex-col items-center justify-center p-8 text-center">
+        <div className="absolute inset-0 bg-background z-100 flex flex-col items-center justify-center p-8 text-center">
           <span className="material-symbols-outlined text-[64px] text-primary mb-4">lock</span>
           <h1 className="text-3xl font-headline-md font-bold text-on-surface mb-2">Secure Exam Environment</h1>
           <p className="text-on-surface-variant max-w-md mb-8">
@@ -167,7 +167,7 @@ export default function DemoSimulationPage() {
       )}
 
       {warningMessage && (
-        <div className="absolute inset-0 bg-on-surface/50 z-[200] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-on-surface/50 z-200 flex items-center justify-center p-4">
           <div className="bg-surface rounded-xl max-w-md w-full p-8 text-center shadow-lg border border-outline-variant">
             <span className="material-symbols-outlined text-[48px] text-error mb-4">warning</span>
             <h2 className="text-2xl font-bold text-on-surface mb-2">Security Warning</h2>
@@ -177,7 +177,7 @@ export default function DemoSimulationPage() {
                 setWarningMessage(null);
                 try {
                   await document.documentElement.requestFullscreen();
-                } catch (err) {}
+                } catch {}
               }}
               className="px-6 py-3 bg-error hover:bg-error/90 text-white font-bold rounded shadow-sm w-full"
             >
@@ -194,6 +194,10 @@ export default function DemoSimulationPage() {
         </div>
         
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-error-container border border-error rounded-full text-error font-technical-code text-sm animate-pulse">
+            <span className="material-symbols-outlined text-lg">timer</span>
+            <span>01:24:45</span>
+          </div>
           {warnings > 0 && (
             <div className="bg-error-container text-on-error-container px-3 py-1 rounded text-sm font-semibold flex items-center gap-2">
               <span className="material-symbols-outlined text-sm">warning</span>
