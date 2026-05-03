@@ -1,31 +1,11 @@
 import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { TopNavBar } from '@/components/TopNavBar';
 
 export default function CoursesPage() {
   return (
     <div className="bg-surface text-on-surface font-body-base text-body-base min-h-screen flex flex-col">
       {/* TopNavBar Component */}
-      <header className="flex justify-between items-center h-16 px-6 w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm font-display-lg antialiased tracking-tight">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold text-blue-700">Practical Labs</span>
-          <nav className="hidden md:flex items-center gap-6 h-16">
-            <Link className="text-slate-600 hover:text-blue-600 transition-colors h-full flex items-center px-1" href="/labs">Dashboard</Link>
-            <Link className="text-blue-700 font-semibold border-b-2 border-blue-700 h-full flex items-center px-1" href="/courses">Courses</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 border border-slate-300">
-            <Image
-              alt="User profile"
-              className="w-full h-full object-cover"
-              width={32}
-              height={32}
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ2NGhGaXrn6CU7oCDEowWr_0zoOYv4pTZfY-4aDRH_FLqS0kvplzpZbM0_ZVIbgWhxjz11Pnw6t2DM0-Mx6wDlLwR4tABOGWZgzyvFB_HNkvIlOD96C1nGaPt6lNP8hPjT-dI8GjTPb6m9xRt4RgvVwJeWyi8C4WU1JZGcNbEIW43x8O9Gc8MEEX4Q25jWGhevKxmI77BJyOgkTr3OPvZfnNS2wgFfANhzDOlCIAOgZSdt946cKYziqFjPUCUlpz2UO9zZmzTeUM"
-            />
-          </div>
-        </div>
-      </header>
+      <TopNavBar />
 
       {/* Main Content */}
       <main className="grow w-full max-w-[1280px] mx-auto px-margin-page py-margin-page">
