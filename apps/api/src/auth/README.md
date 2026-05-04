@@ -40,7 +40,7 @@ Endpoint untuk mendaftarkan akun baru ke dalam sistem.
 
 ---
 
-## 2. Login — `POST /auth/login`
+## 2. Login - `POST /auth/login`
 Endpoint untuk masuk ke akun dan mendapatkan JWT Token.
 
 **Yang dilakukan:**
