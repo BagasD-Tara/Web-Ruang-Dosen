@@ -1,11 +1,11 @@
-# Auth Module — Ariel
+# Auth Module - Ariel
 **Branch:** `fitur/backend-api-auth-ariel`
 
 Modul autentikasi (gerbang masuk aplikasi). Terdiri dari dua endpoint:
 
 ---
 
-## 1. Register — `POST /auth/register`
+## 1. Register - `POST /auth/register`
 Endpoint untuk mendaftarkan akun baru ke dalam sistem.
 
 **Yang dilakukan:**
