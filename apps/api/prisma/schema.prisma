@@ -5,11 +5,104 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum MaterialType {
+  TEXT
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coursesTaught Course[] @relation("InstructorCourses")
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  instructorId String
+  instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  materials   Material[]
+  quizzes     Quiz[]
+  assignments Assignment[]
+  labs        PracticalLab[]
+}
+
+model Material {
+  id        String       @id @default(uuid())
+  title     String
+  url       String?
+  content   String?
+  type      MaterialType
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Quiz {
+  id        String         @id @default(uuid())
+  title     String
+  minScore  Int            @default(70)
+  xpReward  Int            @default(100)
+  courseId  String
+  course    Course         @relation(fields: [courseId], references: [id])
+  questions QuizQuestion[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model QuizQuestion {
+  id       String @id @default(uuid())
+  quizId   String
+  quiz     Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question String
+  options  Json
+  answer   String
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PracticalLab {
+  id           String   @id @default(uuid())
+  title        String
+  instructions String
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
