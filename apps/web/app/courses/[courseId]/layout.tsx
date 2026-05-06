@@ -1,13 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
+import { COURSES } from '@/lib/mock/courses';
 
-export default function CourseDetailLayout({
+export default async function CourseDetailLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { courseId: string };
+  params: Promise<{ courseId: string }>;
 }) {
+  const { courseId } = await params;
+  const course = COURSES.find(c => c.id === Number(courseId));
+  const courseName = course ? course.title : 'Mata Kuliah Tidak Ditemukan';
+
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex flex-col">
       {/* TOP HEADER */}
@@ -41,32 +46,10 @@ export default function CourseDetailLayout({
         <div className="max-w-[1200px] mx-auto px-5 lg:px-10">
           <div className="py-8">
             <div className="inline-block px-3 py-1 bg-[#EEF2FF] text-[#4F46E5] text-xs font-bold rounded-full mb-3 uppercase tracking-wider">
-              ID Kursus: {params.courseId}
+              Materi Pembelajaran
             </div>
-            <h1 className="text-3xl font-extrabold text-[#111827] mb-2">Memuat Mata Kuliah...</h1>
-            <p className="text-[#6B7280]">Pilih tab di bawah untuk melihat materi atau tugas.</p>
-          </div>
-
-          {/* TABS */}
-          <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
-            <Link 
-              href={`/courses/${params.courseId}`}
-              className="px-1 py-4 border-b-2 border-[#0D9488] text-[#0D9488] text-sm font-bold whitespace-nowrap"
-            >
-              Ikhtisar & Materi
-            </Link>
-            <Link 
-              href={`/courses/${params.courseId}/tugas`}
-              className="px-1 py-4 border-b-2 border-transparent text-[#6B7280] hover:text-[#111827] text-sm font-semibold whitespace-nowrap transition-colors"
-            >
-              Tugas & Kuis
-            </Link>
-            <Link 
-              href={`/courses/${params.courseId}/nilai`}
-              className="px-1 py-4 border-b-2 border-transparent text-[#6B7280] hover:text-[#111827] text-sm font-semibold whitespace-nowrap transition-colors"
-            >
-              Penilaian
-            </Link>
+            <h1 className="text-3xl font-extrabold text-[#111827] mb-2">{courseName}</h1>
+            <p className="text-[#6B7280]">Jelajahi seluruh materi yang tersedia untuk meningkatkan pemahaman Anda.</p>
           </div>
         </div>
       </div>

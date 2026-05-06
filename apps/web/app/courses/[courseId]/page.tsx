@@ -1,48 +1,47 @@
-import React from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+'use client';
 
-export default function CourseOverviewPage({ params }: { params: { courseId: string } }) {
+import React, { use } from 'react';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { MateriCard, Materi } from '@/components/course/MateriCard';
+
+const mockMateri: Materi[] = [
+  {
+    id: 'm1',
+    title: 'Pengantar dan Kontrak Kuliah',
+    type: 'document',
+    size: '1.2 MB',
+    isRead: true
+  },
+  {
+    id: 'm2',
+    title: 'Konsep Dasar Pemrograman',
+    type: 'video',
+    duration: '45 Menit',
+    isRead: false
+  },
+  {
+    id: 'm3',
+    title: 'Slide Presentasi Algoritma Dasar',
+    type: 'pdf',
+    size: '3.4 MB',
+    isRead: false
+  }
+];
+
+export default function CourseOverviewPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = use(params);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       {/* LEFT COLUMN: Materi List (Main Content) */}
       <div className="lg:col-span-2 space-y-6">
-        <h2 className="text-xl font-bold text-[#111827]">Daftar Materi</h2>
+        <h2 className="text-xl font-bold text-[#111827]">Materi Terbaru</h2>
         
-        {/* Placeholder MateriCard */}
-        <Card className="border-l-4 border-l-[#0D9488]">
-          <CardContent className="flex items-center justify-between p-5">
-            <div className="flex gap-4 items-center">
-              <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-xl shrink-0">
-                📄
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#6B7280] mb-1">Pertemuan 1</div>
-                <h3 className="text-[15px] font-bold text-[#111827]">Pengantar dan Kontrak Kuliah</h3>
-              </div>
-            </div>
-            <button className="px-4 py-2 bg-[#F3F4F6] text-[#4B5563] text-sm font-semibold rounded-lg hover:bg-[#E5E7EB] transition-colors">
-              Buka
-            </button>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-l-4 border-l-[#E5E7EB]">
-          <CardContent className="flex items-center justify-between p-5">
-            <div className="flex gap-4 items-center">
-              <div className="w-12 h-12 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-xl shrink-0">
-                🎥
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#6B7280] mb-1">Pertemuan 2</div>
-                <h3 className="text-[15px] font-bold text-[#111827]">Konsep Dasar Pemrograman</h3>
-              </div>
-            </div>
-            <button className="px-4 py-2 bg-[#F3F4F6] text-[#4B5563] text-sm font-semibold rounded-lg hover:bg-[#E5E7EB] transition-colors">
-              Buka
-            </button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4">
+          {mockMateri.map((materi) => (
+            <MateriCard key={materi.id} materi={materi} />
+          ))}
+        </div>
       </div>
 
       {/* RIGHT COLUMN: Sidebar Stats / Info */}
