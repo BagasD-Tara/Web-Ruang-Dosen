@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../prisma.service';
 import { Quiz } from '@prisma/client';
 
 @Injectable()
 export class QuizzesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(title: string, courseId: string, xpReward: number, minScore: number): Promise<Quiz> {
     // Cek dulu courseId-nya ada gak di DB
