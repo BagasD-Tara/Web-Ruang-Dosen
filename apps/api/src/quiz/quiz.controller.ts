@@ -1,4 +1,46 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request } from '@nestjs/common';
+import { QuizService } from './quiz.service';
 
-@Controller('quiz')
-export class QuizController {}
+@Controller('quizzes')
+export class QuizController {
+    constructor(private readonly quizService: QuizService) { }
+
+    @Post()
+    create(@Body() data: {
+        title: string;
+        courseId: string;
+        xpReward: number;
+        passingScore: number;
+        timeLimit?: number;
+    }) {
+        return this.quizService.create(data);
+    }
+
+    @Get()
+    findAll(@Query('courseId') courseId?: string) {
+        return this.quizService.findAll(courseId);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.quizService.findOne(id);
+    }
+
+    @Patch(':id')
+    update(
+        @Param('id') id: string,
+        @Body() data: { title?: string; timeLimit?: number; xpReward?: number },
+        @Request() req: any
+    ) {
+        // userId should come from auth guard, for now we assume req.user.id
+        const userId = req.user?.id || 'dummy-user-id'; 
+        return this.quizService.update(id, userId, data);
+    }
+
+    @Delete(':id')
+    remove(@Param('id') id: string, @Request() req: any) {
+        // userId should come from auth guard, for now we assume req.user.id
+        const userId = req.user?.id || 'dummy-user-id';
+        return this.quizService.remove(id, userId);
+    }
+}
