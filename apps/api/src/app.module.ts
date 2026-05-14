@@ -7,6 +7,11 @@ import { UsersModule } from './users/users.module';
 import { CoursesModule } from './courses/courses.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { LabsModule } from './labs/labs.module';
+import { QuizModule } from './quiz/quiz.module';
+import { CourseModule } from './course/course.module';
+import { AssignmentModule } from './assignment/assignment.module';
+import { MaterialModule } from './material/material.module';
+import { LabModule } from './lab/lab.module';
 
 @Module({
   imports: [
@@ -16,6 +21,11 @@ import { LabsModule } from './labs/labs.module';
     CoursesModule,
     QuizzesModule,
     LabsModule,
+    QuizModule,
+    CourseModule,
+    AssignmentModule,
+    MaterialModule,
+    LabModule,
   ],
   controllers: [AppController],
   providers: [AppService],
