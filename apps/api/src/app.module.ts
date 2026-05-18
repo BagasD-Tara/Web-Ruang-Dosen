@@ -2,19 +2,14 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { CoursesModule } from './courses/courses.module';
-import { QuizzesModule } from './quizzes/quizzes.module';
-import { LabsModule } from './labs/labs.module';
 import { QuizModule } from './quiz/quiz.module';
 import { CourseModule } from './course/course.module';
 import { AssignmentModule } from './assignment/assignment.module';
-import { MaterialModule } from './material/material.module';
-import { LabModule } from './lab/lab.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, CoursesModule, QuizzesModule, LabsModule, QuizModule, CourseModule, AssignmentModule, MaterialModule, LabModule],
+  imports: [AuthModule, QuizModule, CourseModule, AssignmentModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
+
