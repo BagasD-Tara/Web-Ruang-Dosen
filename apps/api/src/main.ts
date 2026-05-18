@@ -1,8 +1,41 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+
+  // Enable CORS for frontend integration
+  app.enableCors();
+
+  // Swagger Documentation Setup
+  const config = new DocumentBuilder()
+    .setTitle('EduLab LMS - Ruang Dosen API')
+    .setDescription('Dokumentasi API lengkap untuk sistem manajemen pembelajaran (LMS) Ruang Dosen.')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Masukkan token JWT Anda di sini',
+        in: 'header',
+      },
+      'JWT-auth', // This is the security name used in decorators
+    )
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Keep the JWT token saved even after page refresh!
+    },
+  });
+
+  const port = process.env.PORT ?? 3001;
+  await app.listen(port);
+  console.log(`🚀 Server is running on: http://localhost:${port}`);
+  console.log(`📖 Swagger API documentation: http://localhost:${port}/api`);
 }
 bootstrap();
