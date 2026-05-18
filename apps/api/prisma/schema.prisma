@@ -68,24 +68,25 @@ model Material {
 }
 
 model Quiz {
-  id        String         @id @default(uuid())
-  title     String
-  minScore  Int            @default(70)
-  xpReward  Int            @default(100)
-  courseId  String
-  course    Course         @relation(fields: [courseId], references: [id])
-  questions QuizQuestion[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id           String         @id @default(uuid())
+  title        String
+  passingScore Int            @default(70)
+  xpReward     Int            @default(100)
+  timeLimit    Int            @default(30)
+  courseId     String
+  course       Course         @relation(fields: [courseId], references: [id])
+  questions    QuizQuestion[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
 model QuizQuestion {
-  id       String @id @default(uuid())
-  quizId   String
-  quiz     Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  question String
-  options  Json
-  answer   String
+  id            String @id @default(uuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question      String
+  options       Json
+  correctAnswer String
 }
 
 model Assignment {
