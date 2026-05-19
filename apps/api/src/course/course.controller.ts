@@ -1,9 +1,5 @@
-<<<<<<< Updated upstream
-import { Controller, Post, Body, UseGuards, Param, Request } from '@nestjs/common';
-=======
 import { Controller, Post, Body, UseGuards, Param, Request, Get, Patch, Delete } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
->>>>>>> Stashed changes
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CourseService } from './course.service';
 import { Course } from '@prisma/client';
@@ -25,9 +21,6 @@ export class CourseController {
   async enroll(@Param('id') id: string, @Request() req: any) {
     return this.courseService.enroll(id, req.user.id);
   }
-<<<<<<< Updated upstream
-=======
-
   @Get()
   async findAll() {
     return this.courseService.findAll();
@@ -56,5 +49,4 @@ export class CourseController {
     const userId = req.user.id;
     return this.courseService.remove(id, userId);
   }
->>>>>>> Stashed changes
 }
