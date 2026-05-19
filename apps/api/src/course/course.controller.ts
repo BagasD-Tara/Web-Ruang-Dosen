@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Param, Request, Get, Patch, Delete } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CourseService } from './course.service';
 import { Course } from '@prisma/client';
@@ -8,6 +9,7 @@ export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   @Post()
+  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, instructorId: { type: 'string' } } } })
   async create(
     @Body() data: { title: string; description?: string; instructorId: string }
   ): Promise<Course> {
@@ -32,6 +34,7 @@ export class CourseController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
+  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' } } } })
   async update(
     @Param('id') id: string,
     @Body() updateCourseDto: { title?: string; description?: string },
