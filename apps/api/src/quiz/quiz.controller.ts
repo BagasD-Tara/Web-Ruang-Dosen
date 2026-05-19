@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -8,6 +9,7 @@ export class QuizController {
   constructor(private readonly quizService: QuizService) { }
 
   @Post()
+  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, courseId: { type: 'string' }, xpReward: { type: 'number' }, passingScore: { type: 'number' }, timeLimit: { type: 'number' } } } })
   create(@Body() data: {
     title: string;
     courseId: string;
@@ -29,6 +31,7 @@ export class QuizController {
   }
 
   @Patch(':id')
+  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, timeLimit: { type: 'number' }, xpReward: { type: 'number' } } } })
   update(
     @Param('id') id: string,
     @Body() data: { title?: string; timeLimit?: number; xpReward?: number },
