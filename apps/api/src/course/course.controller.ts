@@ -21,6 +21,7 @@ export class CourseController {
   async enroll(@Param('id') id: string, @Request() req: any) {
     return this.courseService.enroll(id, req.user.id);
   }
+
   @Get()
   async findAll() {
     return this.courseService.findAll();
