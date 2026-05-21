@@ -124,9 +124,13 @@ export default function LabsDashboard() {
                     </div>
                     <p className="text-body-sm text-on-surface-variant">Exploring the laws of energy conversion through controlled heat cycles and engine simulations.</p>
                     <div className="flex items-center justify-end pt-2">
-                      <button className="text-primary font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                        View Details <span className="material-symbols-outlined text-sm">chevron_right</span>
-                      </button>
+                      <Link 
+                        href="/workspace"
+                        className="text-primary font-semibold text-sm flex items-center gap-1 group"
+                      >
+                        <span className="group-hover:underline">View Details</span>
+                        <span className="material-symbols-outlined text-sm">chevron_right</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -139,9 +143,13 @@ export default function LabsDashboard() {
                     </div>
                     <p className="text-body-sm text-on-surface-variant">Introduction to aseptic techniques and bacteria staining procedures in a virtual sterile hood.</p>
                     <div className="flex items-center justify-end pt-2">
-                      <button className="text-primary font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                        View Details <span className="material-symbols-outlined text-sm">chevron_right</span>
-                      </button>
+                      <Link 
+                        href="/workspace"
+                        className="text-primary font-semibold text-sm flex items-center gap-1 group"
+                      >
+                        <span className="group-hover:underline">View Details</span>
+                        <span className="material-symbols-outlined text-sm">chevron_right</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -152,11 +160,6 @@ export default function LabsDashboard() {
         </div>
       </main>
 
-      {/* Floating Action Button for Support/Context */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group">
-        <span className="material-symbols-outlined">support_agent</span>
-        <span className="absolute right-full mr-4 bg-on-surface text-white text-xs px-3 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">Contact Lab Assistant</span>
-      </button>
     </div>
   );
 }

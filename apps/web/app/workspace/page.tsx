@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TopNavBar } from '@/components/TopNavBar';
-import { ModuleTable } from './components/ModuleTable';
+import { DemoTable } from './components/DemoTable';
+import { TaskTable } from './components/TaskTable';
 
 export default function WorkspacePage() {
   const [demoViolations, setDemoViolations] = useState<number | null>(null);
@@ -54,8 +55,13 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        {/* Module Table */}
-        <ModuleTable demoViolations={demoViolations} />
+        {/* Task Table */}
+        <div className="mb-12">
+          <TaskTable />
+        </div>
+
+        {/* Demo Table */}
+        <DemoTable demoViolations={demoViolations} />
       </main>
     </div>
   );

@@ -1,17 +1,22 @@
+import Link from 'next/link';
 import React from 'react';
 
-export function ModuleTable({ demoViolations }: { demoViolations: number | null }) {
+export function DemoTable({ demoViolations }: { demoViolations: number | null }) {
   return (
-    <div className="space-y-stack-lg">
+    <div className="space-y-stack-md">
+      <div className="flex items-center justify-between px-2">
+        <h3 className="font-headline-md text-[20px] font-bold text-on-surface">Lab Demo</h3>
+        <span className="text-xs font-medium text-on-surface-variant bg-surface-container px-2 py-1 rounded uppercase tracking-wider">3 Demo Available</span>
+      </div>
       <div className="bg-surface border border-outline-variant rounded shadow-sm overflow-hidden border-t-4 border-t-primary">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container-low border-b border-outline-variant">
-                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase">Module Name</th>
-                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase">Topic</th>
-                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase">Grade</th>
-                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Action</th>
+                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase w-[35%]">Demo Name</th>
+                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase w-[30%]">Topic</th>
+                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase w-[15%]">Grade</th>
+                <th className="py-3 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase text-right w-[20%]">Action</th>
               </tr>
             </thead>
             <tbody className="font-technical-code text-technical-code">
@@ -56,7 +61,7 @@ export function ModuleTable({ demoViolations }: { demoViolations: number | null 
                   </div>
                 </td>
                 <td className="py-4 px-6 text-on-surface-variant opacity-70">Process Simulation</td>
-                <td className="py-4 px-6 text-primary/70 font-medium italic">Pending</td>
+                <td className="py-4 px-6 text-primary/70 font-medium italic">—</td>
                 <td className="py-4 px-6 text-right">
                   <button disabled className="bg-surface text-on-surface-variant px-4 py-1.5 rounded font-label-caps text-label-caps border border-outline-variant opacity-50 cursor-not-allowed flex items-center gap-2 ml-auto">
                     Locked

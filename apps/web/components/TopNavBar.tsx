@@ -21,7 +21,8 @@ export function TopNavBar() {
   }, []);
 
   const isCourses = pathname.startsWith('/courses');
-  const isDashboard = !isCourses;
+  const isLecturer = pathname.startsWith('/lecturer');
+  const isDashboard = pathname.startsWith('/labs') || pathname === '/';
 
   return (
     <header className="flex justify-between items-center h-16 px-6 w-full sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm font-display-lg antialiased tracking-tight">
@@ -33,6 +34,12 @@ export function TopNavBar() {
             href="/labs"
           >
             Dashboard
+          </Link>
+          <Link 
+            className={`${pathname.startsWith('/lecturer') ? 'text-blue-700 font-semibold border-b-2 border-blue-700' : 'text-slate-600 hover:text-blue-600 transition-colors'} h-full flex items-center px-1`} 
+            href="/lecturer"
+          >
+            Lecturer
           </Link>
           <Link 
             className={`${isCourses ? 'text-blue-700 font-semibold border-b-2 border-blue-700' : 'text-slate-600 hover:text-blue-600 transition-colors'} h-full flex items-center px-1`} 
