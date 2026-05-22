@@ -127,6 +127,88 @@ export class CoursesService {
     };
   }
 
+  async updateMaterial(id: string, data: any, userId: string) {
+    const material = await this.prisma.material.findUnique({
+      where: { id },
+      include: {
+        course: {
+          include: { instructor: true },
+        },
+      },
+    });
+
+    if (!material) {
+      throw new NotFoundException(`Material with ID ${id} not found`);
+    }
+
+    if (!userId) {
+      throw new ForbiddenException('User identification is required to update a material');
+    }
+
+    if (material.course.instructorId !== userId || material.course.instructor.role !== 'LECTURER') {
+      throw new ForbiddenException('Only the lecturer owning this course can update this material');
+    }
+
+    const title = data?.title || data?.judul;
+    const type = data?.type || data?.tipe;
+    const content = data?.content || data?.konten;
+
+    const updateData: any = {};
+
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+
+    const finalType = type ? type.toUpperCase() : material.type;
+
+    if (type !== undefined) {
+      if (finalType !== 'TEXT' && finalType !== 'VIDEO' && finalType !== 'DOCUMENT') {
+        throw new BadRequestException('Type must be TEXT, VIDEO, or DOCUMENT');
+      }
+      updateData.type = finalType;
+    }
+
+    if (content !== undefined) {
+      if (finalType === 'TEXT') {
+        updateData.content = content;
+        updateData.url = null;
+      } else {
+        updateData.url = content;
+        updateData.content = null;
+      }
+    } else if (type !== undefined && finalType !== material.type) {
+      // If type changed but content was not provided, migrate the existing content to the correct field
+      const existingVal = material.type === 'TEXT' ? material.content : material.url;
+      if (finalType === 'TEXT') {
+        updateData.content = existingVal;
+        updateData.url = null;
+      } else {
+        updateData.url = existingVal;
+        updateData.content = null;
+      }
+    }
+
+    const updatedMaterial = await this.prisma.material.update({
+      where: { id },
+      data: updateData,
+    });
+
+    const finalContent = updatedMaterial.type === 'TEXT' ? updatedMaterial.content : updatedMaterial.url;
+
+    return {
+      id: updatedMaterial.id,
+      title: updatedMaterial.title,
+      judul: updatedMaterial.title,
+      type: updatedMaterial.type,
+      tipe: updatedMaterial.type,
+      content: finalContent,
+      konten: finalContent,
+      courseId: updatedMaterial.courseId,
+      createdAt: updatedMaterial.createdAt,
+      updatedAt: updatedMaterial.updatedAt,
+    };
+  }
+
   async update(id: string, data: any, userId: string) {
     const course = await this.prisma.course.findUnique({
       where: { id },
@@ -162,5 +244,75 @@ export class CoursesService {
     return this.prisma.course.delete({
       where: { id },
     });
+  }
+
+  async findMyCourses(userId: string) {
+    if (!userId) {
+      throw new ForbiddenException('User identification is required');
+    }
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                xp: true,
+              },
+            },
+            _count: {
+              select: { enrollments: true },
+            },
+          },
+        },
+      },
+    });
+
+    return enrollments.map((enrollment) => enrollment.course);
+  }
+
+  async removeMaterial(id: string, userId: string) {
+    if (!userId) {
+      throw new ForbiddenException('User identification is required to delete a material');
+    }
+
+    const material = await this.prisma.material.findUnique({
+      where: { id },
+      include: {
+        course: {
+          include: { instructor: true },
+        },
+      },
+    });
+
+    if (!material) {
+      throw new NotFoundException(`Material with ID ${id} not found`);
+    }
+
+    const requester = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    const isAdmin = requester?.role === 'ADMIN';
+    const isCourseOwner = material.course.instructorId === userId && material.course.instructor.role === 'LECTURER';
+
+    if (!isAdmin && !isCourseOwner) {
+      throw new ForbiddenException('Only the lecturer owning this course or an admin can delete this material');
+    }
+
+    await this.prisma.material.delete({
+      where: { id },
+    });
+
+    return {
+      success: true,
+      message: 'Material successfully deleted',
+      pesan: 'Materi berhasil dihapus',
+    };
   }
 }

@@ -14,6 +14,14 @@ describe('CoursesService', () => {
     material: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    enrollment: {
+      findMany: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
   };
 
@@ -220,6 +228,205 @@ describe('CoursesService', () => {
 
       await expect(service.findMaterialOne('non-existent-material'))
         .rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('updateMaterial', () => {
+    const existingTextMaterial = {
+      id: 'mat-edit-1',
+      title: 'Original Title',
+      type: 'TEXT',
+      content: 'Original content.',
+      url: null,
+      courseId: 'course-123',
+      course: {
+        id: 'course-123',
+        instructorId: 'lecturer-1',
+        instructor: {
+          id: 'lecturer-1',
+          role: 'LECTURER',
+        },
+      },
+    };
+
+    it('should update the title of a material successfully', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(existingTextMaterial);
+      mockPrismaService.material.update.mockResolvedValue({
+        ...existingTextMaterial,
+        title: 'New Title',
+      });
+
+      const result = await service.updateMaterial('mat-edit-1', { title: 'New Title' }, 'lecturer-1');
+
+      expect(prisma.material.update).toHaveBeenCalledWith({
+        where: { id: 'mat-edit-1' },
+        data: { title: 'New Title' },
+      });
+      expect(result.title).toBe('New Title');
+      expect(result.judul).toBe('New Title');
+    });
+
+    it('should update the type from TEXT to VIDEO and map existing content to url', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(existingTextMaterial);
+      mockPrismaService.material.update.mockResolvedValue({
+        ...existingTextMaterial,
+        type: 'VIDEO',
+        content: null,
+        url: 'Original content.',
+      });
+
+      const result = await service.updateMaterial('mat-edit-1', { type: 'VIDEO' }, 'lecturer-1');
+
+      expect(prisma.material.update).toHaveBeenCalledWith({
+        where: { id: 'mat-edit-1' },
+        data: {
+          type: 'VIDEO',
+          content: null,
+          url: 'Original content.',
+        },
+      });
+      expect(result.type).toBe('VIDEO');
+      expect(result.content).toBe('Original content.');
+    });
+
+    it('should throw NotFoundException if material is not found', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(null);
+
+      await expect(service.updateMaterial('non-existent', { title: 'New' }, 'lecturer-1'))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if user is not the instructor', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(existingTextMaterial);
+
+      await expect(service.updateMaterial('mat-edit-1', { title: 'New' }, 'other-user'))
+        .rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException if invalid type is provided', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(existingTextMaterial);
+
+      await expect(service.updateMaterial('mat-edit-1', { type: 'INVALID' }, 'lecturer-1'))
+        .rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('findMyCourses', () => {
+    it('should retrieve enrolled courses successfully', async () => {
+      const mockEnrollments = [
+        {
+          id: 'enroll-1',
+          userId: 'student-1',
+          courseId: 'course-1',
+          course: {
+            id: 'course-1',
+            title: 'Course 1',
+            instructorId: 'lecturer-1',
+            instructor: {
+              id: 'lecturer-1',
+              name: 'Lecturer One',
+              email: 'lec1@example.com',
+              role: 'LECTURER',
+              xp: 100,
+            },
+            _count: { enrollments: 1 },
+          },
+        },
+      ];
+
+      mockPrismaService.enrollment.findMany.mockResolvedValue(mockEnrollments);
+
+      const result = await service.findMyCourses('student-1');
+
+      expect(prisma.enrollment.findMany).toHaveBeenCalledWith({
+        where: { userId: 'student-1' },
+        include: {
+          course: {
+            include: {
+              instructor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                  xp: true,
+                },
+              },
+              _count: {
+                select: { enrollments: true },
+              },
+            },
+          },
+        },
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('course-1');
+      expect(result[0].title).toBe('Course 1');
+    });
+
+    it('should throw ForbiddenException if userId is not provided', async () => {
+      await expect(service.findMyCourses('')).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('removeMaterial', () => {
+    const mockMaterial = {
+      id: 'mat-1',
+      title: 'Material 1',
+      type: 'TEXT',
+      courseId: 'course-1',
+      course: {
+        id: 'course-1',
+        instructorId: 'lecturer-1',
+        instructor: {
+          id: 'lecturer-1',
+          role: 'LECTURER',
+        },
+      },
+    };
+
+    it('should delete material successfully when user is the course owner lecturer', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(mockMaterial);
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'lecturer-1', role: 'LECTURER' });
+      mockPrismaService.material.delete.mockResolvedValue(mockMaterial);
+
+      const result = await service.removeMaterial('mat-1', 'lecturer-1');
+
+      expect(prisma.material.delete).toHaveBeenCalledWith({ where: { id: 'mat-1' } });
+      expect(result).toEqual({
+        success: true,
+        message: 'Material successfully deleted',
+        pesan: 'Materi berhasil dihapus',
+      });
+    });
+
+    it('should delete material successfully when user is an admin', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(mockMaterial);
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'admin-1', role: 'ADMIN' });
+      mockPrismaService.material.delete.mockResolvedValue(mockMaterial);
+
+      const result = await service.removeMaterial('mat-1', 'admin-1');
+
+      expect(prisma.material.delete).toHaveBeenCalledWith({ where: { id: 'mat-1' } });
+      expect(result.success).toBe(true);
+    });
+
+    it('should throw ForbiddenException when user is neither the owner lecturer nor admin', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(mockMaterial);
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'student-1', role: 'STUDENT' });
+
+      await expect(service.removeMaterial('mat-1', 'student-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException if material is not found', async () => {
+      mockPrismaService.material.findUnique.mockResolvedValue(null);
+
+      await expect(service.removeMaterial('non-existent', 'lecturer-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if userId is not provided', async () => {
+      await expect(service.removeMaterial('mat-1', '')).rejects.toThrow(ForbiddenException);
     });
   });
 });

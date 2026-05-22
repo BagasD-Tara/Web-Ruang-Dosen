@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Patch, Param, Delete, Request } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 
 @Controller('courses')
@@ -8,6 +8,12 @@ export class CoursesController {
   @Get()
   findAll() {
     return this.coursesService.findAll();
+  }
+
+  @Get('my')
+  findMyCourses(@Request() req: any) {
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
+    return this.coursesService.findMyCourses(userId);
   }
 
   @Get(':id')
@@ -24,6 +30,22 @@ export class CoursesController {
   @Get('materials/:id')
   findMaterialOne(@Param('id') id: string) {
     return this.coursesService.findMaterialOne(id);
+  }
+
+  @Put('materials/:id')
+  updateMaterial(
+    @Param('id') id: string,
+    @Body() updateMaterialDto: any,
+    @Request() req: any,
+  ) {
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
+    return this.coursesService.updateMaterial(id, updateMaterialDto, userId);
+  }
+
+  @Delete('materials/:id')
+  removeMaterial(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
+    return this.coursesService.removeMaterial(id, userId);
   }
 
   @Patch(':id')
