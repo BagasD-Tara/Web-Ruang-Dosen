@@ -75,10 +75,11 @@ export class QuizService {
     };
   }
 
-  async update(id: string, userId: string, data: {
+  async update(id: string, user: { id: string; role: string }, data: {
     title?: string;
     timeLimit?: number;
     xpReward?: number;
+    passingScore?: number;
   }) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
@@ -90,7 +91,7 @@ export class QuizService {
     }
 
     // Validation: Only course instructor can update
-    if (quiz.course.instructorId !== userId) {
+    if (quiz.course.instructorId !== user.id) {
       throw new ForbiddenException('You are not authorized to update this quiz');
     }
 
@@ -100,7 +101,7 @@ export class QuizService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, user: { id: string; role: string }) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
       include: { course: true },
@@ -110,8 +111,8 @@ export class QuizService {
       throw new NotFoundException('Quiz not found');
     }
 
-    // Validation: Only course instructor can remove
-    if (quiz.course.instructorId !== userId) {
+    // Validation: Only course instructor or admin can remove
+    if (quiz.course.instructorId !== user.id && user.role !== 'ADMIN') {
       throw new ForbiddenException('You are not authorized to delete this quiz');
     }
 
