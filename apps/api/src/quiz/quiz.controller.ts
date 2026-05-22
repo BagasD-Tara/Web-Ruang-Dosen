@@ -30,6 +30,11 @@ export class QuizController {
     return this.quizService.findOne(id);
   }
 
+  @Get(':id/questions')
+  findQuestions(@Param('id') id: string) {
+    return this.quizService.findQuestions(id);
+  }
+
   @Put(':id')
   @Patch(':id')
   @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, timeLimit: { type: 'number' }, xpReward: { type: 'number' }, passingScore: { type: 'number' } } } })
