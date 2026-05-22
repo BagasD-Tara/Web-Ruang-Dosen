@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Milestone Tracker — Ruang Dosen</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;padding:30px}
+h1{text-align:center;font-size:26px;color:#fff;margin-bottom:4px}
+.subtitle{text-align:center;font-size:13px;color:#94a3b8;margin-bottom:4px}
+.method{text-align:center;font-size:11px;color:#0ea5e9;margin-bottom:24px;letter-spacing:1px;text-transform:uppercase}
+.legend{display:flex;gap:16px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.legend span{font-size:11px;display:flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#1e293b;border-radius:10px;overflow:hidden}
+thead th{background:#0ea5e9;color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid #334155;vertical-align:top}
+tbody tr:hover{background:#334155}
+.sprint-row{background:#1a2744;border-left:4px solid #0ea5e9}
+.sprint-row td{font-weight:700;color:#38bdf8;padding:12px;font-size:13px}
+.badge{padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-done{background:#065f46;color:#6ee7b7}
+.b-progress{background:#92400e;color:#fcd34d}
+.b-todo{background:#374151;color:#9ca3af}
+.p-high{background:#7f1d1d;color:#fca5a5}
+.p-mid{background:#78350f;color:#fcd34d}
+.p-low{background:#1e3a5f;color:#93c5fd}
+.o{padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;white-space:nowrap}
+.o-ariel{background:#312e81;color:#a5b4fc}
+.o-tio{background:#1e3a5f;color:#7dd3fc}
+.o-sinta{background:#4a1d6a;color:#d8b4fe}
+.o-dimas{background:#3b3117;color:#fcd34d}
+.o-all{background:#1c3d3d;color:#5eead4}
+.info{font-size:11px;color:#94a3b8;margin-top:20px;text-align:center}
+@media print{body{background:#fff;color:#000;padding:15px}table{background:#fff}thead th{background:#1e293b}tbody td{border-color:#ddd;color:#000}.sprint-row{background:#f0f9ff}.badge,.o{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+
+<h1>📊 MILESTONE TRACKER — RUANG DOSEN</h1>
+<p class="subtitle">Backend LMS • Deadline Akhir: 14 Juni 2026 • Tim: Ariel (Lead), Tio, Sinta, Dimas</p>
+<p class="method">Metode: Scrum — 7 Sprint × 1 Minggu</p>
+
+<div class="legend">
+<span><span class="dot" style="background:#6ee7b7"></span> Selesai</span>
+<span><span class="dot" style="background:#fcd34d"></span> Sedang Dikerjakan</span>
+<span><span class="dot" style="background:#9ca3af"></span> Belum Mulai</span>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Priority</th>
+<th>Owner</th>
+<th>Status</th>
+<th>Start</th>
+<th>End</th>
+<th>Deskripsi Jobdesk</th>
+<th>Kendala yang Dialami</th>
+</tr>
+</thead>
+<tbody>
+
+<!-- SPRINT 1 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 1 — Fondasi & Endpoint Pertama (1 Mei – 7 Mei)</td></tr>
+<tr>
+<td>Setup project & Prisma Schema</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-done">✅ Selesai</span></td>
+<td>28 Apr</td><td>30 Apr</td>
+<td>Clone repo, npm install, buat .env, desain semua tabel di schema.prisma, prisma generate & migrate</td>
+<td>—</td>
+</tr>
+<tr>
+<td>POST /auth/register</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-done">✅ Selesai</span></td>
+<td>1 Mei</td><td>1 Mei</td>
+<td>Daftar akun baru. Hash password pakai bcrypt, cek email duplikat, simpan ke DB, return tanpa password</td>
+<td>—</td>
+</tr>
+<tr>
+<td>POST /auth/login</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-done">✅ Selesai</span></td>
+<td>1 Mei</td><td>1 Mei</td>
+<td>Login akun. Verifikasi email & password, generate JWT Token (expire 24h), return token + data user</td>
+<td>—</td>
+</tr>
+<tr>
+<td>POST /quizzes</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-tio">Tio</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>1 Mei</td><td>7 Mei</td>
+<td>Buat kuis baru (title, courseId, xpReward, minScore). Validasi courseId ada di DB sebelum simpan</td>
+<td>—</td>
+</tr>
+<tr>
+<td>POST /courses</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-sinta">Sinta</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>1 Mei</td><td>7 Mei</td>
+<td>Buat mata kuliah baru (title, description, instructorId). Validasi instructorId role-nya LECTURER</td>
+<td>—</td>
+</tr>
+<tr>
+<td>POST /assignments</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-dimas">Dimas</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>1 Mei</td><td>7 Mei</td>
+<td>Buat tugas baru (title, description, courseId). Validasi courseId ada di DB sebelum simpan</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 2 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 2 — CRUD Lengkap & Keamanan API (8 Mei – 14 Mei)</td></tr>
+<tr>
+<td>JWT Strategy + RolesGuard</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>8 Mei</td><td>10 Mei</td>
+<td>Buat JwtStrategy (verifikasi token) dan RolesGuard (batasi akses STUDENT/LECTURER/ADMIN). Pasang di semua endpoint</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Seed data (user & course dummy)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>10 Mei</td><td>11 Mei</td>
+<td>Buat file seed.ts berisi data dummy user (dosen + mahasiswa) dan course. Agar tim bisa test tanpa buat manual</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CRUD Quiz (GET, PUT, DELETE)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-tio">Tio</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>8 Mei</td><td>14 Mei</td>
+<td>GET semua kuis (filter by courseId), GET kuis by ID, PUT update kuis, DELETE hapus kuis</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CRUD Course (GET, PUT, DELETE)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-sinta">Sinta</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>8 Mei</td><td>14 Mei</td>
+<td>GET semua matkul (include relasi materials & quizzes), GET by ID, PUT update, DELETE hapus</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CRUD Assignment (GET, PUT, DELETE)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-dimas">Dimas</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>8 Mei</td><td>14 Mei</td>
+<td>GET semua tugas (filter by courseId), GET by ID, PUT update, DELETE hapus</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 3 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 3 — Fitur Lanjutan & Modul Baru (15 Mei – 21 Mei)</td></tr>
+<tr>
+<td>Admin: Kelola User (CRUD)</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>15 Mei</td><td>17 Mei</td>
+<td>GET semua user, GET by ID, PUT ubah role, DELETE hapus user. Hanya bisa diakses oleh ADMIN</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Endpoint Profile (GET, PUT)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>17 Mei</td><td>18 Mei</td>
+<td>GET profil user yang login (dari token), PUT update nama dan password sendiri</td>
+<td>—</td>
+</tr>
+<tr>
+<td>QuizQuestion + Auto Scoring</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-tio">Tio</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>15 Mei</td><td>21 Mei</td>
+<td>CRUD soal kuis (pilihan ganda, JSON options). Endpoint submit jawaban, hitung skor otomatis, tambah XP ke user</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CRUD Material (upload materi)</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-sinta">Sinta</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>15 Mei</td><td>21 Mei</td>
+<td>CRUD materi per matkul (teks/video/dokumen). Filter by courseId, include relasi ke course</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Submit Assignment + CRUD Lab</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-dimas">Dimas</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>15 Mei</td><td>21 Mei</td>
+<td>Mahasiswa submit jawaban tugas. CRUD PracticalLab (lab session, instruksi, linked course)</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 4 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 4 — Polish, Statistik & Testing (22 Mei – 28 Mei)</td></tr>
+<tr>
+<td>Admin: Statistik + Pengumuman</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>22 Mei</td><td>24 Mei</td>
+<td>Dashboard statistik (total user, course, quiz, assignment). Endpoint pengumuman global (CRUD)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Leaderboard XP</td>
+<td><span class="badge p-low">Low</span></td>
+<td><span class="o o-tio">Tio</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>22 Mei</td><td>25 Mei</td>
+<td>Endpoint ranking mahasiswa berdasarkan XP tertinggi. Bisa filter per course</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Search, Filter & Pagination</td>
+<td><span class="badge p-low">Low</span></td>
+<td><span class="o o-sinta">Sinta</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>22 Mei</td><td>25 Mei</td>
+<td>Tambahkan search by keyword, filter by instructor, dan pagination di semua endpoint GET list</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Grading Assignment</td>
+<td><span class="badge p-low">Low</span></td>
+<td><span class="o o-dimas">Dimas</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>22 Mei</td><td>25 Mei</td>
+<td>Dosen bisa kasih nilai ke submission tugas mahasiswa. Endpoint PUT grade assignment</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Testing semua endpoint (Postman)</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-all">Semua</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>26 Mei</td><td>28 Mei</td>
+<td>Test semua endpoint di Postman, dokumentasi request/response, fix bug yang ditemukan</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 5 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 5 — Integrasi Frontend ↔ Backend (29 Mei – 4 Juni)</td></tr>
+<tr>
+<td>Integrasi Auth (Login/Register)</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>29 Mei</td><td>31 Mei</td>
+<td>Sambungkan form Login/Register di frontend ke API backend. Handle JWT token di localStorage</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Integrasi Quiz & Leaderboard</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-tio">Tio</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>29 Mei</td><td>4 Jun</td>
+<td>Halaman kuis di frontend fetch data dari API. Tampilkan soal, submit jawaban, leaderboard XP</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Integrasi Course & Material</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-sinta">Sinta</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>29 Mei</td><td>4 Jun</td>
+<td>Halaman daftar matkul dan materi di frontend fetch data dari API. Search dan filter berfungsi</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Integrasi Assignment & Lab</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-dimas">Dimas</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>29 Mei</td><td>4 Jun</td>
+<td>Halaman tugas dan lab di frontend fetch data dari API. Form submit tugas berfungsi</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 6 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 6 — Deploy & Final Testing (5 Juni – 11 Juni)</td></tr>
+<tr>
+<td>Deploy backend ke cloud</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-ariel">Ariel</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>5 Jun</td><td>7 Jun</td>
+<td>Deploy NestJS backend ke Railway/Render. Setup PostgreSQL online. Konfigurasi env production</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Deploy frontend ke Vercel</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-all">Semua</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>7 Jun</td><td>9 Jun</td>
+<td>Deploy Next.js ke Vercel. Sambungkan ke backend production. Test CORS dan environment</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Final testing end-to-end</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-all">Semua</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>9 Jun</td><td>11 Jun</td>
+<td>Test semua fitur dari link online. Fix bug, cek responsive, optimasi performa</td>
+<td>—</td>
+</tr>
+
+<!-- SPRINT 7 -->
+<tr class="sprint-row"><td colspan="8">🏁 Sprint 7 — Dokumentasi & Presentasi (12 Juni – 14 Juni)</td></tr>
+<tr>
+<td>Dokumentasi & laporan akhir</td>
+<td><span class="badge p-mid">Medium</span></td>
+<td><span class="o o-all">Semua</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>12 Jun</td><td>13 Jun</td>
+<td>Tulis laporan akhir, screenshot hasil, dokumentasi API lengkap, buat slide presentasi</td>
+<td>—</td>
+</tr>
+<tr>
+<td>📌 DEADLINE / PRESENTASI</td>
+<td><span class="badge p-high">High</span></td>
+<td><span class="o o-all">Semua</span></td>
+<td><span class="badge b-todo">⬜ Belum</span></td>
+<td>14 Jun</td><td>TBD</td>
+<td>Pengumpulan akhir dan presentasi (tanggal presentasi menyusul dari dosen)</td>
+<td>—</td>
+</tr>
+
+</tbody>
+</table>
+
+<p class="info">📅 Total: 7 Sprint • 28 Task • 4 Anggota • Deadline: 14 Juni 2026<br>Metode: Scrum (1 Sprint = 1 Minggu) • Dibuat oleh Ariel (Project Lead) • Last updated: 4 Mei 2026</p>
+
+</body>
+</html>
