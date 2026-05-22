@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 
 @Controller('courses')
@@ -15,6 +15,17 @@ export class CoursesController {
     return this.coursesService.findOne(id);
   }
 
+  @Post('materials')
+  createMaterial(@Body() createMaterialDto: any, @Request() req: any) {
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
+    return this.coursesService.createMaterial(createMaterialDto, userId);
+  }
+
+  @Get('materials/:id')
+  findMaterialOne(@Param('id') id: string) {
+    return this.coursesService.findMaterialOne(id);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -22,14 +33,15 @@ export class CoursesController {
     @Request() req: any,
   ) {
     // Note: In a real application, ensure you have a JWT guard that populates req.user
-    const userId = req.user?.id;
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
     return this.coursesService.update(id, updateCourseDto, userId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: any) {
     // Note: In a real application, ensure you have a JWT guard that populates req.user
-    const userId = req.user?.id;
+    const userId = req.user?.id || req.headers['user-id'] || req.body.userId;
     return this.coursesService.remove(id, userId);
   }
 }
+
