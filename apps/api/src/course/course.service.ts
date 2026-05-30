@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Course } from '@prisma/client';
 
@@ -6,7 +11,11 @@ import { Course } from '@prisma/client';
 export class CourseService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: { title: string; description?: string; instructorId: string }): Promise<Course> {
+  async create(data: {
+    title: string;
+    description?: string;
+    instructorId: string;
+  }): Promise<Course> {
     // 1. check if instructor exists
     const instructor = await this.prisma.user.findUnique({
       where: { id: data.instructorId },
