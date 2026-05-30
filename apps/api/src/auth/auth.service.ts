@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -8,10 +13,15 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   // === REGISTER: Mendaftarkan user baru ===
-  async register(name: string, email: string, password: string, role: 'STUDENT' | 'LECTURER' | 'ADMIN') {
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    role: 'STUDENT' | 'LECTURER' | 'ADMIN',
+  ) {
     // Cek apakah email sudah terdaftar
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -93,7 +103,10 @@ export class AuthService {
   }
 
   // === PROFILE: Update User Profile ===
-  async updateProfile(userId: string, data: { name?: string; password?: string }) {
+  async updateProfile(
+    userId: string,
+    data: { name?: string; password?: string },
+  ) {
     const updateData: any = {};
     if (data.name) {
       updateData.name = data.name;

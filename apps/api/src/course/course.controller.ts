@@ -1,4 +1,14 @@
-import { Controller, Post, Body, UseGuards, Param, Request, Get, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  Request,
+  Get,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CourseService } from './course.service';
@@ -9,9 +19,18 @@ export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
   @Post()
-  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, instructorId: { type: 'string' } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        instructorId: { type: 'string' },
+      },
+    },
+  })
   async create(
-    @Body() data: { title: string; description?: string; instructorId: string }
+    @Body() data: { title: string; description?: string; instructorId: string },
   ): Promise<Course> {
     return this.courseService.create(data);
   }
@@ -34,11 +53,19 @@ export class CourseController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @ApiBody({ schema: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+      },
+    },
+  })
   async update(
     @Param('id') id: string,
     @Body() updateCourseDto: { title?: string; description?: string },
-    @Request() req: any
+    @Request() req: any,
   ) {
     const userId = req.user.id;
     return this.courseService.update(id, updateCourseDto, userId);

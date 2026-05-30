@@ -11,7 +11,9 @@ async function bootstrap() {
   // Swagger Documentation Setup
   const config = new DocumentBuilder()
     .setTitle('EduLab LMS - Ruang Dosen API')
-    .setDescription('Dokumentasi API lengkap untuk sistem manajemen pembelajaran (LMS) Ruang Dosen.')
+    .setDescription(
+      'Dokumentasi API lengkap untuk sistem manajemen pembelajaran (LMS) Ruang Dosen.',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {
