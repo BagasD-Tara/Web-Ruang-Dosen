@@ -35,8 +35,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  coursesTaught Course[] @relation("InstructorCourses")
-  enrollments   Enrollment[]
+  coursesTaught         Course[]               @relation("InstructorCourses")
+  enrollments           Enrollment[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model Course {
@@ -44,7 +45,7 @@ model Course {
   title        String
   description  String?
   instructorId String
-  instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -90,13 +91,32 @@ model QuizQuestion {
 }
 
 model Assignment {
-  id          String   @id @default(uuid())
+  id          String                 @id @default(uuid())
   title       String
   description String
+  deadline    DateTime
   courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions AssignmentSubmission[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl      String?
+  note         String?
+  status       String     @default("PENDING") // "PENDING" or "GRADED"
+  score        Int?
+  feedback     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([assignmentId, studentId])
 }
 
 model PracticalLab {
@@ -112,11 +132,10 @@ model PracticalLab {
 model Enrollment {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, courseId])
 }
-
