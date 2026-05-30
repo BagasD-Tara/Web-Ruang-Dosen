@@ -5,11 +5,19 @@ import { AuthModule } from './auth/auth.module';
 import { QuizModule } from './quiz/quiz.module';
 import { CourseModule } from './course/course.module';
 import { AssignmentModule } from './assignment/assignment.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [AuthModule, QuizModule, CourseModule, AssignmentModule],
+  imports: [
+    AuthModule,
+    QuizModule,
+    CourseModule,
+    AssignmentModule,
+    LeaderboardModule,
+    AdminModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
-
+export class AppModule {}
