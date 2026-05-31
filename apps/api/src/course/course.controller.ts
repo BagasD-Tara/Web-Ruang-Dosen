@@ -46,6 +46,12 @@ export class CourseController {
     return this.courseService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  async getMyCourses(@Request() req: any) {
+    return this.courseService.getMyCourses(req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.courseService.findOne(id);

@@ -7,6 +7,7 @@ import { CourseModule } from './course/course.module';
 import { AssignmentModule } from './assignment/assignment.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AdminModule } from './admin/admin.module';
+import { MaterialModule } from './material/material.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AdminModule } from './admin/admin.module';
     AssignmentModule,
     LeaderboardModule,
     AdminModule,
+    MaterialModule,
   ],
   controllers: [AppController],
   providers: [AppService],
