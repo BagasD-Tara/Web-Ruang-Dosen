@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -76,13 +77,13 @@ export class QuizController {
       xpReward?: number;
       passingScore?: number;
     },
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
   ) {
     return this.quizService.update(id, req.user.id, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: any) {
+  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     return this.quizService.remove(id, req.user.id);
   }
 
@@ -107,8 +108,13 @@ export class QuizController {
   submit(
     @Param('id') id: string,
     @Body() data: { answers: { questionId: string; answer: string }[] },
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
   ) {
     return this.quizService.submit(id, req.user.id, data.answers);
+  }
+
+  @Get(':id/questions')
+  getQuestions(@Param('id') id: string) {
+    return this.quizService.getQuestionsForQuiz(id);
   }
 }

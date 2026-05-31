@@ -69,7 +69,7 @@ export class QuizService {
 
     // Protection: Remove correctAnswer from each question
     const sanitizedQuestions = quiz.questions.map((q) => {
-      const { correctAnswer, ...rest } = q;
+      const { correctAnswer: _correctAnswer, ...rest } = q;
       return rest;
     });
 
@@ -191,5 +191,151 @@ export class QuizService {
       xpGained,
       details,
     };
+  }
+
+  async createQuestion(
+    userId: string,
+    data: {
+      question: string;
+      optionA: string;
+      optionB: string;
+      optionC: string;
+      optionD: string;
+      correctAnswer: string;
+      quizId: string;
+    },
+  ) {
+    const quiz = await this.prisma.quiz.findUnique({
+      where: { id: data.quizId },
+      include: { course: true },
+    });
+
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+
+    if (quiz.course.instructorId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to add questions to this quiz',
+      );
+    }
+
+    return this.prisma.quizQuestion.create({
+      data: {
+        quizId: data.quizId,
+        question: data.question,
+        options: {
+          optionA: data.optionA,
+          optionB: data.optionB,
+          optionC: data.optionC,
+          optionD: data.optionD,
+        },
+        correctAnswer: data.correctAnswer,
+      },
+    });
+  }
+
+  async getQuestionsForQuiz(quizId: string) {
+    const quiz = await this.prisma.quiz.findUnique({
+      where: { id: quizId },
+    });
+
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+
+    const questions = await this.prisma.quizQuestion.findMany({
+      where: { quizId },
+    });
+
+    return questions.map((q) => {
+      const opts = (q.options as Record<string, string>) || {};
+      return {
+        id: q.id,
+        question: q.question,
+        optionA: opts.optionA ?? '',
+        optionB: opts.optionB ?? '',
+        optionC: opts.optionC ?? '',
+        optionD: opts.optionD ?? '',
+      };
+    });
+  }
+
+  async updateQuestion(
+    id: string,
+    userId: string,
+    data: {
+      question?: string;
+      optionA?: string;
+      optionB?: string;
+      optionC?: string;
+      optionD?: string;
+      correctAnswer?: string;
+    },
+  ) {
+    const question = await this.prisma.quizQuestion.findUnique({
+      where: { id },
+      include: {
+        quiz: {
+          include: {
+            course: true,
+          },
+        },
+      },
+    });
+
+    if (!question) {
+      throw new NotFoundException('Quiz question not found');
+    }
+
+    if (question.quiz.course.instructorId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to update this question',
+      );
+    }
+
+    const currentOpts = (question.options as Record<string, string>) || {};
+    const updatedOpts = {
+      optionA: data.optionA !== undefined ? data.optionA : currentOpts.optionA,
+      optionB: data.optionB !== undefined ? data.optionB : currentOpts.optionB,
+      optionC: data.optionC !== undefined ? data.optionC : currentOpts.optionC,
+      optionD: data.optionD !== undefined ? data.optionD : currentOpts.optionD,
+    };
+
+    return this.prisma.quizQuestion.update({
+      where: { id },
+      data: {
+        question: data.question,
+        options: updatedOpts,
+        correctAnswer: data.correctAnswer,
+      },
+    });
+  }
+
+  async deleteQuestion(id: string, userId: string) {
+    const question = await this.prisma.quizQuestion.findUnique({
+      where: { id },
+      include: {
+        quiz: {
+          include: {
+            course: true,
+          },
+        },
+      },
+    });
+
+    if (!question) {
+      throw new NotFoundException('Quiz question not found');
+    }
+
+    if (question.quiz.course.instructorId !== userId) {
+      throw new ForbiddenException(
+        'You are not authorized to delete this question',
+      );
+    }
+
+    return this.prisma.quizQuestion.delete({
+      where: { id },
+    });
   }
 }
