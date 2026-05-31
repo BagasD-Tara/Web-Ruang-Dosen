@@ -75,6 +75,23 @@ export class CourseService {
     });
   }
 
+  async getMyCourses(userId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            instructor: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+    });
+
+    return enrollments.map((e) => e.course);
+  }
+
   async findAll() {
     return this.prisma.course.findMany({
       include: {
