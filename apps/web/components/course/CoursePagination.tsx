@@ -3,47 +3,124 @@ import React from 'react';
 interface CoursePaginationProps {
   currentPage: number;
   totalPages: number;
-  setCurrentPage: (page: number | ((p: number) => number)) => void;
+  onPageChange: (page: number) => void;
 }
 
+const MAX_VISIBLE_PAGES = 3;
+
+/**
+ * CoursePagination — matches Figma pagination style:
+ * Prev chevron | page numbers | ellipsis | Next chevron
+ * Active page uses filled brand-primary style.
+ */
 export const CoursePagination: React.FC<CoursePaginationProps> = ({
   currentPage,
   totalPages,
-  setCurrentPage
+  onPageChange,
 }) => {
   if (totalPages <= 1) return null;
 
-  return (
-    <div className="flex items-center justify-center gap-2 mt-12">
-      <button
-        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-        disabled={currentPage === 1}
-        className="w-10 h-10 flex items-center justify-center border border-[#E5E7EB] bg-white rounded-[10px] text-[#4B5563] hover:border-[#1E293B] hover:text-[#1E293B] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
-      </button>
+  const visiblePages = Array.from(
+    { length: Math.min(MAX_VISIBLE_PAGES, totalPages) },
+    (_, i) => i + 1
+  );
 
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-        <button
+  const showEllipsis = totalPages > MAX_VISIBLE_PAGES;
+
+  return (
+    <div className="flex items-center justify-center gap-2 pt-8">
+      {/* Previous button */}
+      <PaginationButton
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        aria-label="Previous page"
+      >
+        <ChevronLeftIcon />
+      </PaginationButton>
+
+      {/* Page number buttons */}
+      {visiblePages.map((page) => (
+        <PaginationButton
           key={page}
-          onClick={() => setCurrentPage(page)}
-          className={`w-10 h-10 flex items-center justify-center rounded-[10px] font-bold transition-all ${
-            currentPage === page
-              ? 'bg-[#1E293B] text-white shadow-lg shadow-[#1E293B]/20'
-              : 'border border-[#E5E7EB] bg-white text-[#4B5563] hover:border-[#1E293B] hover:text-[#1E293B]'
-          }`}
+          onClick={() => onPageChange(page)}
+          isActive={currentPage === page}
+          aria-label={`Page ${page}`}
         >
           {page}
-        </button>
+        </PaginationButton>
       ))}
 
-      <button
-        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+      {/* Ellipsis for additional pages */}
+      {showEllipsis && (
+        <span
+          className="w-10 h-10 flex items-center justify-center text-sm"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          ...
+        </span>
+      )}
+
+      {/* Next button */}
+      <PaginationButton
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        className="w-10 h-10 flex items-center justify-center border border-[#E5E7EB] bg-white rounded-[10px] text-[#4B5563] hover:border-[#1E293B] hover:text-[#1E293B] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Next page"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
-      </button>
+        <ChevronRightIcon />
+      </PaginationButton>
     </div>
   );
 };
+
+/* ── PaginationButton sub-component ── */
+
+interface PaginationButtonProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  'aria-label'?: string;
+}
+
+const PaginationButton: React.FC<PaginationButtonProps> = ({
+  children,
+  onClick,
+  isActive = false,
+  disabled = false,
+  'aria-label': ariaLabel,
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className="w-10 h-10 flex items-center justify-center rounded text-sm transition-all"
+      style={
+        isActive
+          ? { background: 'var(--color-brand-dark)', color: '#FFFFFF', border: 'none' }
+          : {
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+              background: 'transparent',
+              opacity: disabled ? 0.5 : 1,
+            }
+      }
+    >
+      {children}
+    </button>
+  );
+};
+
+/* ── Icons ── */
+
+const ChevronLeftIcon: React.FC = () => (
+  <svg width="8" height="13" viewBox="0 0 8 13" fill="none">
+    <path d="M7 1L1 6.5L7 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ChevronRightIcon: React.FC = () => (
+  <svg width="8" height="13" viewBox="0 0 8 13" fill="none">
+    <path d="M1 1L7 6.5L1 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

@@ -1,12 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/Card';
 
 export interface Tugas {
   id: string;
   title: string;
-  deadline: string; // ISO string or formatted date
+  deadline: string;
   status: 'pending' | 'submitted' | 'graded' | 'late';
   score?: number;
 }
@@ -16,77 +15,118 @@ interface TugasCardProps {
   onClick?: (tugas: Tugas) => void;
 }
 
+interface StatusDisplay {
+  label: string;
+  badgeStyle: React.CSSProperties;
+  borderLeftColor: string;
+}
+
+const STATUS_CONFIG: Record<Tugas['status'], StatusDisplay> = {
+  submitted: {
+    label: 'Menunggu Penilaian',
+    badgeStyle: { background: '#DBEAFE', color: '#1D4ED8' },
+    borderLeftColor: '#3B82F6',
+  },
+  graded: {
+    label: 'Sudah Dinilai',
+    badgeStyle: { background: '#D1FAE5', color: '#065F46' },
+    borderLeftColor: '#10B981',
+  },
+  late: {
+    label: 'Terlambat',
+    badgeStyle: { background: '#FEE2E2', color: '#991B1B' },
+    borderLeftColor: '#EF4444',
+  },
+  pending: {
+    label: 'Belum Dikerjakan',
+    badgeStyle: { background: '#FEF3C7', color: '#92400E' },
+    borderLeftColor: '#F59E0B',
+  },
+};
+
+/**
+ * TugasCard — displays a single assignment/quiz item.
+ * Left border color encodes the status at a glance.
+ */
 export const TugasCard: React.FC<TugasCardProps> = ({ tugas, onClick }) => {
-  const getStatusDisplay = () => {
-    switch (tugas.status) {
-      case 'submitted':
-        return { label: 'Menunggu Penilaian', color: 'bg-blue-100 text-blue-700', border: 'border-l-blue-500' };
-      case 'graded':
-        return { label: 'Sudah Dinilai', color: 'bg-green-100 text-green-700', border: 'border-l-green-500' };
-      case 'late':
-        return { label: 'Terlambat', color: 'bg-red-100 text-red-700', border: 'border-l-red-500' };
-      case 'pending':
-      default:
-        return { label: 'Belum Dikerjakan', color: 'bg-orange-100 text-orange-700', border: 'border-l-orange-500' };
-    }
-  };
-
-  const statusInfo = getStatusDisplay();
-
-  const formatDeadline = (dateString: string) => {
-    // In a real app, use a library like date-fns. For now, simple mock formatting.
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const statusConfig = STATUS_CONFIG[tugas.status];
 
   return (
-    <Card 
-      onClick={() => onClick && onClick(tugas)}
-      className={`border-l-4 ${statusInfo.border}`}
+    <article
+      onClick={() => onClick?.(tugas)}
+      className="bg-white rounded-xl border border-l-4 flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 transition-shadow hover:shadow-md"
+      style={{
+        borderColor: 'var(--color-border)',
+        borderLeftColor: statusConfig.borderLeftColor,
+        cursor: onClick ? 'pointer' : 'default',
+      }}
     >
-      <CardContent className="flex flex-col md:flex-row md:items-center justify-between p-4 md:p-5 gap-4">
-        <div className="flex gap-4 items-start md:items-center">
-          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">
-            📝
-          </div>
-          <div>
-            <h3 className="text-[15px] font-bold text-[#111827] mb-1">
-              {tugas.title}
-            </h3>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#6B7280]">
-              <span className="flex items-center gap-1">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Tenggat: {formatDeadline(tugas.deadline)}
-              </span>
-            </div>
+      {/* Left: icon + info */}
+      <div className="flex items-start md:items-center gap-4">
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
+          style={{ background: '#F1F5F9' }}
+        >
+          📝
+        </div>
+        <div>
+          <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+            {tugas.title}
+          </h3>
+          <div className="flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            <ClockIcon />
+            <span>Tenggat: {formatDeadline(tugas.deadline)}</span>
           </div>
         </div>
-        
-        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-2 md:mt-0">
-          <div className="flex flex-col items-start md:items-end">
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusInfo.color}`}>
-              {statusInfo.label}
-            </span>
-            {tugas.status === 'graded' && tugas.score !== undefined && (
-              <span className="text-sm font-bold text-[#111827] mt-1.5">
-                Nilai: <span className={tugas.score >= 80 ? 'text-green-600' : 'text-orange-600'}>{tugas.score}/100</span>
-              </span>
-            )}
-          </div>
-          
-          <button 
-            className="px-4 py-2 bg-[#111827] text-white text-sm font-semibold rounded-lg hover:bg-[#374151] transition-colors shrink-0"
-            aria-label="Kerjakan Tugas"
+      </div>
+
+      {/* Right: badge + score + button */}
+      <div className="flex items-center justify-between md:justify-end gap-4">
+        <div className="flex flex-col items-start md:items-end">
+          <span
+            className="text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider"
+            style={statusConfig.badgeStyle}
           >
-            {tugas.status === 'graded' ? 'Lihat' : 'Kerjakan'}
-          </button>
+            {statusConfig.label}
+          </span>
+          {tugas.status === 'graded' && tugas.score !== undefined && (
+            <span className="text-sm font-bold mt-1.5" style={{ color: 'var(--color-text-primary)' }}>
+              Nilai:{' '}
+              <span style={{ color: tugas.score >= 80 ? '#059669' : '#D97706' }}>
+                {tugas.score}/100
+              </span>
+            </span>
+          )}
         </div>
-      </CardContent>
-    </Card>
+
+        <button
+          className="px-4 py-2 text-sm font-semibold rounded-lg text-white shrink-0 transition-colors hover:opacity-80"
+          style={{ background: 'var(--color-text-primary)' }}
+          aria-label={tugas.status === 'graded' ? 'Lihat Tugas' : 'Kerjakan Tugas'}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tugas.status === 'graded' ? 'Lihat' : 'Kerjakan'}
+        </button>
+      </div>
+    </article>
   );
 };
+
+/* ── Helpers ── */
+
+function formatDeadline(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+const ClockIcon: React.FC = () => (
+  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" strokeWidth="2" />
+    <path d="M12 6v6l4 2" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);

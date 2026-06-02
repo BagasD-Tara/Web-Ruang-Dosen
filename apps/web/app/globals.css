@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors */
+  --color-brand-primary: #003594;
+  --color-brand-dark: #00174B;
+  --color-brand-light: #004AC6;
+  --color-brand-bg: #DBE1FF;
+  --color-brand-subtle: #D5E0F8;
+
+  /* Neutral */
+  --color-text-primary: #191C1D;
+  --color-text-secondary: #434654;
+  --color-text-muted: #586377;
+  --color-border: #C3C6D6;
+  --color-bg-backdrop: #EEF2F6;
+  --color-bg-page: #F8F9FA;
+  --color-bg-white: #FFFFFF;
+  --color-bg-input: #EDEEEF;
+  --page-surface-gap: clamp(12px, 1.6vw, 24px);
+  --page-surface-radius: 26px;
+
+  /* Status */
+  --color-danger: #BA1A1A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-backdrop);
+  color: var(--color-text-primary);
+  font-family: 'Liberation Sans', 'Arial', sans-serif;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-fade-in 220ms ease-out;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Sidebar responsive */
+@media (min-width: 768px) and (max-width: 1023px) {
+  aside[data-sidebar] {
+    width: 64px !important;
+    padding: 24px 8px !important;
+  }
+
+  /* Sembunyikan label, tampilkan icon saja */
+  aside[data-sidebar] a span:last-child {
+    display: none;
+  }
+
+  /* Pusatkan icon */
+  aside[data-sidebar] a {
+    justify-content: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  aside[data-sidebar] {
+    width: 256px;
+    padding: 24px 16px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  aside[data-sidebar] a span:last-child {
+    display: none;
+  }
 }
