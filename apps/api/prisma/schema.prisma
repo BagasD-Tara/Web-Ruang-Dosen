@@ -139,7 +139,7 @@ model LabSubmission {
   student   User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
   fileUrl   String?
   note      String?
-  status    String       @default("PENDING")
+  status    String       @default("PENDING") // "PENDING" or "GRADED"
   score     Int?
   feedback  String?
   createdAt DateTime     @default(now())
