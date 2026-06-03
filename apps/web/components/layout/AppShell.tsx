@@ -12,6 +12,7 @@ const TABLET_SIDEBAR_WIDTH_PX = 64;
 
 interface AppShellProps {
   children: React.ReactNode;
+  mode?: 'student' | 'lecturer';
 }
 
 interface AppShellContextValue {
@@ -29,7 +30,7 @@ interface AppShellContextValue {
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
 
-export const AppShell: React.FC<AppShellProps> = ({ children }) => {
+export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }) => {
   const pathname = usePathname();
   const isMobile = useMediaQuery('(max-width: 767px)');
   const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
@@ -110,8 +111,16 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   return (
     <AppShellContext.Provider value={contextValue}>
       <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg-backdrop)' }}>
-        <TopNavBar onToggleSidebar={contextValue.toggleSidebar} />
-        <SideNavBar sidebarOpen={sidebarOpen} onClose={contextValue.closeSidebar} />
+        <TopNavBar
+          onToggleSidebar={contextValue.toggleSidebar}
+          brandHref={mode === 'lecturer' ? '/dosen/courses' : '/courses'}
+          searchBasePath={mode === 'lecturer' ? '/dosen/courses' : undefined}
+        />
+        <SideNavBar
+          sidebarOpen={sidebarOpen}
+          onClose={contextValue.closeSidebar}
+          mode={mode}
+        />
 
         {isMobile && sidebarOpen ? (
           <div

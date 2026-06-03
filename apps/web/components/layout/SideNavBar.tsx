@@ -9,17 +9,24 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   children?: Array<{ label: string; href: string }>;
+  matchMode?: 'exact' | 'section';
 }
 
 interface SideNavBarProps {
   sidebarOpen: boolean;
   onClose: () => void;
+  mode?: 'student' | 'lecturer';
 }
 
-export const SideNavBar: React.FC<SideNavBarProps> = ({ sidebarOpen, onClose }) => {
+export const SideNavBar: React.FC<SideNavBarProps> = ({
+  sidebarOpen,
+  onClose,
+  mode = 'student',
+}) => {
   const pathname = usePathname();
   const asideRef = useRef<HTMLElement>(null);
-  const coursesActive = pathname === '/courses' || pathname.startsWith('/courses/');
+  const coursesHref = mode === 'lecturer' ? '/dosen/courses' : '/courses';
+  const coursesActive = pathname === coursesHref || pathname.startsWith(`${coursesHref}/`);
   const [coursesOpenOverride, setCoursesOpenOverride] = useState<boolean | null>(null);
   const coursesOpen = coursesOpenOverride ?? coursesActive;
 
@@ -47,16 +54,17 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({ sidebarOpen, onClose }) 
 
   const navItems = useMemo<NavItem[]>(
     () => [
-      { label: 'Home', href: '/', icon: <HomeIcon /> },
+      { label: 'Home', href: mode === 'lecturer' ? '/dosen' : '/', icon: <HomeIcon />, matchMode: 'exact' },
       {
         label: 'Courses',
-        href: '/courses',
+        href: coursesHref,
         icon: <CoursesIcon />,
-        children: [{ label: 'My Courses', href: '/courses/my' }],
+        children: mode === 'student' ? [{ label: 'My Courses', href: '/courses/my' }] : undefined,
+        matchMode: 'section',
       },
-      { label: 'Calendar', href: '/calendar', icon: <CalendarIcon /> },
+      { label: 'Calendar', href: mode === 'lecturer' ? '/dosen/calendar' : '/calendar', icon: <CalendarIcon />, matchMode: 'section' },
     ],
-    []
+    [coursesHref, mode]
   );
 
   return (
@@ -76,8 +84,8 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({ sidebarOpen, onClose }) 
     >
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          const isCoursesItem = item.href === '/courses';
+          const isActive = isNavItemActive(pathname, item);
+          const isCoursesItem = item.href === coursesHref;
           const showChildren = Boolean(item.children) && (isCoursesItem ? coursesOpen : isActive);
 
           return (
@@ -140,6 +148,18 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({ sidebarOpen, onClose }) 
     </aside>
   );
 };
+
+function isNavItemActive(pathname: string, item: NavItem) {
+  if (item.matchMode === 'exact') {
+    return pathname === item.href;
+  }
+
+  if (item.href === '/') {
+    return pathname === '/';
+  }
+
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
 
 const HomeIcon: React.FC = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">

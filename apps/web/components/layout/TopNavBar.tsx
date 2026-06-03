@@ -6,9 +6,15 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface TopNavBarProps {
   onToggleSidebar: () => void;
+  brandHref?: string;
+  searchBasePath?: string;
 }
 
-export const TopNavBar: React.FC<TopNavBarProps> = ({ onToggleSidebar }) => {
+export const TopNavBar: React.FC<TopNavBarProps> = ({
+  onToggleSidebar,
+  brandHref = '/courses',
+  searchBasePath,
+}) => {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,7 +31,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onToggleSidebar }) => {
     }
 
     const queryString = params.toString();
-    const basePath = pathname.startsWith('/courses/my') ? '/courses/my' : '/courses';
+    const basePath = searchBasePath ?? (pathname.startsWith('/courses/my') ? '/courses/my' : '/courses');
     const nextPath = queryString ? `${basePath}?${queryString}` : basePath;
     router.replace(nextPath);
   };
@@ -47,7 +53,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onToggleSidebar }) => {
           >
             <HamburgerIcon />
           </button>
-          <Link href="/courses" className="flex items-center gap-2 no-underline">
+          <Link href={brandHref} className="flex items-center gap-2 no-underline">
             <BookIcon />
             <span className="text-xl font-bold hidden sm:inline"
               style={{ color: 'var(--color-brand-primary)' }}>
