@@ -38,6 +38,7 @@ model User {
   coursesTaught         Course[]               @relation("InstructorCourses")
   enrollments           Enrollment[]
   assignmentSubmissions AssignmentSubmission[]
+  labSubmissions        LabSubmission[]
 }
 
 model Course {
@@ -120,13 +121,31 @@ model AssignmentSubmission {
 }
 
 model PracticalLab {
-  id           String   @id @default(uuid())
+  id           String          @id @default(uuid())
   title        String
   instructions String
   courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  course       Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions  LabSubmission[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model LabSubmission {
+  id        String       @id @default(uuid())
+  labId     String
+  lab       PracticalLab @relation(fields: [labId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl   String?
+  note      String?
+  status    String       @default("PENDING")
+  score     Int?
+  feedback  String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([labId, studentId])
 }
 
 model Enrollment {

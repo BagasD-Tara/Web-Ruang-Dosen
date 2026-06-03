@@ -30,9 +30,11 @@ describe('AdminController (e2e)', () => {
         // Actually, we must register via Auth endpoint to get hashed password, then update to ADMIN via Prisma.
       },
     });
-    
+
     // Cleanup first to avoid unique constraint errors if previous tests failed
-    await prisma.user.deleteMany({ where: { email: { in: ['admin.e2e@test.com', 'student.e2e@test.com'] } } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ['admin.e2e@test.com', 'student.e2e@test.com'] } },
+    });
 
     // Proper setup:
     // A. Register Admin
@@ -43,9 +45,14 @@ describe('AdminController (e2e)', () => {
     });
 
     // Make him ADMIN
-    const adminRecord = await prisma.user.findUnique({ where: { email: 'admin.e2e@test.com' } });
+    const adminRecord = await prisma.user.findUnique({
+      where: { email: 'admin.e2e@test.com' },
+    });
     adminId = adminRecord.id;
-    await prisma.user.update({ where: { id: adminId }, data: { role: 'ADMIN' } });
+    await prisma.user.update({
+      where: { id: adminId },
+      data: { role: 'ADMIN' },
+    });
 
     // B. Register Student
     await request(app.getHttpServer()).post('/auth/register').send({
@@ -53,20 +60,26 @@ describe('AdminController (e2e)', () => {
       email: 'student.e2e@test.com',
       password: 'password123',
     });
-    const studentRecord = await prisma.user.findUnique({ where: { email: 'student.e2e@test.com' } });
+    const studentRecord = await prisma.user.findUnique({
+      where: { email: 'student.e2e@test.com' },
+    });
     studentId = studentRecord.id;
 
     // C. Login Admin to get Token
-    const loginRes = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'admin.e2e@test.com',
-      password: 'password123',
-    });
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'admin.e2e@test.com',
+        password: 'password123',
+      });
     adminToken = loginRes.body.access_token;
   });
 
   afterAll(async () => {
     // Cleanup
-    await prisma.user.deleteMany({ where: { email: { in: ['admin.e2e@test.com', 'student.e2e@test.com'] } } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ['admin.e2e@test.com', 'student.e2e@test.com'] } },
+    });
     await app.close();
   });
 
@@ -88,7 +101,7 @@ describe('AdminController (e2e)', () => {
       .expect(200);
 
     expect(Array.isArray(res.body)).toBeTruthy();
-    const adminFound = res.body.find(u => u.email === 'admin.e2e@test.com');
+    const adminFound = res.body.find((u) => u.email === 'admin.e2e@test.com');
     expect(adminFound).toBeDefined();
   });
 
@@ -107,7 +120,7 @@ describe('AdminController (e2e)', () => {
       .delete(`/admin/users/${adminId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(403);
-      
+
     expect(res.body.message).toContain('Admin cannot delete their own account');
   });
 
@@ -116,8 +129,10 @@ describe('AdminController (e2e)', () => {
       .delete(`/admin/users/${studentId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-      
-    const checkUser = await prisma.user.findUnique({ where: { id: studentId } });
+
+    const checkUser = await prisma.user.findUnique({
+      where: { id: studentId },
+    });
     expect(checkUser).toBeNull();
   });
 });

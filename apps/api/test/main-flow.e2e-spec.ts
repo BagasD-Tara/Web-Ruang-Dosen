@@ -7,7 +7,7 @@ import { PrismaService } from './../src/prisma.service';
 describe('Main Flow Integration (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  
+
   // Tokens & IDs
   let lecturerToken: string;
   let lecturerId: string;
@@ -28,35 +28,60 @@ describe('Main Flow Integration (e2e)', () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Cleanup first
-    await prisma.user.deleteMany({ where: { email: { in: ['lecturer.e2e@test.com', 'student.flow@test.com'] } } });
+    await prisma.user.deleteMany({
+      where: {
+        email: { in: ['lecturer.e2e@test.com', 'student.flow@test.com'] },
+      },
+    });
 
     // 1. Setup Lecturer
     await request(app.getHttpServer()).post('/auth/register').send({
-      name: 'Lecturer Flow', email: 'lecturer.e2e@test.com', password: 'password123'
+      name: 'Lecturer Flow',
+      email: 'lecturer.e2e@test.com',
+      password: 'password123',
     });
-    const lecUser = await prisma.user.findUnique({ where: { email: 'lecturer.e2e@test.com' } });
-    await prisma.user.update({ where: { id: lecUser.id }, data: { role: 'LECTURER' } });
+    const lecUser = await prisma.user.findUnique({
+      where: { email: 'lecturer.e2e@test.com' },
+    });
+    await prisma.user.update({
+      where: { id: lecUser.id },
+      data: { role: 'LECTURER' },
+    });
     lecturerId = lecUser.id;
 
-    const lecLogin = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'lecturer.e2e@test.com', password: 'password123'
-    });
+    const lecLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'lecturer.e2e@test.com',
+        password: 'password123',
+      });
     lecturerToken = lecLogin.body.access_token;
 
     // 2. Setup Student
     await request(app.getHttpServer()).post('/auth/register').send({
-      name: 'Student Flow', email: 'student.flow@test.com', password: 'password123'
+      name: 'Student Flow',
+      email: 'student.flow@test.com',
+      password: 'password123',
     });
-    const stuLogin = await request(app.getHttpServer()).post('/auth/login').send({
-      email: 'student.flow@test.com', password: 'password123'
-    });
+    const stuLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'student.flow@test.com',
+        password: 'password123',
+      });
     studentToken = stuLogin.body.access_token;
-    const stuUser = await prisma.user.findUnique({ where: { email: 'student.flow@test.com' } });
+    const stuUser = await prisma.user.findUnique({
+      where: { email: 'student.flow@test.com' },
+    });
     studentId = stuUser.id;
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { email: { in: ['lecturer.e2e@test.com', 'student.flow@test.com'] } } });
+    await prisma.user.deleteMany({
+      where: {
+        email: { in: ['lecturer.e2e@test.com', 'student.flow@test.com'] },
+      },
+    });
     await app.close();
   });
 
@@ -65,7 +90,11 @@ describe('Main Flow Integration (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/courses')
       .set('Authorization', `Bearer ${lecturerToken}`)
-      .send({ title: 'E2E Fullstack Course', description: 'Testing', instructorId: lecturerId })
+      .send({
+        title: 'E2E Fullstack Course',
+        description: 'Testing',
+        instructorId: lecturerId,
+      })
       .expect(201);
     courseId = res.body.id;
     expect(res.body.title).toBe('E2E Fullstack Course');
@@ -94,7 +123,10 @@ describe('Main Flow Integration (e2e)', () => {
       .post('/quiz-questions')
       .set('Authorization', `Bearer ${lecturerToken}`)
       .send({
-        quizId, question: '1+1?', options: { A: '1', B: '2', C: '3', D: '4' }, correctAnswer: 'B'
+        quizId,
+        question: '1+1?',
+        options: { A: '1', B: '2', C: '3', D: '4' },
+        correctAnswer: 'B',
       })
       .expect(201);
   });
@@ -104,7 +136,12 @@ describe('Main Flow Integration (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/assignments')
       .set('Authorization', `Bearer ${lecturerToken}`)
-      .send({ title: 'E2E Task', description: 'Do it', deadline: new Date().toISOString(), courseId })
+      .send({
+        title: 'E2E Task',
+        description: 'Do it',
+        deadline: new Date().toISOString(),
+        courseId,
+      })
       .expect(201);
     assignmentId = res.body.id;
     expect(res.body.title).toBe('E2E Task');
@@ -136,7 +173,7 @@ describe('Main Flow Integration (e2e)', () => {
       .get(`/quizzes/${quizId}/questions`)
       .set('Authorization', `Bearer ${studentToken}`)
       .expect(200);
-    
+
     const questionId = questionsRes.body[0].id;
 
     const submitRes = await request(app.getHttpServer())
@@ -144,7 +181,7 @@ describe('Main Flow Integration (e2e)', () => {
       .set('Authorization', `Bearer ${studentToken}`)
       .send({ answers: [{ questionId, answer: 'B' }] }) // 'B' is correct
       .expect(201);
-      
+
     expect(submitRes.body.passed).toBe(true);
     expect(submitRes.body.score).toBe(100);
     expect(submitRes.body.xpGained).toBe(150);
@@ -154,8 +191,8 @@ describe('Main Flow Integration (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get('/leaderboard')
       .expect(200);
-      
-    const studentLdb = res.body.find(u => u.id === studentId);
+
+    const studentLdb = res.body.find((u) => u.id === studentId);
     expect(studentLdb).toBeDefined();
     expect(studentLdb.xp).toBeGreaterThanOrEqual(150);
   });
