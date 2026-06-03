@@ -9,6 +9,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AdminModule } from './admin/admin.module';
 import { MaterialModule } from './material/material.module';
 import { LabSubmissionModule } from './lab-submission/lab-submission.module';
+import { LabModule } from './lab/lab.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { LabSubmissionModule } from './lab-submission/lab-submission.module';
     AdminModule,
     MaterialModule,
     LabSubmissionModule,
+    LabModule,
   ],
   controllers: [AppController],
   providers: [AppService],
