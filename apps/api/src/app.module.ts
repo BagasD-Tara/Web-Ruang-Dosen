@@ -8,6 +8,7 @@ import { AssignmentModule } from './assignment/assignment.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AdminModule } from './admin/admin.module';
 import { MaterialModule } from './material/material.module';
+import { LabSubmissionModule } from './lab-submission/lab-submission.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MaterialModule } from './material/material.module';
     LeaderboardModule,
     AdminModule,
     MaterialModule,
+    LabSubmissionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
