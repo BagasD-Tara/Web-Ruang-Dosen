@@ -1,4 +1,85 @@
-import { Controller } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Get,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
+import { MaterialService } from './material.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { MaterialType } from '@prisma/client';
 
-@Controller('material')
-export class MaterialController {}
+@ApiBearerAuth('JWT-auth')
+@UseGuards(JwtAuthGuard)
+@Controller('materials')
+export class MaterialController {
+  constructor(private readonly materialService: MaterialService) {}
+
+  @Post()
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        type: { type: 'string', enum: ['TEXT', 'VIDEO', 'DOCUMENT'] },
+        content: { type: 'string' },
+        url: { type: 'string' },
+        courseId: { type: 'string' },
+      },
+    },
+  })
+  create(
+    @Request() req: { user: { id: string } },
+    @Body()
+    data: {
+      title: string;
+      type: MaterialType;
+      content?: string;
+      url?: string;
+      courseId: string;
+    },
+  ) {
+    return this.materialService.create(req.user.id, data);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.materialService.findOne(id);
+  }
+
+  @Put(':id')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        type: { type: 'string', enum: ['TEXT', 'VIDEO', 'DOCUMENT'] },
+        content: { type: 'string' },
+        url: { type: 'string' },
+      },
+    },
+  })
+  update(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } },
+    @Body()
+    data: {
+      title?: string;
+      type?: MaterialType;
+      content?: string;
+      url?: string;
+    },
+  ) {
+    return this.materialService.update(id, req.user.id, data);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.materialService.remove(id, req.user.id);
+  }
+}
