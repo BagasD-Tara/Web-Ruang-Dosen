@@ -197,6 +197,10 @@ export class AssignmentService {
     userId: string,
     data: { score: number; feedback?: string },
   ) {
+    if (data.score < 0 || data.score > 100) {
+      throw new BadRequestException('Score harus antara 0 dan 100.');
+    }
+
     const submission = await this.prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
       include: {

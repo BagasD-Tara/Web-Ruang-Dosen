@@ -23,9 +23,7 @@ import { LabSubmissionService } from './lab-submission.service';
 @ApiTags('Lab Submission')
 @Controller()
 export class LabSubmissionController {
-  constructor(
-    private readonly labSubmissionService: LabSubmissionService,
-  ) {}
+  constructor(private readonly labSubmissionService: LabSubmissionService) {}
 
   /**
    * POST /labs/:id/submit
@@ -59,10 +57,7 @@ export class LabSubmissionController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('labs/:id/submissions')
-  async getSubmissions(
-    @Param('id') labId: string,
-    @Request() req: any,
-  ) {
+  async getSubmissions(@Param('id') labId: string, @Request() req: any) {
     return this.labSubmissionService.getSubmissions(labId, req.user.id);
   }
 
@@ -79,7 +74,10 @@ export class LabSubmissionController {
       required: ['score'],
       properties: {
         score: { type: 'number', description: 'Nilai 0-100' },
-        feedback: { type: 'string', description: 'Komentar evaluatif (opsional)' },
+        feedback: {
+          type: 'string',
+          description: 'Komentar evaluatif (opsional)',
+        },
       },
     },
   })
