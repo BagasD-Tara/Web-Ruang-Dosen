@@ -1,4 +1,5 @@
-import { fetchCourseDetail, fetchCourses } from '@/lib/api/courseApi';
+import { fetchCourseDetail, fetchCourses, fetchMyCourses } from '@/lib/api/courseApi';
+import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
 import {
   mapApiCourseDetailToStudentCourseDetail,
   mapApiCourseDetailToLecturerManageCourse,
@@ -15,7 +16,9 @@ import {
 export async function getStudentCourses(): Promise<Course[]> {
   try {
     const apiCourses = await fetchCourses();
-    return mapApiCoursesToStudentCourses(apiCourses);
+    const enrolledCourseIds = await getStudentEnrolledCourseIds();
+
+    return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
   } catch {
     return COURSES;
   }
@@ -24,9 +27,23 @@ export async function getStudentCourses(): Promise<Course[]> {
 export async function getStudentCourseDetail(courseId: string): Promise<CourseDetail | null> {
   try {
     const apiCourse = await fetchCourseDetail(courseId);
-    return mapApiCourseDetailToStudentCourseDetail(apiCourse);
+    const enrolledCourseIds = await getStudentEnrolledCourseIds();
+
+    return mapApiCourseDetailToStudentCourseDetail(apiCourse, enrolledCourseIds);
   } catch {
     return getCourseDetailById(Number(courseId)) ?? null;
+  }
+}
+
+export async function getStudentMyCourses(): Promise<Course[]> {
+  try {
+    const accessToken = await getDemoStudentAccessToken();
+    const apiCourses = await fetchMyCourses(accessToken);
+    const enrolledCourseIds = apiCourses.map((course) => course.id);
+
+    return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
+  } catch {
+    return COURSES.filter((course) => course.status !== 'notstart');
   }
 }
 
@@ -45,5 +62,16 @@ export async function getLecturerManageCourse(courseId: string): Promise<Lecture
     return mapApiCourseDetailToLecturerManageCourse(apiCourse);
   } catch {
     return getLecturerManageCourseById(courseId);
+  }
+}
+
+async function getStudentEnrolledCourseIds() {
+  try {
+    const accessToken = await getDemoStudentAccessToken();
+    const enrolledCourses = await fetchMyCourses(accessToken);
+
+    return enrolledCourses.map((course) => course.id);
+  } catch {
+    return [];
   }
 }

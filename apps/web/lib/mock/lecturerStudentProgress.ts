@@ -143,12 +143,13 @@ function mapAssignmentProgress(
   student: LecturerEnrollmentStudent
 ): StudentAssignmentProgress {
   const numericSeed = createNumericSeed(student.id, assignment.id);
+  const isLowProgressStudent = student.progressPercentage < 50;
 
   if (assignment.status === 'Draft') {
     return createAssignmentProgressItem(module, assignment, 'Draft');
   }
 
-  if (student.status === 'At Risk' && numericSeed % 2 === 0) {
+  if (isLowProgressStudent && numericSeed % 2 === 0) {
     return createAssignmentProgressItem(module, assignment, 'Missing');
   }
 

@@ -6,10 +6,18 @@ import { Course } from '@/lib/mock/courses';
 interface EnrollModalProps {
     course: Course | null;
     onClose: () => void;
-    onConfirm: (course: Course) => void;
+    onConfirm: (course: Course) => void | Promise<void>;
+    isSubmitting?: boolean;
+    errorMessage?: string | null;
 }
 
-export const EnrollModal: React.FC<EnrollModalProps> = ({ course, onClose, onConfirm }) => {
+export const EnrollModal: React.FC<EnrollModalProps> = ({
+    course,
+    onClose,
+    onConfirm,
+    isSubmitting = false,
+    errorMessage = null,
+}) => {
     if (!course) return null;
 
     return (
@@ -88,10 +96,17 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({ course, onClose, onCon
                         Apakah kamu yakin ingin mendaftar kursus ini?
                     </p>
 
+                    {errorMessage ? (
+                        <p className="mb-4 text-center text-sm font-medium" style={{ color: '#B3261E' }}>
+                            {errorMessage}
+                        </p>
+                    ) : null}
+
                     {/* Actions */}
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
+                            disabled={isSubmitting}
                             className="flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors hover:bg-gray-50"
                             style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
                         >
@@ -99,10 +114,11 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({ course, onClose, onCon
                         </button>
                         <button
                             onClick={() => onConfirm(course)}
+                            disabled={isSubmitting}
                             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
                             style={{ background: 'var(--color-brand-light)' }}
                         >
-                            Enroll Sekarang
+                            {isSubmitting ? 'Memproses...' : 'Enroll Sekarang'}
                         </button>
                     </div>
                 </div>

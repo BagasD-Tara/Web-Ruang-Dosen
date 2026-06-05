@@ -6,18 +6,11 @@ import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import type {
   LecturerEnrollmentData,
   LecturerEnrollmentStudent,
-  StudentEnrollmentStatus,
 } from '@/lib/mock/lecturerEnrollment';
 
 interface LecturerManageEnrollmentViewProps {
   data: LecturerEnrollmentData;
 }
-
-const STATUS_STYLE: Record<StudentEnrollmentStatus, { background: string; color: string }> = {
-  Active: { background: '#E7F6EE', color: '#187346' },
-  'At Risk': { background: '#FFF4DE', color: '#946200' },
-  'Needs Review': { background: '#FDECEC', color: '#B3261E' },
-};
 
 const PAGE_SIZE_OPTIONS = ['10', '20', '50'] as const;
 
@@ -36,7 +29,7 @@ export function LecturerManageEnrollmentView({
     }
 
     return data.students.filter((student) =>
-      [student.name, student.email, student.status].some((value) =>
+      [student.name, student.email].some((value) =>
         value.toLowerCase().includes(normalizedQuery)
       )
     );
@@ -94,14 +87,14 @@ export function LecturerManageEnrollmentView({
           helper="Currently enrolled in this course"
         />
         <SummaryCard
-          label="Needs Attention"
-          value={String(data.students.filter((student) => student.status !== 'Active').length)}
-          helper="At risk or pending review"
-        />
-        <SummaryCard
           label="Average Progress"
           value={`${Math.round(getAverageProgress(data.students))}%`}
           helper="Based on current mock completion"
+        />
+        <SummaryCard
+          label="Latest Join"
+          value={getLatestJoinDate(data.students)}
+          helper="Most recent student enrollment"
         />
       </section>
 
@@ -109,11 +102,10 @@ export function LecturerManageEnrollmentView({
         className="overflow-hidden rounded-[28px] border bg-white shadow-[0_12px_28px_rgba(15,33,74,0.04)]"
         style={{ borderColor: 'var(--color-border)' }}
       >
-        <div className="hidden grid-cols-[2.1fr_2.2fr_1.4fr_1fr_1.4fr] gap-6 border-b px-8 py-6 text-[15px] font-bold uppercase tracking-[0.05em] lg:grid" style={{ borderColor: 'rgba(195,198,214,0.8)', color: 'var(--color-text-secondary)' }}>
+        <div className="hidden grid-cols-[2.2fr_2.3fr_1.4fr_1.3fr] gap-6 border-b px-8 py-6 text-[15px] font-bold uppercase tracking-[0.05em] lg:grid" style={{ borderColor: 'rgba(195,198,214,0.8)', color: 'var(--color-text-secondary)' }}>
           <span>Student Name</span>
           <span>Email Address</span>
           <span>Date Joined</span>
-          <span>Status</span>
           <span className="text-right">Actions</span>
         </div>
 
@@ -233,7 +225,7 @@ function EnrollmentRow({
 
   return (
     <article className="px-5 py-5 sm:px-8">
-      <div className="hidden grid-cols-[2.1fr_2.2fr_1.4fr_1fr_1.4fr] items-center gap-6 lg:grid">
+      <div className="hidden grid-cols-[2.2fr_2.3fr_1.4fr_1.3fr] items-center gap-6 lg:grid">
         <div className="flex min-w-0 items-center gap-4">
           <Avatar initials={initials} />
           <p className="truncate text-[18px] font-semibold" style={{ color: 'var(--color-text-primary)' }}>
@@ -247,9 +239,6 @@ function EnrollmentRow({
         <p className="text-base" style={{ color: 'var(--color-text-secondary)' }}>
           {student.dateJoined}
         </p>
-        <div>
-          <StatusPill status={student.status} />
-        </div>
         <div className="flex justify-end gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
         </div>
@@ -266,7 +255,6 @@ function EnrollmentRow({
               {student.email}
             </p>
           </div>
-          <StatusPill status={student.status} />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -291,17 +279,6 @@ function Avatar({ initials }: { initials: string }) {
     >
       {initials}
     </div>
-  );
-}
-
-function StatusPill({ status }: { status: StudentEnrollmentStatus }) {
-  return (
-    <span
-      className="inline-flex rounded-full px-3 py-1 text-sm font-semibold"
-      style={STATUS_STYLE[status]}
-    >
-      {status}
-    </span>
   );
 }
 
@@ -407,6 +384,14 @@ function getAverageProgress(students: LecturerEnrollmentStudent[]) {
   );
 
   return totalProgress / students.length;
+}
+
+function getLatestJoinDate(students: LecturerEnrollmentStudent[]) {
+  if (students.length === 0) {
+    return '-';
+  }
+
+  return students[students.length - 1]?.dateJoined ?? '-';
 }
 
 function getInitials(name: string) {

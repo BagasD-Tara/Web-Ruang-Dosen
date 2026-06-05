@@ -82,3 +82,21 @@ export function fetchCourseDetail(courseId: string) {
     next: { revalidate: 30 },
   });
 }
+
+export function fetchMyCourses(accessToken: string) {
+  return apiRequest<ApiCourseListItem[]>('/courses/my', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: 'no-store',
+  });
+}
+
+export function enrollInCourse(courseId: string, accessToken: string) {
+  return apiRequest<{ message?: string }>(`/courses/${courseId}/enroll`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}

@@ -114,9 +114,9 @@ function SummaryGrid({ data }: { data: LecturerStudentProgressData }) {
         helper="Assignment score average"
       />
       <SummaryCard
-        label="Student Status"
-        value={data.student.status}
-        helper={`Joined ${data.student.dateJoined}`}
+        label="Date Joined"
+        value={data.student.dateJoined}
+        helper="Student enrollment date"
       />
     </section>
   );

@@ -30,12 +30,19 @@ const DEFAULT_BANNER_CLASS = 'bg-gradient-to-br from-[#0A3A9C] via-[#0A4AB8] to-
 const DEFAULT_IMAGE_URL =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80';
 
-export function mapApiCoursesToStudentCourses(courses: ApiCourseListItem[]): Course[] {
-  return courses.map(mapApiCourseToStudentCourse);
+export function mapApiCoursesToStudentCourses(
+  courses: ApiCourseListItem[],
+  enrolledCourseIds: string[] = []
+): Course[] {
+  return courses.map((course) => mapApiCourseToStudentCourse(course, enrolledCourseIds));
 }
 
-export function mapApiCourseToStudentCourse(course: ApiCourseListItem): Course {
+export function mapApiCourseToStudentCourse(
+  course: ApiCourseListItem,
+  enrolledCourseIds: string[] = []
+): Course {
   const instructorName = course.instructor?.name ?? 'Course Instructor';
+  const isEnrolled = enrolledCourseIds.includes(course.id);
 
   return {
     id: course.id,
@@ -52,7 +59,7 @@ export function mapApiCourseToStudentCourse(course: ApiCourseListItem): Course {
     instructorRole: 'Course Instructor',
     creditHours: DEFAULT_CREDIT_HOURS,
     progressPercentage: 0,
-    status: 'notstart',
+    status: isEnrolled ? 'ongoing' : 'notstart',
     totalMaterials: 0,
     totalQuizzes: 0,
     isNew: false,
@@ -60,8 +67,11 @@ export function mapApiCourseToStudentCourse(course: ApiCourseListItem): Course {
   };
 }
 
-export function mapApiCourseDetailToStudentCourseDetail(course: ApiCourseDetail): CourseDetail {
-  const baseCourse = mapApiCourseToStudentCourse(course);
+export function mapApiCourseDetailToStudentCourseDetail(
+  course: ApiCourseDetail,
+  enrolledCourseIds: string[] = []
+): CourseDetail {
+  const baseCourse = mapApiCourseToStudentCourse(course, enrolledCourseIds);
   const materials = mapMaterialsToContentItems(course.materials);
   const assignments = mapAssignmentsToContentItems(course.assignments);
   const quizzes = mapQuizzesToContentItems(course.quizzes);

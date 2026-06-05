@@ -1,23 +1,10 @@
 import { getLecturerManageCourseById } from './lecturerCourseManagement';
-import {
-  calculateStudentLearningStatus,
-  type StudentLearningStatus,
-} from './studentStatusRules';
-
-export type StudentEnrollmentStatus = StudentLearningStatus;
-
-interface StudentStatusOptions {
-  hasMissingAssignment?: boolean;
-  hasReturnedAssignment?: boolean;
-  averageScore?: number | null;
-}
 
 export interface LecturerEnrollmentStudent {
   id: string;
   name: string;
   email: string;
   dateJoined: string;
-  status: StudentEnrollmentStatus;
   progressPercentage: number;
 }
 
@@ -34,16 +21,12 @@ const ENROLLMENT_STUDENT_OVERRIDES: Record<string, LecturerEnrollmentStudent[]> 
     createStudent('aml-stu-01', 'Alex Johnson', 'alex.j@university.edu', 'Oct 12, 2023', 84),
     createStudent('aml-stu-02', 'Maria Garcia', 'm.garcia@university.edu', 'Oct 14, 2023', 91),
     createStudent('aml-stu-03', 'Liam Smith', 'lsmith@university.edu', 'Oct 15, 2023', 42),
-    createStudent('aml-stu-04', 'Noah Martinez', 'n.martinez@university.edu', 'Oct 18, 2023', 58, {
-      hasReturnedAssignment: true,
-    }),
+    createStudent('aml-stu-04', 'Noah Martinez', 'n.martinez@university.edu', 'Oct 18, 2023', 58),
     createStudent('aml-stu-05', 'Sophia Brown', 'sbrown@university.edu', 'Oct 19, 2023', 76),
     createStudent('aml-stu-06', 'Emma Davis', 'emma.davis@university.edu', 'Oct 20, 2023', 88),
     createStudent('aml-stu-07', 'James Wilson', 'jwilson@university.edu', 'Oct 21, 2023', 39),
     createStudent('aml-stu-08', 'Olivia Moore', 'omoore@university.edu', 'Oct 23, 2023', 81),
-    createStudent('aml-stu-09', 'Benjamin Taylor', 'btaylor@university.edu', 'Oct 24, 2023', 67, {
-      averageScore: 66,
-    }),
+    createStudent('aml-stu-09', 'Benjamin Taylor', 'btaylor@university.edu', 'Oct 24, 2023', 67),
     createStudent('aml-stu-10', 'Ava Anderson', 'ava.anderson@university.edu', 'Oct 25, 2023', 73),
     createStudent('aml-stu-11', 'Lucas Thomas', 'lucas.thomas@university.edu', 'Oct 27, 2023', 49),
     createStudent('aml-stu-12', 'Mia Jackson', 'mia.jackson@university.edu', 'Oct 28, 2023', 86),
@@ -84,11 +67,7 @@ function createFallbackStudents(courseId: string, enrolledStudents: number) {
         `Student ${studentNumber}`,
         `student${studentNumber}@university.edu`,
         `Nov ${String(3 + index).padStart(2, '0')}, 2023`,
-        Math.max(28, 92 - index * 3),
-        {
-          hasMissingAssignment: studentNumber % 7 === 0,
-          averageScore: studentNumber % 5 === 0 ? 68 : null,
-        }
+        Math.max(28, 92 - index * 3)
       )
     );
   }
@@ -101,18 +80,13 @@ function createStudent(
   name: string,
   email: string,
   dateJoined: string,
-  progressPercentage: number,
-  statusOptions: StudentStatusOptions = {}
+  progressPercentage: number
 ): LecturerEnrollmentStudent {
   return {
     id,
     name,
     email,
     dateJoined,
-    status: calculateStudentLearningStatus({
-      progressPercentage,
-      ...statusOptions,
-    }),
     progressPercentage,
   };
 }

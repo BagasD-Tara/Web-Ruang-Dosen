@@ -3,12 +3,9 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseCatalogLayout } from '@/components/course/CourseCatalogLayout';
-import { EnrollModal } from '@/components/course/EnrollModal';
 import { useCourses } from '@/hooks/useCourses';
-import { isCourseEnrolled } from '@/lib/courseEnrollment';
 import { buildCourseDetailHref } from '@/lib/courseNavigation';
 import type { Course } from '@/lib/mock/courses';
-import { useEnrollmentStore } from '@/lib/stores/useEnrollmentStore';
 
 interface MyCoursesCatalogViewProps {
   courses: Course[];
@@ -17,14 +14,7 @@ interface MyCoursesCatalogViewProps {
 
 export function MyCoursesCatalogView({ courses, searchQuery }: MyCoursesCatalogViewProps) {
   const router = useRouter();
-  const [enrollCourse, setEnrollCourse] = React.useState<Course | null>(null);
-  const enrolledCourseIds = useEnrollmentStore((state) => state.enrolledCourseIds);
-  const enrollCourseById = useEnrollmentStore((state) => state.enrollCourse);
-  const courseFilters = useCourses(
-    courses,
-    searchQuery,
-    (course) => isCourseEnrolled(course, enrolledCourseIds)
-  );
+  const courseFilters = useCourses(courses, searchQuery);
 
   const visibleCourses = React.useMemo(() => {
     return courseFilters.paginatedCourses.map((course) =>
@@ -34,46 +24,28 @@ export function MyCoursesCatalogView({ courses, searchQuery }: MyCoursesCatalogV
     );
   }, [courseFilters.paginatedCourses]);
 
-  const handleConfirmEnroll = (course: Course) => {
-    enrollCourseById(course.id);
-    setEnrollCourse(null);
-    router.push(buildCourseDetailHref(course.id, 'my-courses'));
-  };
-
   const handleCourseClick = (course: Course) => {
-    if (!isCourseEnrolled(course, enrolledCourseIds)) {
-      setEnrollCourse(course);
-      return;
-    }
-
     router.push(buildCourseDetailHref(course.id, 'my-courses'));
   };
 
   return (
-    <>
-      <EnrollModal
-        course={enrollCourse}
-        onClose={() => setEnrollCourse(null)}
-        onConfirm={handleConfirmEnroll}
-      />
-      <CourseCatalogLayout
-        title="My Courses"
-        description="Courses you are actively enrolled in and ready to continue."
-        currentBreadcrumb="My Courses"
-        courses={visibleCourses}
-        selectedCategory={courseFilters.selectedCategory}
-        selectedLevel={courseFilters.selectedLevel}
-        currentPage={courseFilters.currentPage}
-        totalPages={courseFilters.totalPages}
-        emptyState={<MyCoursesEmptyState />}
-        onCategoryChange={courseFilters.setSelectedCategory}
-        onLevelChange={courseFilters.setSelectedLevel}
-        onPageChange={courseFilters.setCurrentPage}
-        onResetFilters={courseFilters.resetFilters}
-        onCourseClick={handleCourseClick}
-        onEnroll={setEnrollCourse}
-      />
-    </>
+    <CourseCatalogLayout
+      title="My Courses"
+      description="Courses you are actively enrolled in and ready to continue."
+      currentBreadcrumb="My Courses"
+      courses={visibleCourses}
+      selectedCategory={courseFilters.selectedCategory}
+      selectedLevel={courseFilters.selectedLevel}
+      currentPage={courseFilters.currentPage}
+      totalPages={courseFilters.totalPages}
+      emptyState={<MyCoursesEmptyState />}
+      onCategoryChange={courseFilters.setSelectedCategory}
+      onLevelChange={courseFilters.setSelectedLevel}
+      onPageChange={courseFilters.setCurrentPage}
+      onResetFilters={courseFilters.resetFilters}
+      onCourseClick={handleCourseClick}
+      onEnroll={() => undefined}
+    />
   );
 }
 

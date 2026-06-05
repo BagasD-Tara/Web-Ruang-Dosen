@@ -18,6 +18,8 @@ interface CoursesCatalogViewProps {
 export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewProps) {
   const router = useRouter();
   const [enrollCourse, setEnrollCourse] = React.useState<Course | null>(null);
+  const [isSubmittingEnroll, setIsSubmittingEnroll] = React.useState(false);
+  const [enrollError, setEnrollError] = React.useState<string | null>(null);
   const enrolledCourseIds = useEnrollmentStore((state) => state.enrolledCourseIds);
   const enrollCourseById = useEnrollmentStore((state) => state.enrollCourse);
   const courseFilters = useCourses(courses, searchQuery);
@@ -30,10 +32,27 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
     );
   }, [courseFilters.paginatedCourses, enrolledCourseIds]);
 
-  const handleConfirmEnroll = (course: Course) => {
-    enrollCourseById(course.id);
-    setEnrollCourse(null);
-    router.push(buildCourseDetailHref(course.id, 'courses'));
+  const handleConfirmEnroll = async (course: Course) => {
+    setIsSubmittingEnroll(true);
+    setEnrollError(null);
+
+    try {
+      const response = await fetch(`/api/student/courses/${course.id}/enroll`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to enroll');
+      }
+
+      enrollCourseById(course.id);
+      setEnrollCourse(null);
+      router.push(buildCourseDetailHref(course.id, 'courses'));
+    } catch {
+      setEnrollError('Gagal mendaftarkan course. Coba lagi.');
+    } finally {
+      setIsSubmittingEnroll(false);
+    }
   };
 
   const handleCourseClick = (course: Course) => {
@@ -51,6 +70,8 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
         course={enrollCourse}
         onClose={() => setEnrollCourse(null)}
         onConfirm={handleConfirmEnroll}
+        isSubmitting={isSubmittingEnroll}
+        errorMessage={enrollError}
       />
       <CourseCatalogLayout
         title="Explore Courses"
