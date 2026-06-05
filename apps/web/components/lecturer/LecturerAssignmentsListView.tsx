@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type {
   LecturerAssignmentStatus,
   LecturerCourseModule,
@@ -62,17 +63,53 @@ export function LecturerAssignmentsListView({
         </Link>
       </section>
 
-      <section className="space-y-4">
-        {assignments.map(({ assignment, module }) => (
-          <AssignmentListCard
-            key={assignment.id}
-            courseId={course.id}
-            module={module}
-            assignment={assignment}
-          />
-        ))}
-      </section>
+      {assignments.length > 0 ? (
+        <section className="space-y-4">
+          {assignments.map(({ assignment, module }) => (
+            <AssignmentListCard
+              key={assignment.id}
+              courseId={course.id}
+              module={module}
+              assignment={assignment}
+            />
+          ))}
+        </section>
+      ) : (
+        <EmptyAssignmentsState courseId={course.id} />
+      )}
     </div>
+  );
+}
+
+function EmptyAssignmentsState({ courseId }: { courseId: string }) {
+  return (
+    <section
+      className="rounded-[24px] border bg-white px-6 py-16 text-center shadow-[0_14px_32px_rgba(15,33,74,0.04)]"
+      style={{ borderColor: 'var(--color-border)' }}
+    >
+      <div
+        className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[20px]"
+        style={{ background: '#EEF4FF', color: 'var(--color-brand-primary)' }}
+      >
+        <ClipboardIcon />
+      </div>
+      <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+        No assignments yet
+      </h2>
+      <p
+        className="mx-auto mt-3 max-w-[520px] text-base leading-7"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        This course does not have any assignments yet. Go back to the course module list and create an assignment from the module you want to use.
+      </p>
+      <Link
+        href={`/dosen/courses/${courseId}`}
+        className="mt-7 inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white no-underline transition-opacity hover:opacity-90"
+        style={{ background: 'var(--color-brand-primary)' }}
+      >
+        Back to Course Modules
+      </Link>
+    </section>
   );
 }
 
@@ -112,20 +149,47 @@ function AssignmentListCard({
         <p>{assignment.deadline ? `Due ${formatDateLabel(assignment.deadline)}` : 'No deadline'}</p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end">
+      <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-col lg:items-end">
         <StatusPill status={status} />
-        <Link
-          href={`/dosen/courses/${courseId}/modules/${module.id}/assignments/${assignment.id}/edit`}
-          className="inline-flex h-11 items-center justify-center rounded-[12px] border px-4 text-base font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
-          style={{
-            borderColor: 'var(--color-brand-primary)',
-            color: 'var(--color-brand-primary)',
-          }}
-        >
-          Edit
-        </Link>
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+          <AssignmentActionLink
+            href={`/dosen/courses/${courseId}/modules/${module.id}/assignments/${assignment.id}/submissions`}
+            primary
+          >
+            Submissions
+          </AssignmentActionLink>
+          <AssignmentActionLink
+            href={`/dosen/courses/${courseId}/modules/${module.id}/assignments/${assignment.id}/edit`}
+          >
+            Edit
+          </AssignmentActionLink>
+        </div>
       </div>
     </article>
+  );
+}
+
+function AssignmentActionLink({
+  children,
+  href,
+  primary = false,
+}: {
+  children: ReactNode;
+  href: string;
+  primary?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-11 items-center justify-center rounded-[12px] border px-4 text-base font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
+      style={{
+        background: primary ? 'var(--color-brand-primary)' : '#FFFFFF',
+        borderColor: 'var(--color-brand-primary)',
+        color: primary ? '#FFFFFF' : 'var(--color-brand-primary)',
+      }}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -151,4 +215,18 @@ function formatSubmissionText(assignment: LecturerModuleAssessment) {
 function formatDateLabel(dateTime: string) {
   const [date] = dateTime.split('T');
   return date;
+}
+
+function ClipboardIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M9 5h6M9 11h6M9 15h4M8.5 3.5h7l1 2h1.5A2.5 2.5 0 0 1 20.5 8v10A2.5 2.5 0 0 1 18 20.5H6A2.5 2.5 0 0 1 3.5 18V8A2.5 2.5 0 0 1 6 5.5h1.5l1-2Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }

@@ -4,8 +4,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface EnrollmentStore {
-  enrolledCourseIds: number[];
-  enrollCourse: (courseId: number) => void;
+  enrolledCourseIds: Array<number | string>;
+  enrollCourse: (courseId: number | string) => void;
 }
 
 export const useEnrollmentStore = create<EnrollmentStore>()(

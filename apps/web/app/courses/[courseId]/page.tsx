@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { CourseDetailView } from '@/components/course/CourseDetailView';
-import { getCourseDetailById } from '@/lib/mock/courses';
+import { getStudentCourseDetail } from '@/lib/api/courseRepository';
 
 export default async function CourseDetailPage({
   params,
@@ -8,7 +8,7 @@ export default async function CourseDetailPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const course = getCourseDetailById(Number(courseId));
+  const course = await getStudentCourseDetail(courseId);
 
   if (!course) {
     notFound();

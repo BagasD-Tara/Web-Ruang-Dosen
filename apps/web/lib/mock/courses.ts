@@ -4,7 +4,7 @@ export type CourseContentTab = 'materials' | 'quizzes' | 'assignments' | 'labs';
 export type CourseContentType = 'video' | 'pdf' | 'article' | 'document' | 'quiz' | 'assignment' | 'lab';
 
 export interface Course {
-  id: number;
+  id: number | string;
   code: string;
   semester: string;
   level: CourseLevel;

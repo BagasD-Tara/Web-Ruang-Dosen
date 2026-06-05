@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
-import { COURSES, Course, CourseLevel } from '@/lib/mock/courses';
+import { Course, CourseLevel } from '@/lib/mock/courses';
 import { CategoryOption } from '@/components/course/CourseFilters';
 
 const ITEMS_PER_PAGE = 6;
 
-export function useCourses(searchQuery: string, sourceFilter?: (course: Course) => boolean) {
+export function useCourses(
+  courses: Course[],
+  searchQuery: string,
+  sourceFilter?: (course: Course) => boolean
+) {
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>('All');
   const [selectedLevel, setSelectedLevel] = useState<'All' | CourseLevel>('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -12,7 +16,7 @@ export function useCourses(searchQuery: string, sourceFilter?: (course: Course) 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const filteredCourses = useMemo(() => {
-    return COURSES.filter((course) => {
+    return courses.filter((course) => {
       if (sourceFilter && !sourceFilter(course)) {
         return false;
       }
@@ -28,7 +32,7 @@ export function useCourses(searchQuery: string, sourceFilter?: (course: Course) 
 
       return matchesCategory && matchesLevel && matchesSearch;
     });
-  }, [normalizedQuery, selectedCategory, selectedLevel, sourceFilter]);
+  }, [courses, normalizedQuery, selectedCategory, selectedLevel, sourceFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCourses.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);

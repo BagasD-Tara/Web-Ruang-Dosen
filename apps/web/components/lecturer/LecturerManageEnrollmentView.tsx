@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import type {
@@ -119,7 +120,7 @@ export function LecturerManageEnrollmentView({
         <div className="divide-y" style={{ borderColor: 'rgba(195,198,214,0.75)' }}>
           {paginatedStudents.length > 0 ? (
             paginatedStudents.map((student) => (
-              <EnrollmentRow key={student.id} student={student} />
+              <EnrollmentRow key={student.id} courseId={data.courseId} student={student} />
             ))
           ) : (
             <EmptyEnrollmentState />
@@ -220,8 +221,15 @@ function SearchInput({
   );
 }
 
-function EnrollmentRow({ student }: { student: LecturerEnrollmentStudent }) {
+function EnrollmentRow({
+  courseId,
+  student,
+}: {
+  courseId: string;
+  student: LecturerEnrollmentStudent;
+}) {
   const initials = getInitials(student.name);
+  const progressHref = `/dosen/courses/${courseId}/enrollment/${student.id}/progress`;
 
   return (
     <article className="px-5 py-5 sm:px-8">
@@ -243,10 +251,7 @@ function EnrollmentRow({ student }: { student: LecturerEnrollmentStudent }) {
           <StatusPill status={student.status} />
         </div>
         <div className="flex justify-end gap-2">
-          <RowActionButton>View Progress</RowActionButton>
-          <RowActionIconButton label="Contact student">
-            <MailIcon />
-          </RowActionIconButton>
+          <RowActionLink href={progressHref}>View Progress</RowActionLink>
         </div>
       </div>
 
@@ -269,10 +274,7 @@ function EnrollmentRow({ student }: { student: LecturerEnrollmentStudent }) {
         </div>
 
         <div className="flex gap-2">
-          <RowActionButton>View Progress</RowActionButton>
-          <RowActionIconButton label="Contact student">
-            <MailIcon />
-          </RowActionIconButton>
+          <RowActionLink href={progressHref}>View Progress</RowActionLink>
         </div>
       </div>
     </article>
@@ -303,34 +305,15 @@ function StatusPill({ status }: { status: StudentEnrollmentStatus }) {
   );
 }
 
-function RowActionButton({ children }: { children: React.ReactNode }) {
+function RowActionLink({ children, href }: { children: React.ReactNode; href: string }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
       className="inline-flex h-10 items-center justify-center rounded-[12px] border px-4 text-sm font-semibold transition-colors hover:bg-[#F5F8FF]"
       style={{ borderColor: 'var(--color-brand-primary)', color: 'var(--color-brand-primary)' }}
     >
       {children}
-    </button>
-  );
-}
-
-function RowActionIconButton({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border transition-colors hover:bg-[#F5F8FF]"
-      style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-    >
-      {children}
-    </button>
+    </Link>
   );
 }
 
@@ -455,15 +438,6 @@ function SearchIcon() {
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="5.75" stroke="currentColor" strokeWidth="1.8" />
       <path d="m12.5 12.5 3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function MailIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <rect x="2.25" y="3.5" width="13.5" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="m3.5 5 5.5 4.5L14.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

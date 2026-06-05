@@ -67,7 +67,9 @@ export function LecturerAssignmentEditorView({
 
   const pageTitle = mode === 'create' ? 'Create New Assignment' : 'Edit Assignment';
   const submitButtonLabel = mode === 'create' ? 'Create Assignment' : 'Save Changes';
-  const returnHref = `/dosen/courses/${course.id}`;
+  const courseHref = `/dosen/courses/${course.id}`;
+  const assignmentsHref = `/dosen/courses/${course.id}/assignments`;
+  const cancelHref = mode === 'edit' ? assignmentsHref : courseHref;
 
   return (
     <>
@@ -76,8 +78,8 @@ export function LecturerAssignmentEditorView({
           items={[
             { label: 'Home', href: '/dosen' },
             { label: 'Courses', href: '/dosen/courses' },
-            { label: course.title, href: returnHref },
-            { label: module.orderLabel, href: returnHref },
+            { label: course.title, href: courseHref },
+            { label: mode === 'edit' ? 'Assignments' : module.orderLabel, href: cancelHref },
             { label: pageTitle },
           ]}
         />
@@ -210,7 +212,7 @@ export function LecturerAssignmentEditorView({
                 </button>
               ) : null}
               <Link
-                href={returnHref}
+                href={cancelHref}
                 className="inline-flex h-12 items-center justify-center rounded-[14px] border px-5 text-base font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
                 style={{
                   borderColor: 'var(--color-border)',

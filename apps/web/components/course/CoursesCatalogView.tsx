@@ -11,15 +11,16 @@ import type { Course } from '@/lib/mock/courses';
 import { useEnrollmentStore } from '@/lib/stores/useEnrollmentStore';
 
 interface CoursesCatalogViewProps {
+  courses: Course[];
   searchQuery: string;
 }
 
-export function CoursesCatalogView({ searchQuery }: CoursesCatalogViewProps) {
+export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewProps) {
   const router = useRouter();
   const [enrollCourse, setEnrollCourse] = React.useState<Course | null>(null);
   const enrolledCourseIds = useEnrollmentStore((state) => state.enrolledCourseIds);
   const enrollCourseById = useEnrollmentStore((state) => state.enrollCourse);
-  const courseFilters = useCourses(searchQuery);
+  const courseFilters = useCourses(courses, searchQuery);
 
   const visibleCourses = React.useMemo(() => {
     return courseFilters.paginatedCourses.map((course) =>

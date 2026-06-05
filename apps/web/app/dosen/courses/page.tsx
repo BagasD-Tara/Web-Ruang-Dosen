@@ -1,5 +1,5 @@
 import { LecturerCoursesView } from '@/components/lecturer/LecturerCoursesView';
-import { LECTURER_COURSES } from '@/lib/mock/lecturerCourses';
+import { getLecturerCourses } from '@/lib/api/courseRepository';
 
 export default async function LecturerCoursesPage({
   searchParams,
@@ -7,10 +7,11 @@ export default async function LecturerCoursesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
+  const courses = await getLecturerCourses();
 
   return (
     <LecturerCoursesView
-      courses={LECTURER_COURSES}
+      courses={courses}
       searchQuery={params.q ?? ''}
     />
   );

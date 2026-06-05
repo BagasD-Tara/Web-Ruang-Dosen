@@ -1,4 +1,5 @@
 import { MyCoursesCatalogView } from '@/components/course/MyCoursesCatalogView';
+import { getStudentCourses } from '@/lib/api/courseRepository';
 
 export default async function MyCoursesPage({
   searchParams,
@@ -6,5 +7,7 @@ export default async function MyCoursesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
-  return <MyCoursesCatalogView searchQuery={params.q ?? ''} />;
+  const courses = await getStudentCourses();
+
+  return <MyCoursesCatalogView courses={courses} searchQuery={params.q ?? ''} />;
 }

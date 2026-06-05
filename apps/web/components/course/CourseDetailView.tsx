@@ -177,7 +177,7 @@ function ModuleSection({
   source,
 }: {
   module: CourseModule;
-  courseId: number;
+  courseId: number | string;
   activeTab: CourseContentTab;
   source: CourseSource;
 }) {
@@ -438,7 +438,7 @@ function getContentItemHref({
   source,
 }: {
   activeTab: CourseContentTab;
-  courseId: number;
+  courseId: number | string;
   itemId: string;
   source: CourseSource;
 }) {

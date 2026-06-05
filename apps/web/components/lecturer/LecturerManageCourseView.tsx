@@ -70,12 +70,13 @@ export function LecturerManageCourseView({ data }: LecturerManageCourseViewProps
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="xl:sticky xl:top-6 xl:self-start">
+        <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">
           <EnrollmentSummaryCard
             courseId={data.course.id}
             enrolledStudents={data.enrolledStudents}
             weeklyGrowth={data.weeklyGrowth}
           />
+          <AssignmentSummaryCard courseId={data.course.id} />
         </div>
 
         <div className="space-y-5">
@@ -130,6 +131,28 @@ function EnrollmentSummaryCard({
         className="mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white/12 px-5 text-lg font-semibold text-white transition-colors hover:bg-white/18"
       >
         Manage Enrollment
+        <ArrowRightIcon />
+      </Link>
+    </article>
+  );
+}
+
+function AssignmentSummaryCard({
+  courseId,
+}: {
+  courseId: string;
+}) {
+  return (
+    <article
+      className="rounded-[24px] border bg-white p-4 shadow-[0_14px_32px_rgba(15,33,74,0.05)]"
+      style={{ borderColor: 'var(--color-border)' }}
+    >
+      <Link
+        href={`/dosen/courses/${courseId}/assignments`}
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 text-base font-semibold text-white no-underline transition-opacity hover:opacity-90"
+        style={{ background: 'var(--color-brand-primary)' }}
+      >
+        View All Assignments
         <ArrowRightIcon />
       </Link>
     </article>

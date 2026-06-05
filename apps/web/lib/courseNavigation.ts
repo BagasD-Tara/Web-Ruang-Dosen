@@ -15,14 +15,14 @@ export function getCourseBreadcrumbParent(source: CourseSource): CourseBreadcrum
     : { label: 'Courses', href: '/courses' };
 }
 
-export function buildCourseDetailHref(courseId: number, source: CourseSource) {
+export function buildCourseDetailHref(courseId: number | string, source: CourseSource) {
   return `/courses/${courseId}?from=${source}`;
 }
 
-export function buildMaterialHref(courseId: number, materialId: string, source: CourseSource) {
+export function buildMaterialHref(courseId: number | string, materialId: string, source: CourseSource) {
   return `/courses/${courseId}/materials/${materialId}?from=${source}`;
 }
 
-export function buildAssignmentHref(courseId: number, assignmentId: string, source: CourseSource) {
+export function buildAssignmentHref(courseId: number | string, assignmentId: string, source: CourseSource) {
   return `/courses/${courseId}/tugas?from=${source}&assignment=${assignmentId}`;
 }

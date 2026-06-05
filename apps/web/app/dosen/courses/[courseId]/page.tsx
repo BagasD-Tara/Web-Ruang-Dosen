@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { LecturerManageCourseView } from '@/components/lecturer/LecturerManageCourseView';
-import { getLecturerManageCourseById } from '@/lib/mock/lecturerCourseManagement';
+import { getLecturerManageCourse } from '@/lib/api/courseRepository';
 
 export default async function LecturerManageCoursePage({
   params,
@@ -8,7 +8,7 @@ export default async function LecturerManageCoursePage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const courseManagementData = getLecturerManageCourseById(courseId);
+  const courseManagementData = await getLecturerManageCourse(courseId);
 
   if (!courseManagementData) {
     notFound();
