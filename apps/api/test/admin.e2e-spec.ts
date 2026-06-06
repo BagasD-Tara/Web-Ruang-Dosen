@@ -48,7 +48,7 @@ describe('AdminController (e2e)', () => {
     const adminRecord = await prisma.user.findUnique({
       where: { email: 'admin.e2e@test.com' },
     });
-    adminId = adminRecord.id;
+    adminId = adminRecord!.id;
     await prisma.user.update({
       where: { id: adminId },
       data: { role: 'ADMIN' },
@@ -63,7 +63,7 @@ describe('AdminController (e2e)', () => {
     const studentRecord = await prisma.user.findUnique({
       where: { email: 'student.e2e@test.com' },
     });
-    studentId = studentRecord.id;
+    studentId = studentRecord!.id;
 
     // C. Login Admin to get Token
     const loginRes = await request(app.getHttpServer())

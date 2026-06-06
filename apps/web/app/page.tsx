@@ -1,7 +1,6 @@
+import { redirect } from 'next/navigation';
+
 export default function Home() {
-  return (
-    <main>
-      <h1>Ruang Dosen</h1>
-    </main>
-  );
+  // Arahkan pengunjung dari halaman utama (/) langsung ke halaman login (/login)
+  redirect('/login');
 }
