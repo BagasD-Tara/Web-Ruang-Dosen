@@ -8,7 +8,6 @@ import {
   Bell, 
   Menu, 
   X, 
-  LayoutDashboard,
   BookOpen,
   Award,
   CheckCircle2,
@@ -82,7 +81,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           {/* Student Profile Identity Card */}
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex gap-3.5 items-center">
-            <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold rounded-xl flex items-center justify-center text-base shadow-sm">
+            <div className="w-11 h-11 bg-linear-to-br from-blue-600 to-indigo-700 text-white font-extrabold rounded-xl flex items-center justify-center text-base shadow-sm">
               {student.avatarLetter}
             </div>
             <div className="overflow-hidden">
@@ -121,7 +120,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               onClick={() => setSidebarOpen(false)}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition ${
                 pathname.startsWith('/lecturer')
-                  ? 'bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white shadow-lg shadow-indigo-100/60'
+                  ? 'bg-linear-to-r from-blue-700 via-indigo-700 to-purple-800 text-white shadow-lg shadow-indigo-100/60'
                   : 'text-indigo-750 bg-indigo-50 hover:bg-indigo-100/40 border border-indigo-200/50'
               }`}
               id="nav-dosen-view"

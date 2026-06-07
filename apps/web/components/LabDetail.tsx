@@ -6,18 +6,9 @@ import {
   ArrowLeft, 
   BookOpen, 
   Calendar, 
-  Clock, 
   Lock, 
-  CheckCircle2, 
   ChevronRight, 
-  User, 
   Award, 
-  ListCollapse, 
-  BookCheck,
-  Upload,
-  FileText,
-  Trash2,
-  Check,
   AlertCircle,
   ChevronDown,
   ChevronUp
@@ -32,98 +23,7 @@ interface LabDetailProps {
   onSubmitLab: (labId: string, fileName: string, fileSize: string, studentNote: string) => void;
 }
 
-const SimpleMarkdown: React.FC<{ content: string }> = ({ content }) => {
-  const lines = content.split('\n');
-  let inCodeBlock = false;
-  let codeBlockLines: string[] = [];
-  
-  return (
-    <div className="space-y-4 text-slate-700 text-sm leading-relaxed">
-      {lines.map((line, idx) => {
-        // Toggle code block
-        if (line.startsWith('```')) {
-          if (inCodeBlock) {
-            inCodeBlock = false;
-            const blockContent = codeBlockLines.join('\n');
-            codeBlockLines = [];
-            return (
-              <pre key={idx} className="bg-slate-900 text-teal-400 p-4 rounded-xl font-mono text-xs overflow-x-auto my-3 border border-slate-800 shadow-inner">
-                <code>{blockContent}</code>
-              </pre>
-            );
-          } else {
-            inCodeBlock = true;
-            return null;
-          }
-        }
-        
-        if (inCodeBlock) {
-          codeBlockLines.push(line);
-          return null;
-        }
 
-        // Headers
-        if (line.startsWith('### ')) {
-          return (
-            <h3 key={idx} className="text-base font-extrabold text-slate-900 pt-3 pb-1 border-b border-slate-100 uppercase tracking-wider flex items-center gap-2">
-              <span className="w-1.5 h-4 bg-blue-600 rounded-xs inline-block" />
-              {line.slice(4)}
-            </h3>
-          );
-        }
-        if (line.startsWith('#### ')) {
-          return <h4 key={idx} className="text-sm font-bold text-slate-800 pt-2 pb-1">{line.slice(5)}</h4>;
-        }
-        if (line.startsWith('## ')) {
-          return (
-            <h2 key={idx} className="text-lg font-black text-slate-900 pt-5 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
-              {line.slice(3)}
-            </h2>
-          );
-        }
-
-        // Checked item formats (numbered/unordered lists)
-        if (line.startsWith('* ')) {
-          return (
-            <div key={idx} className="flex gap-2.5 pl-4 py-0.5">
-              <span className="text-blue-500 font-extrabold">•</span>
-              <span className="text-slate-650">{renderInlineFormatting(line.slice(2))}</span>
-            </div>
-          );
-        }
-        if (line.match(/^\d+\.\s/)) {
-          const match = line.match(/^(\d+)\.\s(.*)/);
-          if (match) {
-            return (
-              <div key={idx} className="flex gap-2.5 pl-4 py-0.5">
-                <span className="text-blue-600 font-bold">{match[1]}.</span>
-                <span className="text-slate-650">{renderInlineFormatting(match[2])}</span>
-              </div>
-            );
-          }
-        }
-
-        if (line.trim() === '') return <div key={idx} className="h-1.5" />;
-
-        return <p key={idx} className="text-slate-650 font-medium py-0.5">{renderInlineFormatting(line)}</p>;
-      })}
-    </div>
-  );
-};
-
-function renderInlineFormatting(text: string) {
-  const regex = /(\*\*.*?\*\*|\x60.*?\x60)/g;
-  const parts = text.split(regex);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-extrabold text-slate-900">{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={i} className="bg-slate-100 text-blue-700 px-1.5 py-0.5 rounded font-mono text-xs font-semibold border border-slate-200">{part.slice(1, -1)}</code>;
-    }
-    return part;
-  });
-}
 
 interface LabAssistant {
   name: string;
@@ -162,7 +62,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
   onBack,
   onSelectTask,
   onNavigateToRegister,
-  onSubmitLab,
+
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -216,8 +116,8 @@ export const LabDetail: React.FC<LabDetailProps> = ({
   
   // Filter tasks belonging only to this specific lab
   const labTasks = tasks.filter((task) => task.labId === lab.id);
-  const completedTasks = labTasks.filter((t) => t.submission && t.submission.status === 'Selesai').length;
-  const progressPct = labTasks.length > 0 ? Math.round((completedTasks / labTasks.length) * 100) : 0;
+
+
 
   const getStatusBadge = (task: Task) => {
     if (!task.submission) {
@@ -247,35 +147,6 @@ export const LabDetail: React.FC<LabDetailProps> = ({
           Belum Dinilai
         </span>
       );
-    }
-  };
-
-  const renderLabStatusHeading = () => {
-    switch (lab.labStatus) {
-      case 'Belum Submit':
-        return (
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-4 text-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider">
-              ● Belum Submit
-            </span>
-            <p className="text-[10px] text-slate-550 mt-2 max-w-[170px] mx-auto leading-relaxed">
-              Anda belum melakukan submisi laporan hasil praktikum terpadu.
-            </p>
-          </div>
-        );
-      case 'Sudah Submit, menunggu penilaian':
-        return (
-          <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 mb-4 text-center">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider">
-              ● Sudah Submit
-            </span>
-            <p className="text-[10px] text-amber-800 mt-2 max-w-[170px] mx-auto leading-relaxed">
-              Laporan terunggah. Menunggu koreksi nilai dari Dosen Pengampu.
-            </p>
-          </div>
-        );
-      case 'Sudah Dinilai':
-        return null;
     }
   };
 
@@ -319,7 +190,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
             {/* Lecturer Info & Assistants Block */}
             <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pt-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-extrabold rounded-full flex items-center justify-center text-sm shadow-sm">
+                <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-700 text-white font-extrabold rounded-full flex items-center justify-center text-sm shadow-sm">
                   {lab.dosen.replace(new RegExp('(Prof\\.|Dr\\.|Eng\\.|M\\.T\\.)', 'g'), '').trim().charAt(0) || 'D'}
                 </div>
                 <div>
@@ -352,7 +223,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
         </div>
 
         <div className="mt-6 pt-6 border-t border-slate-100">
-          <h3 className="font-bold text-slate-900 text-sm mb-1 uppercase tracking-wider text-slate-400">Deskripsi Laboratorium</h3>
+          <h3 className="font-bold text-slate-400 text-sm mb-1 uppercase tracking-wider">Deskripsi Laboratorium</h3>
           <p className="text-xs text-slate-650 leading-relaxed max-w-4xl">
             {lab.description}
           </p>
@@ -369,7 +240,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
               <div className="flex border-b border-slate-150 pb-1 mb-6">
                 <button
                   onClick={() => handleSetTab('tugas')}
-                  className={`pb-3 px-4 font-bold text-xs uppercase tracking-wider transition-all border-b-2 -mb-[5px] flex items-center gap-2 ${
+                  className={`pb-3 px-4 font-bold text-xs uppercase tracking-wider transition-all border-b-2 mb-[-5px] flex items-center gap-2 ${
                     activeTab === 'tugas'
                       ? 'border-blue-600 text-blue-700'
                       : 'border-transparent text-slate-400 hover:text-slate-650'
@@ -380,7 +251,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
                 </button>
                 <button
                   onClick={() => handleSetTab('demo')}
-                  className={`pb-3 px-4 font-bold text-xs uppercase tracking-wider transition-all border-b-2 -mb-[5px] flex items-center gap-2 ${
+                  className={`pb-3 px-4 font-bold text-xs uppercase tracking-wider transition-all border-b-2 mb-[-5px] flex items-center gap-2 ${
                     activeTab.startsWith('demo')
                       ? 'border-blue-600 text-blue-700'
                       : 'border-transparent text-slate-400 hover:text-slate-650'
@@ -477,8 +348,16 @@ export const LabDetail: React.FC<LabDetailProps> = ({
                       <div key={demo.id} className="border border-slate-150 bg-white rounded-2xl hover:border-blue-150 transition group hover:shadow-xs overflow-hidden">
                         {/* Summary Header */}
                         <div 
-                          className="flex flex-col sm:flex-row justify-between sm:items-center p-4 cursor-pointer"
-                          onClick={() => setExpandedDemoId(expandedDemoId === demo.id ? null : demo.id)}
+                          className={`flex flex-col sm:flex-row justify-between sm:items-center p-4 ${
+                            demo.status === 'selesai' 
+                              ? 'opacity-90' 
+                              : 'cursor-pointer hover:bg-slate-50'
+                          }`}
+                          onClick={() => {
+                            if (demo.status !== 'selesai') {
+                              setExpandedDemoId(expandedDemoId === demo.id ? null : demo.id);
+                            }
+                          }}
                         >
                           <div className="space-y-1.5">
                             <h4 className="font-extrabold text-sm text-slate-950 leading-tight">
@@ -508,22 +387,30 @@ export const LabDetail: React.FC<LabDetailProps> = ({
                               </span>
                             )}
                             <div className="p-1 rounded-full bg-slate-50 text-slate-400 group-hover:text-blue-600 transition">
-                              {expandedDemoId === demo.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              {demo.status !== 'selesai' && (
+                                expandedDemoId === demo.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* Dropdown Content */}
-                        {expandedDemoId === demo.id && (
+                        {expandedDemoId === demo.id && demo.status !== 'selesai' && (
                           <div className="bg-white border-t border-slate-100 p-4">
-                            <div className="flex justify-center mt-2">
-                              <button
-                                onClick={() => router.push(`${pathname}?tab=demo/${demo.title}`)}
-                                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-md shadow-blue-900/20 flex items-center justify-center gap-2"
-                              >
-                                Mulai Kuis Demo
-                              </button>
-                            </div>
+                            {demo.status === 'belum' ? (
+                              <div className="flex justify-center mt-2 p-4 text-slate-400 text-xs font-semibold text-center border border-dashed border-slate-200 rounded-xl">
+                                Kuis demo belum diset oleh asisten/dosen.
+                              </div>
+                            ) : (
+                              <div className="flex justify-center mt-2">
+                                <button
+                                  onClick={() => router.push(`${pathname}?tab=demo/${demo.title}`)}
+                                  className="w-full sm:w-auto px-6 py-3 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-md shadow-blue-900/20 flex items-center justify-center gap-2"
+                                >
+                                  Mulai Kuis Demo
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

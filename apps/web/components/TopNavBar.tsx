@@ -20,7 +20,7 @@ export function TopNavBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isCourses = pathname.startsWith('/courses');
+
   const isLecturer = pathname.startsWith('/lecturer');
   const isDashboard = pathname.startsWith('/labs') || pathname === '/';
 
@@ -36,17 +36,12 @@ export function TopNavBar() {
             Dashboard
           </Link>
           <Link 
-            className={`${pathname.startsWith('/lecturer') ? 'text-blue-700 font-semibold border-b-2 border-blue-700' : 'text-slate-600 hover:text-blue-600 transition-colors'} h-full flex items-center px-1`} 
+            className={`${isLecturer ? 'text-blue-700 font-semibold border-b-2 border-blue-700' : 'text-slate-600 hover:text-blue-600 transition-colors'} h-full flex items-center px-1`} 
             href="/lecturer"
           >
             Lecturer
           </Link>
-          <Link 
-            className={`${isCourses ? 'text-blue-700 font-semibold border-b-2 border-blue-700' : 'text-slate-600 hover:text-blue-600 transition-colors'} h-full flex items-center px-1`} 
-            href="/courses"
-          >
-            Courses
-          </Link>
+
         </nav>
       </div>
       <div className="flex items-center gap-4 relative" ref={dropdownRef}>

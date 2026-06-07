@@ -1,33 +1,23 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Lab, Task, TaskSubmission, LabSubmission } from '../types';
+import { Lab, Task } from '../types';
 import { 
-  Plus, 
   Edit, 
   Trash2, 
   Save, 
   X, 
   Award, 
   FileText, 
-  Check, 
   PlusCircle, 
-  CheckCircle2, 
-  ChevronRight, 
-  FolderPlus, 
   Calendar, 
-  User, 
   BookOpen, 
-  AlertCircle, 
   Search,
-  Filter,
-  RefreshCw,
   Trophy,
   ArrowRight,
   Clock,
   ChevronDown,
   ChevronUp,
   FileQuestion,
-  List,
   Download
 } from 'lucide-react';
 
@@ -44,17 +34,6 @@ interface DosenWorkspaceProps {
   onGradeLabSubmission: (labId: string, grade: number) => void;
   setToast: (toast: { type: 'success' | 'info'; message: string } | null) => void;
 }
-
-// Preset Gradient Colors for new Labs
-const GRADIENT_PRESETS = [
-  { label: 'Blue Indigo', value: 'bg-gradient-to-br from-blue-500 to-indigo-600' },
-  { label: 'Indigo Violet', value: 'bg-gradient-to-br from-indigo-500 to-violet-600' },
-  { label: 'Blue Cyan', value: 'bg-gradient-to-br from-blue-600 to-cyan-500' },
-  { label: 'Sky Blue', value: 'bg-gradient-to-br from-sky-500 to-blue-700' },
-  { label: 'Amber Orange', value: 'bg-gradient-to-br from-amber-500 to-orange-600' },
-  { label: 'Emerald Teal', value: 'bg-gradient-to-br from-emerald-500 to-teal-600' },
-  { label: 'Rose Red', value: 'bg-gradient-to-br from-rose-500 to-red-600' },
-];
 
 // Helper demo entries that Dosen can grade
 interface DemoGradingInfo {
@@ -117,7 +96,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
   onUpdateTask,
   onDeleteTask,
   onGradeTask,
-  onGradeLabSubmission,
+
   setToast
 }) => {
   const searchParams = useSearchParams();
@@ -132,7 +111,8 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
 
   React.useEffect(() => {
     if (tabParam === 'labs' || tabParam === 'tasks' || tabParam === 'demo' || tabParam === 'grading') {
-      setActiveDosenTab(tabParam);
+      const timer = setTimeout(() => setActiveDosenTab(tabParam), 0);
+      return () => clearTimeout(timer);
     }
   }, [tabParam]);
 
@@ -204,9 +184,6 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
   const [demoTitle, setDemoTitle] = useState('');
   const [demoStatus, setDemoStatus] = useState<'Lulus' | 'Perlu Demo' | 'Belum Mulai'>('Perlu Demo');
   const [demoScore, setDemoScore] = useState<string>('');
-  const [demoTryOut, setDemoTryOut] = useState<string>('');
-  const [demoAssignment, setDemoAssignment] = useState<string>('');
-  const [demoAssessment, setDemoAssessment] = useState<string>('');
 
   // States for Quiz Builder Modal
   const [isQuizBuilderOpen, setIsQuizBuilderOpen] = useState(false);
@@ -247,8 +224,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
   const [taskGradeInput, setTaskGradeInput] = useState<number>(90);
   const [taskFeedbackInput, setTaskFeedbackInput] = useState('');
 
-  const [selectedLabToGrade, setSelectedLabToGrade] = useState<Lab | null>(null);
-  const [labGradeInput, setLabGradeInput] = useState<number>(90);
+
 
   const [selectedDemoToGrade, setSelectedDemoToGrade] = useState<DemoGradingInfo | null>(null);
   const [demoGradeInput, setDemoGradeInput] = useState<number>(90);
@@ -350,17 +326,6 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
     setDeleteConfirm({ isOpen: true, id: labId, title, type: 'lab' });
   };
 
-  // Open Task Form for Add
-  const handleOpenAddTask = () => {
-    setEditingTaskId(null);
-    setTaskLabId(labs[0]?.id || '');
-    setTaskTitle('');
-    setTaskDescription('');
-    setTaskDeadline('20 Juni 2026, 23:59 WIB');
-    setTaskFormatText('File PDF Dokumen Laporan\nScreenshot Hasil Run');
-    setIsTaskFormOpen(true);
-  };
-
   // Open Task Form for Edit
   const handleOpenEditTask = (task: Task) => {
     setEditingTaskId(task.id);
@@ -423,7 +388,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
     setDeleteConfirm({ isOpen: true, id: taskId, title: title.split(':')[0], type: 'task' });
   };
 
-  const handleEditQuizQuestion = (q: any) => {
+  const handleEditQuizQuestion = (q: {id: string, demoTitle: string, question: string, options: string[], correctOptionIndex: number | null}) => {
     setEditingQuizQuestionId(q.id);
     setQuizTargetDemo(q.demoTitle);
     setQuizQuestionText(q.question);
@@ -457,34 +422,6 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
       message: `Pemberian nilai ${taskGradeInput} untuk "${selectedTaskToGrade.title.split(':')[0]}" sukses!` 
     });
     setSelectedTaskToGrade(null);
-  };
-
-  // Open Lab Report Rubric Grading
-  const handleOpenLabGrading = (lab: Lab) => {
-    setSelectedLabToGrade(lab);
-    setLabGradeInput(lab.labGrade || 90);
-  };
-
-  // Save Lab Grade
-  const handleSaveLabGrading = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLabToGrade) return;
-
-    onGradeLabSubmission(selectedLabToGrade.id, Number(labGradeInput));
-    setToast({ 
-      type: 'success', 
-      message: `Pemberian nilai laporan ${labGradeInput} untuk "${selectedLabToGrade.title}" sukses!` 
-    });
-    setSelectedLabToGrade(null);
-  };
-
-  // Open Demo Grading Modal
-  const handleOpenDemoGrading = (demo: DemoGradingInfo) => {
-    setSelectedDemoToGrade(demo);
-    setDemoGradeInput(demo.score || 90);
-    setDemoGradeTryOut(demo.grades?.tryOut || '10%');
-    setDemoGradeAssignment(demo.grades?.assignment || '45%');
-    setDemoGradeAssessment(demo.grades?.assessment || '45%');
   };
 
   // Save Demo Grade
@@ -523,17 +460,6 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
   };
 
   // Demo CRUD operations
-  const handleOpenAddDemo = () => {
-    setEditingDemoId(null);
-    setDemoStudentName('Budi Santoso');
-    setDemoNim('2201083042');
-    setDemoLabTitle(labs[0]?.title || 'Lab Pemrograman Web Pro');
-    setDemoTitle('Demo ke-4: Uji Pertahanan Aplikasi Akhir');
-    setDemoStatus('Perlu Demo');
-    setDemoScore('');
-    setIsDemoSettingFormOpen(true);
-  };
-
   const handleOpenEditDemo = (demo: DemoGradingInfo) => {
     setEditingDemoId(demo.id);
     setDemoStudentName(demo.studentName);
@@ -604,7 +530,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
     <div className="space-y-6 animate-fade-in text-slate-800">
       
       {/* HEADER BANNER OF DOSEN WORKSPACE */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white rounded-3xl p-6 md:p-8 shadow-md border border-indigo-200/20">
+      <div className="bg-linear-to-r from-blue-700 via-indigo-700 to-purple-800 text-white rounded-3xl p-6 md:p-8 shadow-md border border-indigo-200/20">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
           <div className="space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-blue-200">
@@ -896,7 +822,6 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
 
           {/* Group tasks by Lab */}
           {(() => {
-            const labsWithTasks = labs.filter(lab => tasks.some(t => t.labId === lab.id));
 
             if (labs.length === 0) {
               return (
@@ -1145,7 +1070,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
           {/* Group Demos by courseName */}
           {/* Group Demos by Lab */}
           {(() => {
-            const labsWithDemos = labs.filter(lab => demoList.some(d => d.labTitle === lab.title));
+
 
             if (labs.length === 0) {
               return (
@@ -1286,7 +1211,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
                                           {questionsForThisDemo.map((q, idx) => (
                                             <div key={q.id || idx} className="bg-slate-50 border border-slate-150 p-3 rounded-xl text-xs flex items-start gap-2 justify-between">
                                               <div className="flex items-start gap-2">
-                                                <span className="bg-indigo-100 text-indigo-700 font-black px-2 py-0.5 rounded flex-shrink-0">{idx + 1}</span>
+                                                <span className="bg-indigo-100 text-indigo-700 font-black px-2 py-0.5 rounded shrink-0">{idx + 1}</span>
                                                 <p className="text-slate-700 font-semibold mt-0.5">{q.question}</p>
                                               </div>
                                               <div className="flex gap-1 shrink-0">
@@ -1388,7 +1313,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450 mb-1">Status Demo</label>
                       <select
                         value={demoStatus}
-                        onChange={(e) => setDemoStatus(e.target.value as any)}
+                        onChange={(e) => setDemoStatus(e.target.value as DemoGradingInfo['status'])}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-bold"
                       >
                         <option value="Belum Mulai">Belum Mulai</option>
@@ -1435,7 +1360,7 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
 
       {/* QUIZ BUILDER MODAL POPUP */}
       {isQuizBuilderOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-930/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-slate-930/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 max-w-lg w-full rounded-2xl shadow-xl p-6 relative max-h-[90vh] overflow-y-auto">
             <button
               type="button"
@@ -2089,14 +2014,14 @@ export const DosenWorkspace: React.FC<DosenWorkspaceProps> = ({
 
       {/* DELETE CONFIRMATION MODAL */}
       {deleteConfirm.isOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-930/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-100 bg-slate-930/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center relative border border-slate-200">
             <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-red-100">
               <Trash2 size={28} strokeWidth={2.5} />
             </div>
             <h3 className="text-lg font-black text-slate-900 mb-2 leading-tight">Hapus {deleteConfirm.type === 'lab' ? 'Laboratorium' : deleteConfirm.type === 'task' ? 'Tugas' : 'Demo'}?</h3>
             <p className="text-xs text-slate-500 font-medium mb-8 px-2">
-              Apakah Anda yakin ingin menghapus <strong className="text-slate-800 font-bold">"{deleteConfirm.title}"</strong>? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus <strong className="text-slate-800 font-bold">&quot;{deleteConfirm.title}&quot;</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
             <div className="flex gap-3 justify-center">
               <button

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lab, StudentProfile } from '../types';
-import { ArrowLeft, Check, AlertCircle, Monitor, Cpu, Info, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Monitor, Cpu, Info, ShieldCheck } from 'lucide-react';
 
 interface LabSubmitFormProps {
   lab: Lab;

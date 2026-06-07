@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Quiz, QuizQuestion, StudentQuizAttempt, Lab, StudentProfile } from '../types';
+import { Quiz, StudentQuizAttempt, Lab, StudentProfile } from '../types';
 import { 
   Clock, 
-  Award, 
-  BookOpen, 
   ChevronLeft, 
   ChevronRight, 
   Check, 
@@ -12,15 +10,7 @@ import {
   X, 
   HelpCircle, 
   Bookmark, 
-  RotateCcw, 
   AlertCircle,
-  FileCheck2,
-  Calendar,
-  User,
-  Eye,
-  ArrowLeft,
-  PlusCircle,
-  Trash2,
   Lightbulb
 } from 'lucide-react';
 
@@ -36,7 +26,7 @@ interface QuizWorkspaceProps {
 
 export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
   quizzes,
-  attempts,
+
   labs,
   student,
   onAddAttempt,
@@ -72,41 +62,43 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     if (targetQuizId) {
       const quiz = quizzes.find(q => q.id === targetQuizId);
       if (quiz) {
-        setSelectedQuiz(quiz);
-        
-        let initialScreen: 'detail' | 'active' = 'detail';
-        try {
-          const saved = sessionStorage.getItem('quiz_state_' + targetQuizId);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setSelectedAnswers(parsed.selectedAnswers || {});
-            setMarkedQuestions(parsed.markedQuestions || []);
-            setTimeLeft(parsed.timeLeft || (quiz.timeLimitMinutes * 60));
-            
-            // Check URL for specific question index
-            let urlIndex = parsed.currentQuestionIndex || 0;
-            const tabQuery = new URLSearchParams(window.location.search).get('tab');
-            if (tabQuery) {
-              const match = tabQuery.match(/\/soal-(\d+)/);
-              if (match) {
-                const parsedIndex = parseInt(match[1], 10) - 1;
-                if (parsedIndex >= 0 && parsedIndex < quiz.questions.length) {
-                  urlIndex = parsedIndex;
+        setTimeout(() => {
+          setSelectedQuiz(quiz);
+          
+          let initialScreen: 'detail' | 'active' = 'detail';
+          try {
+            const saved = sessionStorage.getItem('quiz_state_' + targetQuizId);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              setSelectedAnswers(parsed.selectedAnswers || {});
+              setMarkedQuestions(parsed.markedQuestions || []);
+              setTimeLeft(parsed.timeLeft || (quiz.timeLimitMinutes * 60));
+              
+              // Check URL for specific question index
+              let urlIndex = parsed.currentQuestionIndex || 0;
+              const tabQuery = new URLSearchParams(window.location.search).get('tab');
+              if (tabQuery) {
+                const match = tabQuery.match(/\/soal-(\d+)/);
+                if (match) {
+                  const parsedIndex = parseInt(match[1], 10) - 1;
+                  if (parsedIndex >= 0 && parsedIndex < quiz.questions.length) {
+                    urlIndex = parsedIndex;
+                  }
                 }
               }
+              setCurrentQuestionIndex(urlIndex);
+              initialScreen = 'active';
             }
-            setCurrentQuestionIndex(urlIndex);
-            initialScreen = 'active';
+          } catch {}
+          
+          setScreen(initialScreen);
+          
+          // Clear the URL param without refreshing so it doesn't get stuck (only if from URL params)
+          if (!initialQuizId && typeof window !== 'undefined') {
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
           }
-        } catch (e) {}
-        
-        setScreen(initialScreen);
-        
-        // Clear the URL param without refreshing so it doesn't get stuck (only if from URL params)
-        if (!initialQuizId && typeof window !== 'undefined') {
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
-        }
+        }, 0);
       }
     }
   }, [quizzes, initialQuizId]);
@@ -128,6 +120,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, selectedQuiz]);
 
   // Save state continuously while active
@@ -204,14 +197,14 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     );
   };
 
-  const handleAutoSubmit = () => {
+  function handleAutoSubmit() {
     if (!selectedQuiz) return;
     submitQuizAnswers();
     alert('Waktu kuis habis! Jawaban Anda telah dikumpulkan secara otomatis.');
-  };
+  }
 
   // Actually aggregate score and submit
-  const submitQuizAnswers = () => {
+  function submitQuizAnswers() {
     if (!selectedQuiz) return;
     setIsSubmitModalOpen(false);
 
@@ -292,18 +285,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
   return (
     <div className="space-y-6 text-slate-800" id="quiz-workspace-container">
       
-      {/* HEADER SECTION (HIDDEN DURING ACTIVE TEST TO IMPROVE FOCUS) */}
-      {screen !== 'active' && (
-        <div className="flex border-b border-slate-100 pb-5">
-          <button 
-            onClick={() => onBackToLab(selectedQuiz?.labId)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl shadow-3xs transition w-fit"
-          >
-            <ArrowLeft size={16} />
-            <span>Kembali</span>
-          </button>
-        </div>
-      )}
+
 
       {/* ==========================================
           SCREEN 2: QUIZ DETAIL & PRE-START RULE PAGE
@@ -357,7 +339,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
             </button>
             <button
               onClick={handleStartQuiz}
-              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-black rounded-2xl shadow-md shadow-blue-100/80 transition"
+              className="flex-1 py-3 bg-linear-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-black rounded-2xl shadow-md shadow-blue-100/80 transition"
               id="btn-confirm-start-quiz"
             >
               Mulai Tes Sekarang
@@ -442,12 +424,12 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
               </div>
 
               {/* Controls bar at bottom of card */}
-              <div className="flex items-center justify-between border-t border-slate-100 pt-5 mt-4">
-                <div className="flex gap-2">
+              <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex w-full md:w-auto gap-2 order-2 md:order-1">
                   <button
                     onClick={() => handleSetQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 ${
+                    className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 ${
                       currentQuestionIndex === 0
                         ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400'
                         : 'bg-white hover:bg-slate-50 text-slate-700 transition'
@@ -459,7 +441,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
                   <button
                     onClick={() => handleSetQuestionIndex(Math.min(selectedQuiz.questions.length - 1, currentQuestionIndex + 1))}
                     disabled={currentQuestionIndex === selectedQuiz.questions.length - 1}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 ${
+                    className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-200 ${
                       currentQuestionIndex === selectedQuiz.questions.length - 1
                         ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400'
                         : 'bg-white hover:bg-slate-50 text-slate-700 transition'
@@ -470,11 +452,11 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex w-full md:w-auto items-center gap-2 order-1 md:order-2">
                   {/* Yellow Doubt flag widget */}
                   <button
                     onClick={() => toggleMarkQuestion(selectedQuiz.questions[currentQuestionIndex].id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition border ${
+                    className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition border ${
                       markedQuestions.includes(selectedQuiz.questions[currentQuestionIndex].id)
                         ? 'bg-amber-500 border-amber-650 text-white shadow-3xs shadow-amber-200'
                         : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200/50'
@@ -488,7 +470,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
                   {currentQuestionIndex === selectedQuiz.questions.length - 1 ? (
                     <button
                       onClick={handleManualSubmitClick}
-                      className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-black rounded-xl shadow-sm transition"
+                      className="flex-1 md:flex-none px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-black rounded-xl shadow-sm transition"
                       id="btn-complete-quiz"
                     >
                       Kumpulkan
@@ -496,7 +478,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
                   ) : (
                     <button
                       onClick={() => handleSetQuestionIndex(currentQuestionIndex + 1)}
-                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-xs transition"
+                      className="flex-1 md:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-xs transition"
                     >
                       Selesai & Lanjut
                     </button>
@@ -601,10 +583,11 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
           {/* Huge Score Circle Area */}
           <div className="p-6 bg-slate-50/50 border border-slate-100 rounded-3xl max-w-sm mx-auto space-y-4">
             <div className="space-y-1">
-              <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">NILAI AKHIR</p>
-              <h2 className="text-5xl font-black text-blue-600 font-mono tracking-tight shadow-3xs">
-                {latestAttempt.score} <span className="text-slate-400 text-lg font-sans">/ 100</span>
-              </h2>
+              <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest leading-none text-center">NILAI AKHIR</p>
+              <div className="flex items-baseline justify-center gap-1 mt-1">
+                <span className="text-4xl font-black text-blue-600 tracking-tight">{latestAttempt.score}</span>
+                <span className="text-slate-400 text-xl font-bold">/ 100</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 border-t border-slate-200/80 pt-3 text-xs leading-none">
@@ -638,8 +621,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
               onClick={() => handleViewDiscussion(latestAttempt)}
               className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-2xl shadow-md shadow-blue-100/80 transition flex items-center justify-center gap-1.5"
             >
-              <Lightbulb size={14} />
-              <span>Bahas Kunci Jawaban</span>
+              <span>Kunci Jawaban</span>
             </button>
           </div>
 
@@ -682,7 +664,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
             {selectedQuiz.questions.map((question, qIdx) => {
               const studentChoice = viewingAttempt.selectedAnswers[question.id];
               const isCorrect = studentChoice === question.correctOptionIndex;
-              const hasAnswered = studentChoice !== undefined;
+
 
               return (
                 <div 

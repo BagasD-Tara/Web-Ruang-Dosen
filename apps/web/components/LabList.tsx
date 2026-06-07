@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lab, Task, StudentProfile } from '../types';
-import { Search, GraduationCap, ChevronRight, BookOpen, User, Calendar, CheckCircle2, Bell } from 'lucide-react';
+import { Search, GraduationCap, ChevronRight, BookOpen, User, CheckCircle2 } from 'lucide-react';
 
 interface LabListProps {
   labs: Lab[];
@@ -12,7 +12,7 @@ interface LabListProps {
 
 export const LabList: React.FC<LabListProps> = ({
   labs,
-  tasks,
+
   student,
   onSelectLab,
   onNavigateToRegister,
@@ -45,56 +45,17 @@ export const LabList: React.FC<LabListProps> = ({
 
   // Calculate some analytics for quick stats in student portal
   const registeredLabsCount = labs.filter((l) => l.isRegistered).length;
-  const completedTasksCount = tasks.filter((t) => t.submission && t.submission.status === 'Selesai').length;
-  const pendingTasksCount = tasks.filter((t) => t.submission && t.submission.status === 'Menunggu Penilaian').length;
 
   // Split filtered labs into categories requested by user & semester setup
   const activeLabs = filteredLabs.filter((lab) => lab.semester === student.semester && lab.isRegistered);
   const availableLabs = filteredLabs.filter((lab) => lab.semester === student.semester && !lab.isRegistered);
   const pastLabs = filteredLabs.filter((lab) => lab.semester < student.semester && lab.isRegistered);
 
-  function renderLabStatusBadge(lab: Lab) {
-    if (!lab.isRegistered) {
-      return (
-        <span className="inline-block px-2.5 py-1 bg-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider rounded-full">
-          Belum Join
-        </span>
-      );
-    }
 
-    switch (lab.labStatus) {
-      case 'Belum Submit':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 border border-slate-250 text-slate-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
-            Belum Submit
-          </span>
-        );
-      case 'Sudah Submit, menunggu penilaian':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full animate-pulse">
-            Sudah Submit
-          </span>
-        );
-      case 'Sudah Dinilai':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-bold uppercase tracking-wider rounded-full">
-            ✓ Dinilai: {lab.labGrade ?? 0}
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-block px-2.5 py-1 bg-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider rounded-full">
-            Belum Submit
-          </span>
-        );
-    }
-  }
 
   const renderLabCard = (lab: Lab) => {
     // Calculate completion progress
-    const labTasks = tasks.filter((t) => t.labId === lab.id);
-    const completedLabTasks = labTasks.filter((t) => t.submission && t.submission.status === 'Selesai').length;
-    const progressPct = labTasks.length > 0 ? Math.round((completedLabTasks / labTasks.length) * 100) : 0;
+
 
     return (
       <div
@@ -176,7 +137,7 @@ export const LabList: React.FC<LabListProps> = ({
   return (
     <div className="space-y-8 animate-fade-in text-slate-800 animate-slide-up">
       {/* Overview Banner Card */}
-      <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-linear-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="max-w-xl">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
             Selamat Datang di Ruang Dosen!
@@ -209,22 +170,6 @@ export const LabList: React.FC<LabListProps> = ({
               className="w-full text-sm border border-slate-200/90 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
               id="lab-search-input"
             />
-          </div>
-
-          <div className="flex flex-wrap gap-2.5 w-full md:w-auto items-center">
-            {/* Status Select Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-200 text-slate-700 py-3 px-4 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="Semua">Semua Status Sesi</option>
-              <option value="Belum Submit">Belum Submit</option>
-              <option value="Sudah Submit">Sudah Submit</option>
-              <option value="Sudah Dinilai">Sudah Dinilai</option>
-              <option value="Terdaftar">Sesi Terdaftar</option>
-              <option value="Belum Terdaftar">Sesi Belum Terdaftar</option>
-            </select>
           </div>
         </div>
 

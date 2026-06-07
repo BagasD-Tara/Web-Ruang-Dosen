@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Task, TaskSubmission } from '../types';
+import { Task } from '../types';
 import { ArrowLeft, Calendar, FileText, CheckCircle, Upload, MessageSquare, Award, Clock, RotateCcw, AlertTriangle } from 'lucide-react';
 
 interface TaskDetailAndSubmitProps {
@@ -244,7 +244,7 @@ export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
                   </div>
                   {task.submission.feedback ? (
                     <p className="text-sm italic text-slate-700 leading-relaxed font-medium border-t border-emerald-100 pt-3">
-                      "{task.submission.feedback}"
+                      &quot;{task.submission.feedback}&quot;
                     </p>
                   ) : (
                     <p className="text-xs text-slate-400 font-medium italic border-t border-emerald-100 pt-3">
@@ -292,7 +292,7 @@ export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
                 {task.submission.note && (
                   <div className="mt-4 pt-3 border-t border-slate-200/55">
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Komentar Mahasiswa:</p>
-                    <p className="text-xs text-slate-600 mt-0.5 italic">"{task.submission.note}"</p>
+                    <p className="text-xs text-slate-600 mt-0.5 italic">&quot;{task.submission.note}&quot;</p>
                   </div>
                 )}
               </div>

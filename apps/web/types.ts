@@ -11,7 +11,10 @@ export interface TaskSubmission {
 }
 
 export interface LabSubmission {
-  // Can be extended later if needed
+  submittedAt: string;
+  fileName: string;
+  fileSize: string;
+  note?: string;
 }
 
 export interface Task {

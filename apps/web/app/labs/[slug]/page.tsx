@@ -51,16 +51,18 @@ function LabDynamicContent() {
     const taskIdQuery = searchParams.get('taskId');
     const tabQuery = searchParams.get('tab');
     
-    if (viewQuery === 'register') {
-      setCurrentView('register-lab');
-    } else if (taskIdQuery) {
-      setSelectedTaskId(taskIdQuery);
-      setCurrentView('task-detail');
-    } else if (tabQuery?.startsWith('demo/') && tabQuery.length > 5) {
-      setCurrentView('demo-quiz');
-    } else {
-      setCurrentView('lab-detail');
-    }
+    setTimeout(() => {
+      if (viewQuery === 'register') {
+        setCurrentView('register-lab');
+      } else if (taskIdQuery) {
+        setSelectedTaskId(taskIdQuery);
+        setCurrentView('task-detail');
+      } else if (tabQuery?.startsWith('demo/') && tabQuery.length > 5) {
+        setCurrentView('demo-quiz');
+      } else {
+        setCurrentView('lab-detail');
+      }
+    }, 0);
   }, [searchParams]);
 
   if (!lab) {
