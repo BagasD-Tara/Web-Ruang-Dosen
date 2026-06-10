@@ -1,7 +1,3 @@
-// ============================================================
-// MOCK DATA COURSES & MATERI
-// Hapus file ini dan ganti dengan API call saat backend ready
-// ============================================================
 
 export interface MockCourse {
   id: string;

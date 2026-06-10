@@ -3,26 +3,17 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Play,
-  FileText,
-  BookOpen,
-  HelpCircle,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-  Clock,
+  Play, FileText, BookOpen, HelpCircle,
+  CheckCircle2, ChevronDown, ChevronUp, Calendar, Clock,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import {
-  getMockCourseById,
-  getMockModulesByCourse,
-} from "@/app/lib/mock/coursesMock";
+import { getMockCourseById, getMockModulesByCourse } from "@/app/lib/mock/coursesMock";
 import { MOCK_QUIZZES } from "@/app/lib/mock/quizMock";
 import { QuizInfoModal } from "@/app/components/quiz/QuizInfoModal";
 import type { Quiz } from "@/app/types/quiz";
 
-// ─── tipe tab ─────────────────────────────────────────────
+// ─── Konstanta ────────────────────────────────────────────────────────────────
+
 type Tab = "materials" | "quizzes" | "assignments" | "labs";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -32,15 +23,85 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "labs", label: "Labs" },
 ];
 
-// ─── ikon per tipe materi ─────────────────────────────────
-const ICON_MAP = {
-  video: { Icon: Play, bg: "bg-blue-50", color: "text-blue-600" },
-  pdf: { Icon: FileText, bg: "bg-gray-100", color: "text-gray-600" },
-  article: { Icon: BookOpen, bg: "bg-gray-100", color: "text-gray-600" },
-  quiz: { Icon: HelpCircle, bg: "bg-orange-50", color: "text-orange-500" },
+const MATERIAL_ICON_MAP = {
+  video:   { Icon: Play,      bg: "bg-blue-50",  color: "text-blue-600" },
+  pdf:     { Icon: FileText,  bg: "bg-gray-100", color: "text-gray-600" },
+  article: { Icon: BookOpen,  bg: "bg-gray-100", color: "text-gray-600" },
 } as const;
 
-// ─────────────────────────────────────────────────────────
+// ─── Helper: cek apakah quiz sudah pernah dikerjakan ─────────────────────────
+
+function getCompletedAttemptId(quizId: string): string | null {
+  if (typeof window === "undefined") return null;
+  // Cari semua key di sessionStorage yang cocok dengan quiz ini
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (!key?.startsWith("quiz-result-")) continue;
+    try {
+      const data = JSON.parse(sessionStorage.getItem(key) ?? "");
+      if (data?.attempt?.quizId === quizId) return data.attempt.id;
+    } catch {
+      // skip invalid entry
+    }
+  }
+  return null;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center text-sm text-gray-400">
+      {text}
+    </div>
+  );
+}
+
+interface QuizRowProps {
+  quizId: string;
+  onStart: (quizId: string) => void;
+  onReview: (attemptId: string, quizId: string) => void;
+}
+
+function QuizRow({ quizId, onStart, onReview }: QuizRowProps) {
+  const quiz = MOCK_QUIZZES[quizId];
+  if (!quiz) return null;
+
+  const completedAttemptId = getCompletedAttemptId(quizId);
+  const isCompleted = Boolean(completedAttemptId);
+
+  return (
+    <div className="flex items-center gap-4 px-6 py-4">
+      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
+        <HelpCircle className="h-5 w-5 text-orange-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-gray-900 text-sm">{quiz.title}</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Quiz • {quiz.durationMinutes} min • {quiz.totalQuestions} questions
+        </p>
+      </div>
+      {isCompleted ? (
+        <button
+          onClick={() => onReview(completedAttemptId!, quizId)}
+          className="flex-shrink-0 rounded-lg border border-blue-700 px-4 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+        >
+          Lihat Review
+        </button>
+      ) : (
+        <button
+          onClick={() => onStart(quizId)}
+          className="flex-shrink-0 rounded-lg bg-blue-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
+        >
+          Start Quiz
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function CourseDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -63,6 +124,10 @@ export default function CourseDetailPage() {
     );
   }
 
+  const courseQuizzes = Object.values(MOCK_QUIZZES).filter(
+    (q) => q.courseId === courseId
+  );
+
   function toggleModule(id: string) {
     setOpenModules((prev) => ({ ...prev, [id]: !prev[id] }));
   }
@@ -72,64 +137,55 @@ export default function CourseDetailPage() {
     if (quiz) setSelectedQuiz(quiz);
   }
 
-  // semua quiz di course ini untuk tab Quizzes
-  const courseQuizzes = Object.values(MOCK_QUIZZES).filter(
-    (q) => q.courseId === courseId
-  );
+  function handleReview(attemptId: string, quizId: string) {
+    router.push(`/quiz/${quizId}/review?attemptId=${attemptId}`);
+  }
 
   return (
-    <div className="min-h-screen">
-      {/* ── Banner biru ──────────────────────────────────── */}
+    <div className="min-h-screen pb-10">
+
+      {/* ── Banner ── */}
       <div className="relative h-[200px] bg-gradient-to-br from-blue-800 to-blue-600">
-        {/* oval dekorasi */}
         <div className="absolute left-1/2 top-1/2 h-4 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
       </div>
 
-      {/* ── Card info course (mengambang di atas banner) ── */}
+      {/* ── Card info course ── */}
       <div className="mx-4 -mt-16 mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-md lg:mx-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+
           {/* Kiri: info */}
           <div className="flex-1 min-w-0">
-            {/* Badge level + durasi */}
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700">
-                Advanced Module
+                {course.level}
               </span>
               <span className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
                 <Clock className="h-3 w-3" />
-                12 Weeks
+                {course.durationWeeks} Weeks
               </span>
             </div>
 
-            {/* Judul */}
             <h1 className="mb-3 text-xl font-bold text-gray-900 lg:text-2xl">
               {course.title}
             </h1>
 
-            {/* Instruktur */}
             <div className="mb-4 flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-700 text-xs font-bold text-white">
-                {course.instructor
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)}
+                {course.instructorInitials}
               </div>
               <span className="text-sm font-medium text-gray-800">
                 {course.instructor}
               </span>
               <span className="text-gray-300">•</span>
               <span className="text-sm text-gray-500">
-                Prof. of Computer Science
+                {course.instructorRole}
               </span>
             </div>
 
-            {/* Deskripsi */}
             <p className="mb-5 text-sm leading-relaxed text-gray-600">
               {course.description}
             </p>
 
-            {/* Progress */}
             <div className="flex items-center gap-3">
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
                 <div
@@ -157,7 +213,7 @@ export default function CourseDetailPage() {
         </div>
       </div>
 
-      {/* ── Tab navigasi ─────────────────────────────────── */}
+      {/* ── Tabs ── */}
       <div className="mx-4 lg:mx-8">
         <div className="flex border-b border-gray-200 bg-white rounded-t-xl px-2">
           {TABS.map(({ key, label }) => (
@@ -176,9 +232,10 @@ export default function CourseDetailPage() {
           ))}
         </div>
 
-        {/* ── Konten tab ───────────────────────────────── */}
+        {/* ── Konten tab ── */}
         <div className="rounded-b-xl border border-t-0 border-gray-200 bg-gray-50 p-5">
-          {/* TAB: Materials */}
+
+          {/* Materials */}
           {activeTab === "materials" && (
             <div className="space-y-4">
               {modules.length === 0 ? (
@@ -194,47 +251,33 @@ export default function CourseDetailPage() {
                       onClick={() => toggleModule(modul.id)}
                       className="flex w-full items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
                     >
-                      <h2 className="font-semibold text-gray-900">
-                        {modul.title}
-                      </h2>
-                      {openModules[modul.id] ? (
-                        <ChevronUp className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
-                      )}
+                      <h2 className="font-semibold text-gray-900">{modul.title}</h2>
+                      {openModules[modul.id]
+                        ? <ChevronUp className="h-5 w-5 text-gray-400" />
+                        : <ChevronDown className="h-5 w-5 text-gray-400" />
+                      }
                     </button>
 
-                    {/* Daftar materi */}
+                    {/* Daftar materi + quiz */}
                     {openModules[modul.id] && (
-                      <div className="divide-y divide-gray-100">
-                        {/* Materi (video/pdf/article) */}
+                      <div className="divide-y divide-gray-100 border-t border-gray-100">
                         {modul.materials.map((item) => {
                           const { Icon, bg, color } =
-                            ICON_MAP[item.type] ?? ICON_MAP.article;
+                            MATERIAL_ICON_MAP[item.type] ?? MATERIAL_ICON_MAP.article;
                           return (
                             <div
                               key={item.id}
                               className={cn(
                                 "flex items-center gap-4 px-6 py-4",
-                                item.isCompleted &&
-                                  "border-l-4 border-l-blue-600"
+                                item.isCompleted && "border-l-4 border-l-blue-600"
                               )}
                             >
-                              <div
-                                className={cn(
-                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
-                                  bg
-                                )}
-                              >
+                              <div className={cn("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl", bg)}>
                                 <Icon className={cn("h-5 w-5", color)} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 text-sm">
-                                  {item.title}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                  {item.meta}
-                                </p>
+                                <p className="font-medium text-gray-900 text-sm">{item.title}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{item.meta}</p>
                               </div>
                               {item.isCompleted && (
                                 <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -243,30 +286,12 @@ export default function CourseDetailPage() {
                           );
                         })}
 
-                        {/* Baris kuis di bawah materi */}
-                        <div className="flex items-center gap-4 px-6 py-4">
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
-                            <HelpCircle className="h-5 w-5 text-orange-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 text-sm">
-                              {MOCK_QUIZZES[modul.quizId]?.title ?? "Kuis"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Quiz •{" "}
-                              {MOCK_QUIZZES[modul.quizId]?.durationMinutes} min
-                              •{" "}
-                              {MOCK_QUIZZES[modul.quizId]?.totalQuestions}{" "}
-                              questions
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleStartQuiz(modul.quizId)}
-                            className="flex-shrink-0 rounded-lg bg-blue-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
-                          >
-                            Start Quiz
-                          </button>
-                        </div>
+                        {/* Baris quiz */}
+                        <QuizRow
+                          quizId={modul.quizId}
+                          onStart={handleStartQuiz}
+                          onReview={handleReview}
+                        />
                       </div>
                     )}
                   </div>
@@ -275,50 +300,57 @@ export default function CourseDetailPage() {
             </div>
           )}
 
-          {/* TAB: Quizzes */}
+          {/* Quizzes */}
           {activeTab === "quizzes" && (
             <div className="space-y-3">
               {courseQuizzes.length === 0 ? (
                 <EmptyState text="Belum ada kuis untuk course ini." />
               ) : (
-                courseQuizzes.map((quiz) => (
-                  <div
-                    key={quiz.id}
-                    className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4"
-                  >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
-                      <HelpCircle className="h-5 w-5 text-orange-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">
-                        {quiz.title}
-                      </p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
-                        <span>{quiz.durationMinutes} menit</span>
-                        <span>{quiz.totalQuestions} soal</span>
-                        <span className="font-medium text-yellow-600">
-                          +{quiz.xpReward} XP
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setSelectedQuiz(quiz)}
-                      className="flex-shrink-0 rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
+                courseQuizzes.map((quiz) => {
+                  const completedAttemptId = getCompletedAttemptId(quiz.id);
+                  const isCompleted = Boolean(completedAttemptId);
+                  return (
+                    <div
+                      key={quiz.id}
+                      className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4"
                     >
-                      Mulai Kuis
-                    </button>
-                  </div>
-                ))
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
+                        <HelpCircle className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm">{quiz.title}</p>
+                        <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+                          <span>{quiz.durationMinutes} menit</span>
+                          <span>{quiz.totalQuestions} soal</span>
+                          <span className="font-medium text-yellow-600">+{quiz.xpReward} XP</span>
+                        </div>
+                      </div>
+                      {isCompleted ? (
+                        <button
+                          onClick={() => handleReview(completedAttemptId!, quiz.id)}
+                          className="flex-shrink-0 rounded-lg border border-blue-700 px-4 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+                        >
+                          Lihat Review
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="flex-shrink-0 rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
+                        >
+                          Mulai Kuis
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           )}
 
-          {/* TAB: Assignments */}
+          {/* Assignments & Labs */}
           {activeTab === "assignments" && (
             <EmptyState text="Belum ada assignment untuk course ini." />
           )}
-
-          {/* TAB: Labs */}
           {activeTab === "labs" && (
             <EmptyState text="Belum ada lab untuk course ini." />
           )}
@@ -333,15 +365,6 @@ export default function CourseDetailPage() {
           onClose={() => setSelectedQuiz(null)}
         />
       )}
-    </div>
-  );
-}
-
-// ─── Komponen empty state ─────────────────────────────────
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center text-sm text-gray-400">
-      {text}
     </div>
   );
 }

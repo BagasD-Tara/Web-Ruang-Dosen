@@ -1,7 +1,3 @@
-// ============================================================
-// MOCK DATA QUIZ & SOAL
-// Hapus file ini dan ganti dengan API call saat backend ready
-// ============================================================
 
 import type {
   Quiz,
