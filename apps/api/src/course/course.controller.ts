@@ -18,6 +18,7 @@ import { Course } from '@prisma/client';
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @ApiBody({
     schema: {
@@ -38,7 +39,7 @@ export class CourseController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/enroll')
   async enroll(@Param('id') id: string, @Request() req: any) {
-    return this.courseService.enroll(id, req.user.id);
+    return this.courseService.enroll(id, req.user.id, req.user.role);
   }
 
   @Get()
@@ -52,6 +53,7 @@ export class CourseController {
     return this.courseService.getMyCourses(req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.courseService.findOne(id);

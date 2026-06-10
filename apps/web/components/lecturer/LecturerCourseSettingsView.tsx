@@ -77,7 +77,7 @@ export function LecturerCourseSettingsView({
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <form
-          className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
+          className={`${LECTURER_CARD_CLASSNAME} overflow-visible`}
           style={{ borderColor: 'var(--color-border)' }}
           onSubmit={(event) => event.preventDefault()}
         >

@@ -10,6 +10,7 @@ import { AdminModule } from './admin/admin.module';
 import { MaterialModule } from './material/material.module';
 import { LabSubmissionModule } from './lab-submission/lab-submission.module';
 import { LabModule } from './lab/lab.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { LabModule } from './lab/lab.module';
     MaterialModule,
     LabSubmissionModule,
     LabModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

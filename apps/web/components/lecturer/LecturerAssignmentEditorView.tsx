@@ -40,6 +40,8 @@ interface LecturerAssignmentEditorViewProps {
   module: LecturerCourseModule;
   existingAssignments: ExistingAssignmentItem[];
   assignment?: LecturerModuleAssessment;
+  onSave: (formData: FormData) => Promise<void>;
+  onDelete?: () => Promise<void>;
 }
 
 const SUBMISSION_REQUIREMENT_OPTIONS = [
@@ -59,17 +61,49 @@ export function LecturerAssignmentEditorView({
   module,
   existingAssignments,
   assignment,
+  onSave,
+  onDelete,
 }: LecturerAssignmentEditorViewProps) {
   const [formState, setFormState] = React.useState(() =>
     createInitialFormState(mode, assignment)
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isPending, setIsPending] = React.useState(false);
 
   const pageTitle = mode === 'create' ? 'Create New Assignment' : 'Edit Assignment';
   const submitButtonLabel = mode === 'create' ? 'Create Assignment' : 'Save Changes';
   const courseHref = `/dosen/courses/${course.id}`;
   const assignmentsHref = `/dosen/courses/${course.id}/assignments`;
   const cancelHref = mode === 'edit' ? assignmentsHref : courseHref;
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsPending(true);
+    try {
+      const formData = new FormData();
+      formData.set('title', formState.title);
+      formData.set('description', formState.description);
+      formData.set('assignedDate', formState.assignedDate);
+      formData.set('deadline', formState.deadline);
+      formData.set('submissionRequirement', formState.submissionRequirement);
+      formData.set('status', formState.status);
+      formData.set('templateName', formState.templateName);
+      formData.set('templateMeta', formState.templateMeta);
+      await onSave(formData);
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!onDelete) return;
+    setIsPending(true);
+    try {
+      await onDelete();
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <>
@@ -100,7 +134,7 @@ export function LecturerAssignmentEditorView({
           <form
             className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
             style={{ borderColor: 'var(--color-border)' }}
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={handleSubmit}
           >
             <div className="space-y-0 px-5 py-6 sm:px-7 sm:py-7">
               <FormSection>
@@ -236,12 +270,12 @@ export function LecturerAssignmentEditorView({
               ) : null}
               <button
                 type="submit"
-                disabled={!canSubmitAssignment(formState)}
+                disabled={!canSubmitAssignment(formState) || isPending}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
                 style={{ background: 'var(--color-brand-primary)' }}
               >
                 <SubmitIcon />
-                {submitButtonLabel}
+                {isPending ? 'Saving...' : submitButtonLabel}
               </button>
             </div>
           </form>
@@ -260,7 +294,10 @@ export function LecturerAssignmentEditorView({
           confirmLabel="Delete Assignment"
           labelledById="delete-assignment-title"
           onCancel={() => setIsDeleteDialogOpen(false)}
-          onConfirm={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            setIsDeleteDialogOpen(false);
+            handleDelete();
+          }}
         />
       ) : null}
     </>

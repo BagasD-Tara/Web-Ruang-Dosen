@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { buildApiUrl } from "@/lib/api/apiConfig";
 import "./dashboard.css";
 
 export default function DashboardAdminPage() {
@@ -33,7 +34,7 @@ export default function DashboardAdminPage() {
 
         // Fetch profil terbaru dari /auth/profile
         try {
-          const profileRes = await fetch("http://localhost:3001/auth/profile", {
+          const profileRes = await fetch(buildApiUrl("/auth/profile"), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (profileRes.ok) {
@@ -46,7 +47,7 @@ export default function DashboardAdminPage() {
         }
 
         // Fetch semua courses (admin melihat semua)
-        const coursesRes = await fetch("http://localhost:3001/courses", {
+        const coursesRes = await fetch(buildApiUrl("/courses"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

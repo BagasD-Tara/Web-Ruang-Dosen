@@ -42,14 +42,22 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
       });
 
       if (!response.ok) {
-        throw new Error('Failed to enroll');
+        const data = await response.json().catch(() => null);
+        if (data?.alreadyEnrolled || response.status === 409) {
+          // Already enrolled, sync state and proceed
+          enrollCourseById(course.id);
+          setEnrollCourse(null);
+          router.push(buildCourseDetailHref(course.id, 'courses'));
+          return;
+        }
+        throw new Error(data?.message || 'Failed to enroll');
       }
 
       enrollCourseById(course.id);
       setEnrollCourse(null);
       router.push(buildCourseDetailHref(course.id, 'courses'));
-    } catch {
-      setEnrollError('Gagal mendaftarkan course. Coba lagi.');
+    } catch (err: any) {
+      setEnrollError(err.message === 'Failed to enroll' ? 'Gagal mendaftarkan course. Coba lagi.' : err.message || 'Gagal mendaftarkan course. Coba lagi.');
     } finally {
       setIsSubmittingEnroll(false);
     }
@@ -97,7 +105,7 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
     <div className="flex flex-col items-center py-24 text-center">
-      <span className="mb-4 text-5xl grayscale">Search</span>
+      <span className="mb-4 text-5xl grayscale">🔍</span>
       <h3 className="mb-2 text-lg font-bold" style={{ color: 'var(--color-text-secondary)' }}>
         No courses found
       </h3>

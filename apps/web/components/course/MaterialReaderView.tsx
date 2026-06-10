@@ -151,6 +151,17 @@ function MaterialHero({ material }: { material: CourseContentItem }) {
     const videoUrl = material.content?.videoUrl ?? '';
     const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
 
+    let embedUrl = videoUrl;
+    if (isYoutube) {
+      if (videoUrl.includes('watch?v=')) {
+        const videoId = new URL(videoUrl).searchParams.get('v');
+        if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (videoUrl.includes('youtu.be/')) {
+        const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+        if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+
     return (
       <section
         className="overflow-hidden rounded-[24px] border bg-[#243451] shadow-[0_14px_36px_rgba(15,33,74,0.12)]"
@@ -160,7 +171,7 @@ function MaterialHero({ material }: { material: CourseContentItem }) {
           {isYoutube ? (
             <iframe
               className="h-full w-full"
-              src={videoUrl}
+              src={embedUrl}
               title={material.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -390,10 +401,10 @@ function MarkdownArticle({ content }: { content: string }) {
       style={{ borderColor: 'var(--color-border)' }}
     >
       <div className="space-y-5">
-        {blocks.map((block, index) => {
+        {blocks.map((block) => {
           if (block.startsWith('## ')) {
             return (
-              <h3 key={index} className="text-[20px] font-bold" style={{ color: 'var(--color-text-primary)' }}>
+              <h3 key={block} className="text-[20px] font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {block.replace(/^## /, '')}
               </h3>
             );
@@ -403,7 +414,7 @@ function MarkdownArticle({ content }: { content: string }) {
             const code = block.replace(/^```/, '').replace(/```$/, '').trim();
             return (
               <pre
-                key={index}
+                key={block}
                 className="overflow-x-auto rounded-2xl border bg-[#F6F8FB] p-4 text-sm leading-7"
                 style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
               >
@@ -415,7 +426,7 @@ function MarkdownArticle({ content }: { content: string }) {
           if (block.split('\n').every((line) => line.startsWith('- '))) {
             return (
               <ul
-                key={index}
+                key={block}
                 className="space-y-2 pl-5 text-base leading-8"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
@@ -427,7 +438,7 @@ function MarkdownArticle({ content }: { content: string }) {
           }
 
           return (
-            <p key={index} className="text-base leading-8" style={{ color: 'var(--color-text-secondary)' }}>
+            <p key={block} className="text-base leading-8" style={{ color: 'var(--color-text-secondary)' }}>
               {block}
             </p>
           );

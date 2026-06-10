@@ -44,6 +44,10 @@ export function getLecturerEnrollmentData(courseId: string) {
     return null;
   }
 
+  return buildEnrollmentData(courseId, courseData);
+}
+
+export function buildEnrollmentData(courseId: string, courseData: any) {
   return {
     courseId,
     courseTitle: courseData.course.title,
@@ -56,7 +60,7 @@ export function getLecturerEnrollmentData(courseId: string) {
 }
 
 function createFallbackStudents(courseId: string, enrolledStudents: number) {
-  const fallbackCount = Math.min(Math.max(enrolledStudents, 12), 18);
+  const fallbackCount = Math.min(enrolledStudents, 50);
   const students: LecturerEnrollmentStudent[] = [];
 
   for (let index = 0; index < fallbackCount; index += 1) {

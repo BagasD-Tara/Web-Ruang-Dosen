@@ -34,6 +34,8 @@ interface LecturerMaterialEditorViewProps {
   course: LecturerCourse;
   module: LecturerCourseModule;
   material?: LecturerModuleMaterial;
+  onSave?: (data: FormData) => Promise<void>;
+  onDelete?: () => Promise<void>;
 }
 
 const MATERIAL_TYPE_OPTIONS: Array<{
@@ -51,10 +53,15 @@ export function LecturerMaterialEditorView({
   course,
   module,
   material,
+  onSave,
+  onDelete,
 }: LecturerMaterialEditorViewProps) {
   const [formState, setFormState] = React.useState(() =>
     createInitialFormState(mode, material)
   );
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
   const pageTitle = mode === 'create' ? 'Create Course Material' : 'Edit Course Material';
@@ -86,10 +93,49 @@ export function LecturerMaterialEditorView({
           </p>
         </section>
 
+        {feedbackMessage ? (
+          <div
+            className="mb-6 rounded-[18px] border px-5 py-4 text-sm sm:text-base"
+            style={{
+              borderColor: '#B7D1FF',
+              background: '#EEF4FF',
+              color: 'var(--color-brand-primary)',
+            }}
+          >
+            {feedbackMessage}
+          </div>
+        ) : null}
+
         <form
           className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
           style={{ borderColor: 'var(--color-border)' }}
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setIsSaving(true);
+            setFeedbackMessage(null);
+            try {
+              if (onSave) {
+                const formData = new FormData();
+                formData.append('title', formState.title);
+                formData.append('description', formState.description);
+                formData.append('materialKind', formState.materialKind);
+                formData.append('visibilityStatus', formState.visibilityStatus);
+                formData.append('externalUrl', formState.externalUrl);
+                formData.append('videoSourceMode', formState.videoSourceMode);
+                if (selectedFile) {
+                  formData.append('file', selectedFile);
+                }
+                await onSave(formData);
+              } else {
+                setFeedbackMessage(mode === 'create' ? 'Material created locally.' : 'Material changes saved locally.');
+                setIsSaving(false);
+              }
+            } catch (error: any) {
+              console.error(error);
+              setFeedbackMessage(error?.message || 'An error occurred while saving.');
+              setIsSaving(false);
+            }
+          }}
         >
           <div className="space-y-0 px-5 py-6 sm:px-7 sm:py-7">
             <FormSection>
@@ -134,6 +180,8 @@ export function LecturerMaterialEditorView({
                 material={material}
                 mode={mode}
                 onChange={setFormState}
+                selectedFile={selectedFile}
+                onFileSelect={setSelectedFile}
               />
             </FormSection>
 
@@ -187,11 +235,11 @@ export function LecturerMaterialEditorView({
             </Link>
             <button
               type="submit"
-              disabled={!canSubmitMaterial(formState)}
+              disabled={!canSubmitMaterial(formState, selectedFile, mode) || isSaving}
               className="inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
               style={{ background: 'var(--color-brand-primary)' }}
             >
-              {submitButtonLabel}
+              {isSaving ? 'Saving...' : submitButtonLabel}
             </button>
           </div>
         </form>
@@ -204,7 +252,21 @@ export function LecturerMaterialEditorView({
           confirmLabel="Delete Material"
           labelledById="delete-material-title"
           onCancel={() => setIsDeleteDialogOpen(false)}
-          onConfirm={() => setIsDeleteDialogOpen(false)}
+          onConfirm={async () => {
+            if (onDelete) {
+              setIsSaving(true);
+              try {
+                await onDelete();
+              } catch (error: any) {
+                console.error(error);
+                setFeedbackMessage(error?.message || 'An error occurred while deleting.');
+                setIsSaving(false);
+                setIsDeleteDialogOpen(false);
+              }
+            } else {
+              setIsDeleteDialogOpen(false);
+            }
+          }}
         />
       ) : null}
     </>
@@ -216,11 +278,15 @@ function MaterialSourcePanel({
   material,
   mode,
   onChange,
+  selectedFile,
+  onFileSelect,
 }: {
   formState: MaterialEditorFormState;
   material?: LecturerModuleMaterial;
   mode: MaterialEditorMode;
   onChange: React.Dispatch<React.SetStateAction<MaterialEditorFormState>>;
+  selectedFile: File | null;
+  onFileSelect: (file: File | null) => void;
 }) {
   if (formState.materialKind === 'video') {
     return (
@@ -229,6 +295,8 @@ function MaterialSourcePanel({
         material={material}
         mode={mode}
         onChange={onChange}
+        selectedFile={selectedFile}
+        onFileSelect={onFileSelect}
       />
     );
   }
@@ -242,34 +310,53 @@ function MaterialSourcePanel({
     );
   }
 
-  return <DocumentSourcePanel material={material} mode={mode} />;
+  return (
+    <DocumentSourcePanel
+      material={material}
+      mode={mode}
+      selectedFile={selectedFile}
+      onFileSelect={onFileSelect}
+    />
+  );
 }
 
 function DocumentSourcePanel({
   material,
   mode,
+  selectedFile,
+  onFileSelect,
 }: {
   material?: LecturerModuleMaterial;
   mode: MaterialEditorMode;
+  selectedFile: File | null;
+  onFileSelect: (file: File | null) => void;
 }) {
   const hasAttachedFile = mode === 'edit' && material?.fileName;
+  const displayFile = selectedFile
+    ? { name: selectedFile.name, meta: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB - Selected to upload` }
+    : hasAttachedFile
+    ? { name: material.fileName ?? '', meta: material.fileMeta ?? 'Uploaded file' }
+    : null;
 
   return (
     <div className="rounded-[18px] border bg-[#F4F5F7] px-5 py-5" style={{ borderColor: '#D9DDE7' }}>
       <h2 className="text-[20px] font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        {hasAttachedFile ? 'Attached File' : 'Document Upload'}
+        {displayFile ? 'Attached File' : 'Document Upload'}
       </h2>
-      {hasAttachedFile ? (
+      {displayFile ? (
         <AttachedFileCard
-          fileName={material.fileName ?? ''}
-          fileMeta={material.fileMeta ?? 'Uploaded file'}
+          fileName={displayFile.name}
+          fileMeta={displayFile.meta}
+          onRemove={selectedFile ? () => onFileSelect(null) : undefined}
         />
       ) : null}
       <UploadDropzone
         icon={<DocumentUploadIcon />}
-        title={hasAttachedFile ? 'Drag and drop to replace file' : 'Drag and drop document files here'}
+        title={displayFile ? 'Drag and drop to replace file' : 'Drag and drop document files here'}
         browseText="browse your computer"
         meta="Max file size: 50MB. Supported formats: PDF, PPTX, DOCX."
+        accept=".pdf,.pptx,.docx"
+        onFileSelect={onFileSelect}
       />
     </div>
   );
@@ -280,14 +367,24 @@ function VideoSourcePanel({
   material,
   mode,
   onChange,
+  selectedFile,
+  onFileSelect,
 }: {
   formState: MaterialEditorFormState;
   material?: LecturerModuleMaterial;
   mode: MaterialEditorMode;
   onChange: React.Dispatch<React.SetStateAction<MaterialEditorFormState>>;
+  selectedFile: File | null;
+  onFileSelect: (file: File | null) => void;
 }) {
   const hasAttachedVideo =
     mode === 'edit' && formState.videoSourceMode === 'upload' && material?.fileName;
+
+  const displayFile = selectedFile
+    ? { name: selectedFile.name, meta: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB - Selected to upload` }
+    : hasAttachedVideo
+    ? { name: material.fileName ?? '', meta: material.fileMeta ?? 'Uploaded video' }
+    : null;
 
   return (
     <div className="rounded-[18px] border bg-[#F4F5F7] px-5 py-5" style={{ borderColor: '#D9DDE7' }}>
@@ -308,18 +405,21 @@ function VideoSourcePanel({
       </div>
       {formState.videoSourceMode === 'upload' ? (
         <>
-          {hasAttachedVideo ? (
+          {displayFile ? (
             <AttachedFileCard
-              fileName={material.fileName ?? ''}
-              fileMeta={material.fileMeta ?? 'Uploaded video'}
+              fileName={displayFile.name}
+              fileMeta={displayFile.meta}
               icon={<VideoUploadIcon />}
+              onRemove={selectedFile ? () => onFileSelect(null) : undefined}
             />
           ) : null}
           <UploadDropzone
             icon={<VideoUploadIcon />}
-            title={hasAttachedVideo ? 'Drag and drop to replace video' : 'Drag and drop video files here'}
+            title={displayFile ? 'Drag and drop to replace video' : 'Drag and drop video files here'}
             browseText="browse your computer"
             meta="Max file size: 500MB. Supported formats: MP4, WEBM, MOV."
+            accept=".mp4,.webm,.mov"
+            onFileSelect={onFileSelect}
           />
         </>
       ) : (
@@ -517,10 +617,12 @@ function AttachedFileCard({
   fileName,
   fileMeta,
   icon = <DocumentUploadIcon />,
+  onRemove,
 }: {
   fileName: string;
   fileMeta: string;
   icon?: React.ReactNode;
+  onRemove?: () => void;
 }) {
   return (
     <div
@@ -540,14 +642,26 @@ function AttachedFileCard({
           </p>
         </div>
       </div>
-      <button
-        type="button"
-        aria-label="Download attached file"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#EEF3FF]"
-        style={{ color: 'var(--color-text-secondary)' }}
-      >
-        <DownloadIcon />
-      </button>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remove attached file"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#FFF5F5]"
+          style={{ color: '#D92D20' }}
+        >
+          <TrashIcon />
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label="Download attached file"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#EEF3FF]"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          <DownloadIcon />
+        </button>
+      )}
     </div>
   );
 }
@@ -557,17 +671,64 @@ function UploadDropzone({
   title,
   browseText,
   meta,
+  accept,
+  onFileSelect,
 }: {
   icon: React.ReactNode;
   title: string;
   browseText: string;
   meta: string;
+  accept?: string;
+  onFileSelect?: (file: File) => void;
 }) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = React.useState(false);
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onFileSelect?.(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFileSelect?.(e.dataTransfer.files[0]);
+    }
+  };
+
   return (
     <div
-      className="mt-5 flex min-h-[172px] flex-col items-center justify-center rounded-[16px] border-2 border-dashed bg-white px-5 py-8 text-center"
-      style={{ borderColor: '#C5CADB' }}
+      onClick={handleClick}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`mt-5 flex min-h-[172px] cursor-pointer flex-col items-center justify-center rounded-[16px] border-2 border-dashed px-5 py-8 text-center transition-colors ${
+        isDragOver ? 'border-[var(--color-brand-primary)] bg-[#F5F8FF]' : 'bg-white'
+      }`}
+      style={{ borderColor: isDragOver ? 'var(--color-brand-primary)' : '#C5CADB' }}
     >
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept={accept}
+        className="hidden"
+      />
       <span className="mb-3 text-[#747C8F]">{icon}</span>
       <p className="text-[18px] font-medium" style={{ color: 'var(--color-text-primary)' }}>
         {title}
@@ -666,7 +827,11 @@ function updateVideoSourceMode(
   }));
 }
 
-function canSubmitMaterial(formState: MaterialEditorFormState) {
+function canSubmitMaterial(
+  formState: MaterialEditorFormState,
+  selectedFile: File | null,
+  mode: MaterialEditorMode
+) {
   if (!formState.title.trim() || !formState.description.trim()) {
     return false;
   }
@@ -675,8 +840,22 @@ function canSubmitMaterial(formState: MaterialEditorFormState) {
     return isValidExternalUrl(formState.externalUrl);
   }
 
-  if (formState.materialKind === 'video' && formState.videoSourceMode === 'link') {
-    return isValidExternalUrl(formState.externalUrl);
+  if (formState.materialKind === 'video') {
+    if (formState.videoSourceMode === 'link') {
+      return isValidExternalUrl(formState.externalUrl);
+    }
+    // upload mode
+    if (mode === 'create' && !selectedFile) {
+      return false;
+    }
+    return true;
+  }
+
+  if (formState.materialKind === 'document') {
+    if (mode === 'create' && !selectedFile) {
+      return false;
+    }
+    return true;
   }
 
   return true;
@@ -732,6 +911,17 @@ function DownloadIcon() {
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
       <path d="M11 3v10M7 9l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 17h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      <line x1="10" y1="11" x2="10" y2="17"></line>
+      <line x1="14" y1="11" x2="14" y2="17"></line>
     </svg>
   );
 }

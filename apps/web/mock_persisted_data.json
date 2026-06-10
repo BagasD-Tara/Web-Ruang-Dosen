@@ -1,0 +1,198 @@
+{
+  "courses": [
+    {
+      "id": "aml-501",
+      "code": "CS-501",
+      "title": "Advanced Machine Learning",
+      "department": "Computer Science",
+      "studentCount": 48,
+      "moduleCount": 8,
+      "assignmentCount": 6,
+      "status": "Active",
+      "imageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "dsa-302",
+      "code": "CS-302",
+      "title": "Data Structures & Algorithms",
+      "department": "Computer Science",
+      "studentCount": 120,
+      "moduleCount": 12,
+      "assignmentCount": 10,
+      "status": "Active",
+      "imageUrl": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "sep-410",
+      "code": "SE-410",
+      "title": "Software Engineering Project",
+      "department": "Software Engineering",
+      "studentCount": 30,
+      "moduleCount": 6,
+      "assignmentCount": 4,
+      "status": "Active",
+      "imageUrl": "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "dbs-204",
+      "code": "CS-204",
+      "title": "Database Systems",
+      "department": "Computer Science",
+      "studentCount": 86,
+      "moduleCount": 9,
+      "assignmentCount": 7,
+      "status": "Draft",
+      "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "hci-330",
+      "code": "UX-330",
+      "title": "Human Computer Interaction",
+      "department": "Interaction Design",
+      "studentCount": 64,
+      "moduleCount": 7,
+      "assignmentCount": 5,
+      "status": "Active",
+      "imageUrl": "https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "net-315",
+      "code": "IT-315",
+      "title": "Computer Networks",
+      "department": "Information Technology",
+      "studentCount": 72,
+      "moduleCount": 10,
+      "assignmentCount": 8,
+      "status": "Draft",
+      "imageUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80"
+    }
+  ],
+  "overrides": {
+    "aml-501": {
+      "termLabel": "Fall Semester 2026",
+      "credits": 3,
+      "enrolledStudents": 48,
+      "weeklyGrowth": 3,
+      "modules": [
+        {
+          "id": "aml-m1",
+          "orderLabel": "M1",
+          "title": "Introduction to Neural Networks",
+          "weekLabel": "Week 1-2",
+          "status": "Published",
+          "description": "By the end of this module, students will be able to explain neuron structure, activation flow, and the role of loss functions in supervised learning.",
+          "durationWeeks": 2,
+          "accessControl": "Enrolled Students Only",
+          "defaultExpanded": true,
+          "materials": [
+            {
+              "id": "aml-m1-slides",
+              "title": "Lecture Slides: Perceptrons",
+              "kind": "document",
+              "meta": "PDF Document",
+              "description": "Core concepts of perceptrons and neural network foundations.",
+              "visibilityStatus": "Published",
+              "fileName": "AML_Module1_Perceptrons.pdf",
+              "fileMeta": "4.2 MB - Uploaded Sep 12, 2026"
+            },
+            {
+              "id": "aml-m1-video",
+              "title": "Video: Activation Functions Explained",
+              "kind": "video",
+              "meta": "18 min video",
+              "description": "A focused walkthrough of activation functions and why they matter in neural network training.",
+              "visibilityStatus": "Published",
+              "fileName": "activation-functions-overview.mp4",
+              "fileMeta": "184 MB - Uploaded Sep 14, 2026"
+            },
+            {
+              "id": "aml-m1-link",
+              "title": "Reading: Backpropagation Notes",
+              "kind": "link",
+              "meta": "External Link",
+              "description": "Supplementary reading for backpropagation notation and chain rule intuition.",
+              "visibilityStatus": "Draft",
+              "externalUrl": "https://example.com/backpropagation-notes"
+            }
+          ],
+          "assessments": [
+            {
+              "id": "aml-m1-quiz",
+              "title": "Quiz 1: Fundamentals",
+              "kind": "quiz",
+              "meta": "Due Oct 15, 23:59 - 10 Questions",
+              "badgeLabel": "Auto-graded",
+              "badgeTone": "neutral"
+            },
+            {
+              "id": "aml-m1-assignment",
+              "title": "Assignment 1: Build a Simple Perceptron",
+              "kind": "assignment",
+              "meta": "Due Oct 20, 23:59 - 15% of Final Grade",
+              "description": "Build a simple single-layer perceptron from scratch and submit both source code and a short implementation report.",
+              "status": "Active",
+              "assignedDate": "2026-10-10T09:00",
+              "deadline": "2026-10-20T23:59",
+              "submissionRequirement": "File Upload (PDF, DOCX, ZIP)",
+              "templateName": "perceptron_assignment_template.docx",
+              "templateMeta": "48 KB",
+              "submittedCount": 24,
+              "studentCount": 48,
+              "badgeLabel": "24 Submissions",
+              "badgeTone": "brand"
+            }
+          ]
+        },
+        {
+          "id": "aml-m2",
+          "orderLabel": "M2",
+          "title": "Deep Learning Architectures",
+          "weekLabel": "Week 3-4",
+          "status": "Draft",
+          "description": "Students will compare feed-forward, convolutional, and deeper architectures to understand where each model family is applied.",
+          "durationWeeks": 2,
+          "accessControl": "Enrolled Students Only",
+          "materials": [],
+          "assessments": [
+            {
+              "id": "aml-m2-assignment",
+              "title": "Assignment 2: Compare Neural Architectures",
+              "kind": "assignment",
+              "meta": "Scheduled for Nov 03 - 20% of Final Grade",
+              "description": "Compare feed-forward and convolutional architectures using a short technical report and experiment summary.",
+              "status": "Draft",
+              "assignedDate": "2026-10-28T09:00",
+              "deadline": "2026-11-03T23:59",
+              "submissionRequirement": "File Upload (PDF, DOCX, ZIP)",
+              "templateName": "architecture_comparison_template.docx",
+              "templateMeta": "52 KB",
+              "submittedCount": 0,
+              "studentCount": 48,
+              "badgeLabel": "Draft",
+              "badgeTone": "neutral"
+            }
+          ]
+        },
+        {
+          "id": "aml-m3",
+          "orderLabel": "M3",
+          "title": "Convolutional Neural Networks (CNNs)",
+          "weekLabel": "Week 5-6",
+          "status": "Locked",
+          "description": "This module is prepared for image-based learning tasks and will be opened after foundational concepts are completed.",
+          "durationWeeks": 2,
+          "accessControl": "Enrolled Students Only",
+          "materials": [],
+          "assessments": []
+        }
+      ]
+    },
+    "92f9e4ef-6c87-48a3-8c20-336ec5147aba": {
+      "termLabel": "Current Semester",
+      "credits": 3,
+      "enrolledStudents": 0,
+      "weeklyGrowth": 0,
+      "modules": []
+    }
+  }
+}

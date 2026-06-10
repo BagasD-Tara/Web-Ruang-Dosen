@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation';
 import { LecturerStudentProgressView } from '@/components/lecturer/LecturerStudentProgressView';
-import { getLecturerStudentProgressData } from '@/lib/mock/lecturerStudentProgress';
+import { getLecturerStudentProgress } from '@/lib/api/courseRepository';
+
+interface LecturerStudentProgressPageProps {
+  params: Promise<{ courseId: string; studentId: string }>;
+}
 
 export default async function LecturerStudentProgressPage({
   params,
-}: {
-  params: Promise<{ courseId: string; studentId: string }>;
-}) {
+}: LecturerStudentProgressPageProps) {
   const { courseId, studentId } = await params;
-  const progressData = getLecturerStudentProgressData(courseId, studentId);
+  const progressData = await getLecturerStudentProgress(courseId, studentId);
 
   if (!progressData) {
     notFound();

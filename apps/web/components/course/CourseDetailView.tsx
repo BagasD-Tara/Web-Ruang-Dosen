@@ -58,14 +58,18 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
         className="overflow-hidden rounded-[28px] border bg-white shadow-[0_14px_40px_rgba(7,27,63,0.05)]"
         style={{ borderColor: 'var(--color-border)' }}
       >
-        <div className={`relative min-h-[230px] px-5 pt-6 sm:px-7 lg:min-h-[280px] ${course.bannerColorClass}`}>
+        {/* Banner Section */}
+        <div className={`relative h-[160px] w-full lg:h-[200px] ${course.bannerColorClass}`}>
           <div
-            className="absolute left-1/2 top-[72px] h-3 w-16 -translate-x-1/2 rounded-full opacity-30"
+            className="absolute left-1/2 top-[40px] h-3 w-16 -translate-x-1/2 rounded-full opacity-30"
             style={{ background: 'rgba(255,255,255,0.42)' }}
           />
+        </div>
 
+        {/* Content Card (Overlapping) */}
+        <div className="relative z-10 px-5 pb-8 sm:px-7">
           <div
-            className="relative mt-[110px] rounded-[22px] border bg-white px-5 py-6 shadow-[0_14px_28px_rgba(7,27,63,0.08)] sm:px-8 lg:mt-[130px] lg:px-9 lg:py-8"
+            className="relative -mt-20 rounded-[22px] border bg-white px-5 py-6 shadow-[0_14px_28px_rgba(7,27,63,0.08)] sm:px-8 lg:-mt-24 lg:px-9 lg:py-8"
             style={{ borderColor: 'rgba(195,198,214,0.85)' }}
           >
             <div className="flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between">
@@ -120,12 +124,10 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
                     {course.status === 'notstart' ? 'Start Learning' : 'Continue Learning'}
                   </ActionButton>
                 )}
-                <ActionButton icon={<CalendarButtonIcon />}>View Schedule</ActionButton>
+                <ActionButton icon={<CalendarButtonIcon />} onClick={() => alert('View Schedule clicked!')}>View Schedule</ActionButton>
               </div>
             </div>
           </div>
-
-          <div className="pb-6" />
         </div>
       </section>
 
@@ -248,12 +250,11 @@ function ContentItemCard({
 
       <div className="flex items-center gap-3 self-end sm:self-auto">
         {showSubmitButton ? (
-          <button
-            type="button"
+          <span
             className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0F4BB6] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
             Submit
-          </button>
+          </span>
         ) : null}
 
         {item.isCompleted ? (
@@ -337,11 +338,13 @@ function ActionButton({
   primary = false,
   icon,
   href,
+  onClick,
 }: {
   children: React.ReactNode;
   primary?: boolean;
   icon?: React.ReactNode;
   href?: string;
+  onClick?: () => void;
 }) {
   const className = "flex h-14 items-center justify-center gap-2 rounded-[18px] border px-5 text-lg font-semibold transition-opacity hover:opacity-90";
   const style =
@@ -373,6 +376,7 @@ function ActionButton({
   return (
     <button
       type="button"
+      onClick={onClick}
       className="flex h-14 items-center justify-center gap-2 rounded-[18px] border px-5 text-lg font-semibold transition-opacity hover:opacity-90"
       style={style}
     >

@@ -37,6 +37,14 @@ Dokumen ini berisi rangkuman seluruh perubahan yang telah dilakukan pada direkto
 6. **Routing Halaman Utama (`app/page.tsx`)**
    - Memperbarui halaman utama (root `/`) agar secara otomatis me-redirect pengunjung langsung ke halaman `/login`.
 
+7. **Perbaikan Bug & Fitur Dosen (Course Management)**
+   - Menonaktifkan fitur "Create Quiz" karena berada di luar cakupan saat ini.
+   - Memperbaiki style tombol disabled pada komponen `.btn-link` agar dirender dengan benar.
+   - Memperbaiki bug "Silent Failure" saat edit/hapus modul dan material pada course yang berasal dari API (state lokal `MANAGE_COURSE_OVERRIDES` sekarang diinisialisasi otomatis).
+   - Memperbaiki kompatibilitas Next.js 16 pada `revalidateTag` yang sebelumnya menyebabkan error kompilasi TypeScript.
+   - Memperbaiki Editor Tugas (Assignment Editor) yang sebelumnya statis; menambahkan fungsi server actions untuk membuat, menyimpan, dan menghapus tugas, serta menghubungkannya ke mock data `lecturerCourseManagement.ts`.
+   - Menghindari *Error Overlay* (layar merah) bawaan Next.js 16 di mode development saat API backend offline dengan merubah `console.error` menjadi `console.warn` pada proses fallback fetch data layout dan material.
+
 ---
 
 ## ⚙️ Perubahan pada Backend (`apps/api`)
@@ -115,3 +123,8 @@ Dokumen ini berisi rangkuman seluruh perubahan yang telah dilakukan pada direkto
 ---
 
 *Catatan: Seluruh perubahan di atas belum di-commit (uncommitted changes) dan masih berada pada branch lokal `fe-dashboard`.*
+
+
+admin@test.com	password123
+dosen@test.com	password123
+student@test.com	password123

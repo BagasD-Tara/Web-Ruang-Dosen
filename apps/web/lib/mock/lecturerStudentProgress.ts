@@ -55,7 +55,16 @@ export function getLecturerStudentProgressData(
 ): LecturerStudentProgressData | null {
   const courseData = getLecturerManageCourseById(courseId);
   const enrollmentData = getLecturerEnrollmentData(courseId);
-  const student = enrollmentData?.students.find((currentStudent) => currentStudent.id === studentId);
+
+  if (!courseData || !enrollmentData) {
+    return null;
+  }
+
+  return buildStudentProgressData(courseData, enrollmentData, studentId);
+}
+
+export function buildStudentProgressData(courseData: any, enrollmentData: any, studentId: string): LecturerStudentProgressData | null {
+  const student = enrollmentData?.students.find((currentStudent: any) => currentStudent.id === studentId);
 
   if (!courseData || !student) {
     return null;

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { MaterialReaderView } from '@/components/course/MaterialReaderView';
-import { getCourseMaterialById } from '@/lib/mock/courses';
+import { getStudentCourseDetail } from '@/lib/api/courseRepository';
 
 export default async function CourseMaterialPage({
   params,
@@ -8,17 +8,32 @@ export default async function CourseMaterialPage({
   params: Promise<{ courseId: string; materialId: string }>;
 }) {
   const { courseId, materialId } = await params;
-  const result = getCourseMaterialById(Number(courseId), materialId);
+  const courseDetail = await getStudentCourseDetail(courseId);
 
-  if (!result) {
+  if (!courseDetail) {
+    notFound();
+  }
+
+  let foundModule = null;
+  let foundMaterial = null;
+  for (const courseModule of courseDetail.tabs.materials) {
+    const item = courseModule.items.find((entry) => entry.id === materialId);
+    if (item) {
+      foundModule = courseModule;
+      foundMaterial = item;
+      break;
+    }
+  }
+
+  if (!foundModule || !foundMaterial) {
     notFound();
   }
 
   return (
     <MaterialReaderView
-      course={result.course}
-      currentModule={result.module}
-      currentMaterial={result.material}
+      course={courseDetail}
+      currentModule={foundModule}
+      currentMaterial={foundMaterial}
     />
   );
 }

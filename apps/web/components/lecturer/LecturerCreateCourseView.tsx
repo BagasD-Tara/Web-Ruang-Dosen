@@ -2,12 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { LECTURER_COURSES } from '@/lib/mock/lecturerCourses';
+import { LECTURER_COURSES, type LecturerCourse } from '@/lib/mock/lecturerCourses';
+import { createMockCourseAction } from '@/app/actions/createCourse';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
-import {
-  LECTURER_CARD_CLASSNAME,
-  LECTURER_COMPACT_CONTROL_CLASSNAME,
-} from './shared/lecturerUiStyles';
+import './LecturerCreateCourseView.css';
 
 type PublishingMode = 'draft' | 'published';
 type TeachingFormat = 'Theory and Practice' | 'Project-Based' | 'Research Seminar';
@@ -55,9 +53,51 @@ const INITIAL_FORM_STATE: CourseDraftFormState = {
 export function LecturerCreateCourseView() {
   const [draft, setDraft] = React.useState(INITIAL_FORM_STATE);
   const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+
+  if (isSubmitted) {
+    return (
+      <div className="create-course-wrapper dashboard-content">
+        <LecturerBreadcrumbs
+          items={[
+            { label: 'Home', href: '/dosen' },
+            { label: 'Courses', href: '/dosen/courses' },
+            { label: 'Create Course' },
+          ]}
+        />
+        <div className="form-card" style={{ padding: '60px 20px', textAlign: 'center', marginTop: '32px' }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#E8F5E9', color: '#4CAF50', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h2 style={{ fontSize: '28px', color: 'var(--primary)', marginBottom: '16px' }}>Course Created Successfully!</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '16px' }}>
+            Your new course <strong>{draft.title}</strong> has been created.
+          </p>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+            <Link href="/dosen/courses" className="btn-draft" style={{ textDecoration: 'none' }}>
+              Back to Courses
+            </Link>
+            <button
+              onClick={() => {
+                setDraft(INITIAL_FORM_STATE);
+                setIsSubmitted(false);
+                setFeedbackMessage(null);
+                window.scrollTo(0, 0);
+              }}
+              className="btn-submit"
+            >
+              Create Another Course
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="create-course-wrapper dashboard-content">
       <LecturerBreadcrumbs
         items={[
           { label: 'Home', href: '/dosen' },
@@ -66,48 +106,35 @@ export function LecturerCreateCourseView() {
         ]}
       />
 
-      <section className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-[760px]">
-          <h1
-            className="text-[34px] font-bold leading-tight sm:text-[46px]"
-            style={{ color: 'var(--color-brand-primary)' }}
-          >
-            Create New Course
-          </h1>
-          <p
-            className="mt-3 text-lg leading-8"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
+      <section className="create-course-header">
+        <div className="header-text">
+          <h1>Create New Course</h1>
+          <p>
             Fill in the course identity, delivery plan, and publishing setup before the backend generates the course code and saves the data.
           </p>
         </div>
 
         <Link
           href="/dosen/courses"
-          className="inline-flex h-12 items-center justify-center rounded-[14px] border px-5 text-base font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
-          style={{ borderColor: 'var(--color-brand-primary)', color: 'var(--color-brand-primary)' }}
+          className="btn-back"
         >
           Back to Courses
         </Link>
       </section>
 
       {feedbackMessage ? (
-        <div
-          className="mb-6 rounded-[18px] border px-5 py-4 text-sm sm:text-base"
-          style={{ borderColor: '#B7D1FF', background: '#EEF4FF', color: 'var(--color-brand-primary)' }}
-        >
+        <div className="feedback-msg">
           {feedbackMessage}
         </div>
       ) : null}
 
       <form
-        className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
-        style={{ borderColor: 'var(--color-border)' }}
+        className="form-card"
         onSubmit={(event) => event.preventDefault()}
       >
-        <div className="space-y-0 px-5 py-6 sm:px-7 sm:py-7">
+        <div className="form-body">
           <FormSection title="Course Information">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid-cols-1 md:grid-cols-2">
               <FormField label="Course Title">
                 <TextInput
                   value={draft.title}
@@ -140,7 +167,7 @@ export function LecturerCreateCourseView() {
           </FormSection>
 
           <FormSection title="Delivery Setup">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid-cols-1 md:grid-cols-3">
               <FormField label="Teaching Format">
                 <SelectInput
                   value={draft.teachingFormat}
@@ -177,62 +204,55 @@ export function LecturerCreateCourseView() {
             </FormField>
           </FormSection>
 
-          <div className="grid grid-cols-1 gap-6 border-b py-6" style={{ borderColor: 'rgba(195,198,214,0.75)' }}>
-            <CompactSection title="Initial Course Options">
-              <div className="grid grid-cols-1 gap-3">
-                <CheckboxRow
-                  checked={draft.includeStarterModule}
-                  label="Generate a starter module outline"
-                  onToggle={() => toggleDraftFlag('includeStarterModule', setDraft)}
-                />
-              </div>
-            </CompactSection>
+          <div className="create-course-section">
+            <h2 className="create-course-section-title">Initial Course Options</h2>
+            <div className="grid-cols-1">
+              <CheckboxRow
+                checked={draft.includeStarterModule}
+                label="Generate a starter module outline"
+                onToggle={() => toggleDraftFlag('includeStarterModule', setDraft)}
+              />
+            </div>
           </div>
         </div>
 
-        <div
-          className="flex flex-col gap-3 border-t px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7"
-          style={{ borderColor: 'rgba(195,198,214,0.75)' }}
-        >
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => handleDraftAction('draft', setFeedbackMessage)}
-              className="inline-flex h-12 items-center justify-center rounded-[14px] border px-5 text-base font-semibold transition-colors hover:bg-[#F5F8FF]"
-              style={{ borderColor: 'var(--color-brand-primary)', color: 'var(--color-brand-primary)' }}
-            >
-              Save Draft
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDraftAction('published', setFeedbackMessage)}
-              disabled={!canCreateCourse(draft)}
-              className="inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-              style={{ background: 'var(--color-brand-primary)' }}
-            >
-              Create Course
-            </button>
-          </div>
+        <div className="form-actions">
+          <button
+            type="button"
+            onClick={() => {
+              setFeedbackMessage('Course draft is saved locally. You can continue preparing modules and materials.');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="btn-draft"
+          >
+            Save Draft
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const newCourse: LecturerCourse = {
+                id: `course-${Date.now()}`,
+                code: draft.department.substring(0, 2).toUpperCase() + '-' + Math.floor(Math.random() * 900 + 100),
+                title: draft.title,
+                department: draft.department,
+                studentCount: 0,
+                moduleCount: 0,
+                assignmentCount: 0,
+                status: 'Draft',
+                imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
+              };
+              await createMockCourseAction(newCourse);
+              setIsSubmitted(true);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            disabled={!canCreateCourse(draft)}
+            className="btn-submit"
+          >
+            Create Course
+          </button>
         </div>
       </form>
     </div>
-  );
-}
-
-function CompactSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <h2 className="mb-4 text-[22px] font-bold" style={{ color: 'var(--color-text-primary)' }}>
-        {title}
-      </h2>
-      {children}
-    </section>
   );
 }
 
@@ -244,8 +264,8 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-b py-6 first:pt-0 last:border-b-0 last:pb-0" style={{ borderColor: 'rgba(195,198,214,0.75)' }}>
-      <h2 className="mb-4 text-[22px] font-bold" style={{ color: 'var(--color-text-primary)' }}>
+    <section className="create-course-section">
+      <h2 className="create-course-section-title">
         {title}
       </h2>
       {children}
@@ -261,11 +281,8 @@ function FormField({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span
-        className="mb-2 block text-sm font-semibold uppercase tracking-[0.04em]"
-        style={{ color: 'var(--color-text-secondary)' }}
-      >
+    <label className="form-field">
+      <span className="field-label">
         {label}
       </span>
       {children}
@@ -288,8 +305,7 @@ function TextInput({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className={LECTURER_COMPACT_CONTROL_CLASSNAME}
-      style={{ borderColor: 'var(--color-border)', background: '#FFFFFF', color: 'var(--color-text-primary)' }}
+      className="input-control"
     />
   );
 }
@@ -304,12 +320,11 @@ function SelectInput({
   options: readonly string[];
 }) {
   return (
-    <div className="relative">
+    <div className="select-wrapper">
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={`${LECTURER_COMPACT_CONTROL_CLASSNAME} appearance-none pr-11`}
-        style={{ borderColor: 'var(--color-border)', background: '#FFFFFF', color: 'var(--color-text-primary)' }}
+        className="input-control select-control"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -317,10 +332,7 @@ function SelectInput({
           </option>
         ))}
       </select>
-      <span
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-        style={{ color: 'var(--color-text-secondary)' }}
-      >
+      <span className="select-icon">
         <SelectChevronIcon />
       </span>
     </div>
@@ -342,8 +354,7 @@ function TextAreaInput({
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       rows={5}
-      className="w-full rounded-[14px] border px-4 py-3 text-base outline-none transition-colors focus:border-[#7DA8FF]"
-      style={{ borderColor: 'var(--color-border)', background: '#FFFFFF', color: 'var(--color-text-primary)' }}
+      className="textarea-control"
     />
   );
 }
@@ -361,20 +372,12 @@ function CheckboxRow({
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-start gap-4 rounded-[16px] border px-4 py-4 text-left transition-colors hover:bg-[#F8FAFF]"
-      style={{ borderColor: checked ? '#7DA8FF' : 'var(--color-border)' }}
+      className={`checkbox-row ${checked ? 'checked' : ''}`}
     >
-      <span
-        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border"
-        style={{
-          borderColor: checked ? 'var(--color-brand-primary)' : 'var(--color-border)',
-          background: checked ? 'var(--color-brand-primary)' : '#FFFFFF',
-          color: '#FFFFFF',
-        }}
-      >
+      <span className="checkbox-box">
         {checked ? <CheckIcon /> : null}
       </span>
-      <span className="block text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+      <span className="checkbox-label">
         {label}
       </span>
     </button>
@@ -402,16 +405,7 @@ function toggleDraftFlag(
   }));
 }
 
-function handleDraftAction(
-  publishingMode: PublishingMode,
-  setFeedbackMessage: React.Dispatch<React.SetStateAction<string | null>>
-) {
-  setFeedbackMessage(
-    publishingMode === 'draft'
-      ? 'Course draft is saved locally. You can continue preparing modules and materials.'
-      : 'Course setup is ready to be created. Connect the form to backend submission when the API is available.'
-  );
-}
+
 
 function canCreateCourse(draft: CourseDraftFormState) {
   return Boolean(

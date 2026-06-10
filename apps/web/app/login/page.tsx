@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { buildApiUrl } from "@/lib/api/apiConfig";
 import "./login.css";
 
 export default function LoginPage() {
@@ -19,7 +20,7 @@ export default function LoginPage() {
 
     try {
       // Panggil endpoint API login
-      const response = await fetch("http://localhost:3001/auth/login", {
+      const response = await fetch(buildApiUrl("/auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,6 +37,9 @@ export default function LoginPage() {
       // Simpan token dan data user ke localStorage
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Simpan token ke cookie untuk diakses oleh Server Components (berlaku 1 hari)
+      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
       
       alert("Login Berhasil! Selamat datang " + data.user.name);
       router.push("/dashboard_dosen");

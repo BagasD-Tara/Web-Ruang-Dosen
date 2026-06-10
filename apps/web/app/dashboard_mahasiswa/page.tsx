@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { buildApiUrl } from "@/lib/api/apiConfig";
 import "./dashboard.css";
 
 export default function DashboardMahasiswaPage() {
@@ -32,7 +33,7 @@ export default function DashboardMahasiswaPage() {
 
         // Fetch profil terbaru dari /auth/profile
         try {
-          const profileRes = await fetch("http://localhost:3001/auth/profile", {
+          const profileRes = await fetch(buildApiUrl("/auth/profile"), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (profileRes.ok) {
@@ -46,7 +47,7 @@ export default function DashboardMahasiswaPage() {
 
         // Fetch semua courses yang di-enroll mahasiswa
         try {
-          const coursesRes = await fetch("http://localhost:3001/courses", {
+          const coursesRes = await fetch(buildApiUrl("/courses"), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (coursesRes.ok) {
@@ -179,14 +180,14 @@ export default function DashboardMahasiswaPage() {
             </div>
             <div className="sub-nav">
               {enrolledCourses.map((c) => (
-                <Link key={c.id} href="#" className="sub-nav-link">{c.title}</Link>
+                <Link key={c.id} href={`/courses/${c.id}`} className="sub-nav-link">{c.title}</Link>
               ))}
-              <Link href="#" className="sub-nav-link">+ Explore Courses</Link>
+              <Link href="/courses" className="sub-nav-link">Lihat Semua Courses</Link>
             </div>
           </div>
 
           <div className="nav-item">
-            <Link href="#" className="nav-link">
+            <Link href="/calendar" className="nav-link">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -292,7 +293,7 @@ export default function DashboardMahasiswaPage() {
                 </svg>
                 Ekspor Laporan
               </button>
-              <button className="btn-outline-white" id="view-courses-btn">
+              <button className="btn-outline-white" id="view-courses-btn" onClick={() => router.push("/courses")}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
@@ -393,7 +394,7 @@ export default function DashboardMahasiswaPage() {
             <section>
               <div className="section-header">
                 <h3 className="section-title">Active Courses</h3>
-                <Link href="#" className="view-all-link" id="view-all-courses-link">
+                <Link href="/courses/my" className="view-all-link" id="view-all-courses-link">
                   View All
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="9 18 15 12 9 6" />
@@ -431,7 +432,7 @@ export default function DashboardMahasiswaPage() {
                         ></div>
                       </div>
                     </div>
-                    <button className={`course-action-btn ${course.actionType}`}>
+                    <button className={`course-action-btn ${course.actionType}`} onClick={() => router.push(`/courses/${course.id}`)}>
                       {course.action}
                     </button>
                   </div>

@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+import { DosenDashboardLayout } from '@/components/layout/DosenDashboardLayout';
 
 export default function LecturerLayout({
   children,
@@ -8,7 +8,7 @@ export default function LecturerLayout({
 }) {
   return (
     <Suspense fallback={null}>
-      <AppShell mode="lecturer">{children}</AppShell>
+      <DosenDashboardLayout>{children}</DosenDashboardLayout>
     </Suspense>
   );
 }

@@ -82,6 +82,10 @@ export function getLecturerAssignmentSubmissions(
     return null;
   }
 
+  return buildAssignmentSubmissionsData(assignmentId, assignmentData);
+}
+
+export function buildAssignmentSubmissionsData(assignmentId: string, assignmentData: any): LecturerAssignmentSubmissionsData {
   return {
     course: assignmentData.course,
     module: assignmentData.module,

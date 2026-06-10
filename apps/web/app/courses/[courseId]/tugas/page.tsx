@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { AssignmentSubmissionView } from '@/components/course/AssignmentSubmissionView';
-import { getCourseDetailById } from '@/lib/mock/courses';
+import { getStudentCourseDetail } from '@/lib/api/courseRepository';
 
 export default async function CourseTugasPage({
   params,
@@ -11,7 +11,7 @@ export default async function CourseTugasPage({
 }) {
   const { courseId } = await params;
   const { assignment: requestedAssignmentId } = await searchParams;
-  const course = getCourseDetailById(Number(courseId));
+  const course = await getStudentCourseDetail(courseId);
   const assignments = course?.tabs.assignments.flatMap((module) => module.items) ?? [];
   const selectedAssignmentIndex = getSelectedAssignmentIndex(assignments, requestedAssignmentId);
   const assignment = assignments[selectedAssignmentIndex];

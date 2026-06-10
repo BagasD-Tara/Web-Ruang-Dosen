@@ -21,6 +21,7 @@ interface AssignmentSubmissionViewProps {
 interface AssignmentActionBarProps {
   previousHref?: string;
   nextHref?: string;
+  onSubmit?: () => void;
 }
 
 interface AssignmentNavButtonProps {
@@ -77,15 +78,15 @@ export function AssignmentSubmissionView({
         <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
           <main className="space-y-7">
             <AssignmentHero assignment={assignment} />
-            <AssignmentBrief />
+            <AssignmentBrief assignment={assignment} />
             <SubmissionBox />
           </main>
 
-          <AssignmentStatusCard />
+          <AssignmentStatusCard assignment={assignment} />
         </div>
       </div>
 
-      <AssignmentActionBar previousHref={previousHref} nextHref={nextHref} />
+      <AssignmentActionBar previousHref={previousHref} nextHref={nextHref} onSubmit={() => alert('Assignment Submitted!')} />
     </div>
   );
 }
@@ -147,18 +148,23 @@ function AssignmentHero({ assignment }: { assignment: CourseContentItem }) {
   );
 }
 
-function AssignmentBrief() {
+function AssignmentBrief({ assignment }: { assignment: CourseContentItem }) {
+  const briefContent = assignment.summary || 'Follow the instructions provided to complete this assignment.';
+  const requirements = assignment.content?.previewText 
+    ? assignment.content.previewText.split('\n').filter(Boolean)
+    : ASSIGNMENT_REQUIREMENTS;
+
   return (
     <AssignmentSection>
       <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
         Assignment Brief
       </h2>
       <p className="mt-5 text-base leading-8 sm:text-lg" style={{ color: 'var(--color-text-secondary)' }}>
-        Build a simple single-layer perceptron from scratch using Python. Do not use external ML libraries like scikit-learn or TensorFlow for the core logic (NumPy is permitted for matrix operations).
+        {briefContent}
       </p>
       <ul className="mt-5 space-y-3 pl-6 text-base leading-7 sm:text-lg" style={{ color: 'var(--color-text-secondary)' }}>
-        {ASSIGNMENT_REQUIREMENTS.map((requirement) => (
-          <li key={requirement}>{requirement}</li>
+        {requirements.map((requirement, idx) => (
+          <li key={idx}>{requirement.replace(/^- /, '')}</li>
         ))}
       </ul>
     </AssignmentSection>
@@ -166,15 +172,29 @@ function AssignmentBrief() {
 }
 
 function SubmissionBox() {
+  const [file, setFile] = React.useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
   return (
     <AssignmentSection>
       <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
         Submission Box
       </h2>
-      <div className="mt-5 rounded-[24px] border-2 border-dashed px-5 py-10 text-center" style={{ borderColor: '#BFC7DA', background: '#FBFCFE' }}>
+      <div className="mt-5 rounded-[24px] border-2 border-dashed px-5 py-10 text-center relative" style={{ borderColor: '#BFC7DA', background: '#FBFCFE' }}>
+        <input 
+          type="file" 
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+          onChange={handleFileChange}
+          accept=".pdf,.py,.ipynb"
+        />
         <UploadIcon />
         <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          Drag and drop your files here
+          {file ? file.name : 'Drag and drop your files here'}
         </h3>
         <p className="mt-3 text-base" style={{ color: 'var(--color-text-secondary)' }}>
           Supported formats: PDF, .py, .ipynb (Max 50MB)
@@ -184,7 +204,7 @@ function SubmissionBox() {
           className="mt-7 inline-flex h-12 items-center justify-center rounded-xl border bg-white px-7 text-base font-semibold transition-opacity hover:opacity-80"
           style={{ borderColor: 'var(--color-border)', color: 'var(--color-brand-primary)' }}
         >
-          Browse Files
+          {file ? 'Change File' : 'Browse Files'}
         </button>
       </div>
     </AssignmentSection>
@@ -199,7 +219,11 @@ function AssignmentSection({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AssignmentStatusCard() {
+function AssignmentStatusCard({ assignment }: { assignment: CourseContentItem }) {
+  const metaParts = assignment.meta ? assignment.meta.split(' • ') : [];
+  const points = metaParts.length > 0 ? metaParts[0] : '100 Points';
+  const dueDate = metaParts.length > 1 ? metaParts[1] : 'No Due Date';
+
   return (
     <aside className="h-fit rounded-[28px] border bg-white px-6 py-7 shadow-[0_12px_28px_rgba(7,27,63,0.04)] xl:sticky xl:top-28" style={{ borderColor: 'var(--color-border)' }}>
       <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -209,14 +233,14 @@ function AssignmentStatusCard() {
         <StatusRow
           icon={<ClockStatusIcon />}
           label="Due Date"
-          primaryText="Oct 24, 2024 at 11:59 PM"
-          secondaryText="3 days remaining"
+          primaryText={dueDate}
+          secondaryText="Open"
           secondaryTone="#A42C08"
         />
         <StatusRow
           icon={<TrophyIcon />}
           label="Points Possible"
-          primaryText="100 Points"
+          primaryText={points}
         />
         <StatusRow
           icon={<ClipboardStatusIcon />}
@@ -265,7 +289,13 @@ function StatusRow({
   );
 }
 
-function AssignmentActionBar({ previousHref, nextHref }: AssignmentActionBarProps) {
+interface AssignmentActionBarProps {
+  previousHref?: string;
+  nextHref?: string;
+  onSubmit?: () => void;
+}
+
+function AssignmentActionBar({ previousHref, nextHref, onSubmit }: AssignmentActionBarProps) {
   return (
     <div className="border-t bg-white px-4 py-4 sm:px-6 lg:px-8" style={{ borderColor: 'var(--color-border)' }}>
       <div className="mx-auto grid w-full max-w-[1280px] gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -276,6 +306,7 @@ function AssignmentActionBar({ previousHref, nextHref }: AssignmentActionBarProp
         <div className="flex justify-start xl:justify-end">
           <button
             type="button"
+            onClick={onSubmit}
             className="inline-flex h-12 items-center justify-center rounded-xl bg-[#86A2D5] px-8 text-base font-semibold text-white transition-opacity hover:opacity-90"
           >
             Submit Assignment

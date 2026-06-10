@@ -10,8 +10,54 @@ export interface LecturerCourse {
   imageUrl: string;
 }
 
-export const LECTURER_COURSES: LecturerCourse[] = [
-  {
+declare global {
+  var __LECTURER_COURSES: LecturerCourse[] | undefined;
+}
+
+function saveMockData() {
+  if (typeof window === 'undefined') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const file = path.join(process.cwd(), 'mock_persisted_data.json');
+      const overrides = globalThis.__MANAGE_COURSE_OVERRIDES || {};
+      const data = {
+        courses: globalThis.__LECTURER_COURSES,
+        overrides,
+      };
+      fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+      console.error('Failed to save mock data:', err);
+    }
+  }
+}
+
+function loadMockData() {
+  if (typeof window === 'undefined') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const file = path.join(process.cwd(), 'mock_persisted_data.json');
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, 'utf8');
+        const parsed = JSON.parse(content);
+        if (parsed.courses && Array.isArray(parsed.courses)) {
+          globalThis.__LECTURER_COURSES = parsed.courses;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load mock data:', err);
+    }
+  }
+}
+
+if (typeof window === 'undefined') {
+  loadMockData();
+}
+
+if (!globalThis.__LECTURER_COURSES) {
+  globalThis.__LECTURER_COURSES = [
+    {
     id: 'aml-501',
     code: 'CS-501',
     title: 'Advanced Machine Learning',
@@ -78,7 +124,15 @@ export const LECTURER_COURSES: LecturerCourse[] = [
     imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80',
   },
 ];
+}
+
+export const LECTURER_COURSES = globalThis.__LECTURER_COURSES!;
 
 export function getLecturerCourseById(courseId: string) {
   return LECTURER_COURSES.find((course) => course.id === courseId) ?? null;
+}
+
+export function addLecturerCourse(course: LecturerCourse) {
+  LECTURER_COURSES.push(course);
+  saveMockData();
 }

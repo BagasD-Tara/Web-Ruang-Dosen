@@ -10,8 +10,9 @@ interface CourseCardProps {
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onClick, onEnroll }) => {
   return (
     <article
-      className="flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-lg"
+      className="flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-lg cursor-pointer"
       style={{ borderColor: 'var(--color-border)' }}
+      onClick={() => onClick(course)}
     >
       <div className={`relative flex h-48 w-full items-center justify-center ${course.bannerColorClass}`}>
         <span className="select-none text-6xl">{course.bannerEmoji}</span>
@@ -101,7 +102,14 @@ const CourseActionButton: React.FC<CourseActionButtonProps> = ({ status, onConti
               background: 'transparent',
             }
       }
-      onClick={requiresEnroll ? onEnroll : onContinue}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (requiresEnroll && onEnroll) {
+          onEnroll();
+        } else {
+          onContinue();
+        }
+      }}
     >
       {requiresEnroll ? 'Enroll' : 'Continue'}
     </button>

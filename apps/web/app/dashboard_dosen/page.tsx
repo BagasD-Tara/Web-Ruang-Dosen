@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { buildApiUrl } from "@/lib/api/apiConfig";
+import { DosenDashboardLayout } from "@/components/layout/DosenDashboardLayout";
 import "./dashboard.css";
 
 export default function DashboardPage() {
-  const [coursesOpen, setCoursesOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -27,13 +28,11 @@ export default function DashboardPage() {
           return;
         }
 
-        // Ambil data user dari localStorage
         let currentUser = JSON.parse(localStorage.getItem("user") || "null");
         if (currentUser) setUser(currentUser);
 
-        // Fetch profil terbaru dari /auth/profile
         try {
-          const profileRes = await fetch("http://localhost:3001/auth/profile", {
+          const profileRes = await fetch(buildApiUrl("/auth/profile"), {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (profileRes.ok) {
@@ -45,8 +44,7 @@ export default function DashboardPage() {
           console.error("Failed to fetch profile", e);
         }
 
-        // Fetch semua courses
-        const coursesRes = await fetch("http://localhost:3001/courses", {
+        const coursesRes = await fetch(buildApiUrl("/courses"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -54,14 +52,12 @@ export default function DashboardPage() {
         
         if (coursesRes.ok) {
           const allCourses = await coursesRes.json();
-          // Filter kursus dimana dosen ini adalah instruktur
           const myCourses = allCourses.filter(
             (c: any) => c.instructor?.id === currentUser?.id || c.instructorId === currentUser?.id
           );
           
           setCourses(myCourses);
 
-          // Kalkulasi statistik jumlah mahasiswa dari enrollments
           const totalStudents = myCourses.reduce(
             (acc: number, curr: any) => acc + (curr._count?.enrollments || 0),
             0
@@ -83,388 +79,243 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [router]);
 
-  // Fungsi utilitas untuk mendapatkan inisial nama
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
-
   if (loading) {
     return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>Memuat...</div>;
   }
 
   return (
-    <div className="app-wrapper">
-      {/* ============================================================
-          SIDEBAR
-      ============================================================ */}
-      <aside className="sidebar">
-        {/* Logo */}
-        <div className="sidebar-header">
-          <div className="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c3 3 9 3 12 0v-5" />
-            </svg>
+    <DosenDashboardLayout>
+      <div className="dashboard-content">
+        {/* ---- WELCOME BANNER ---- */}
+        <section className="welcome-banner">
+          <div className="banner-decoration">
+            <div className="banner-circle banner-circle-1"></div>
+            <div className="banner-circle banner-circle-2"></div>
+            <div className="banner-circle banner-circle-3"></div>
+            <div className="banner-dots"></div>
           </div>
-          <span className="logo-text">Ruang<span>Dosen</span></span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          <div className="nav-item">
-            <Link href="/dashboard_dosen" className="nav-link active">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-              Dashboard
-            </Link>
+          <div className="banner-content">
+            <p className="banner-greeting">Selamat Datang Kembali</p>
+            <h2 className="banner-title">Halo, {user?.name || "Dosen"}! 👋</h2>
+            <p className="banner-subtitle">Anda memiliki <strong>{stats.pendingSubmissions} tugas mahasiswa</strong> yang menunggu untuk ditinjau hari ini.</p>
           </div>
-
-          <div className={`nav-item ${coursesOpen ? "open" : ""}`}>
-            <div className="nav-link" onClick={() => setCoursesOpen(!coursesOpen)} style={{ cursor: "pointer" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+          <div className="banner-actions">
+            <button className="btn-primary-white" id="review-submissions-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
               </svg>
-              Courses
-              <svg className="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                {coursesOpen ? <line x1="5" y1="12" x2="19" y2="12" /> : <polyline points="6 9 12 15 18 9" />}
-              </svg>
-            </div>
-            <div className="sub-nav">
-              {courses.map((c) => (
-                <Link key={c.id} href="#" className="sub-nav-link">{c.title}</Link>
-              ))}
-              <Link href="#" className="sub-nav-link">+ Add Course</Link>
-            </div>
-          </div>
-
-          <div className="nav-item">
-            <Link href="#" className="nav-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              Tinjau Tugas
+            </button>
+            <button className="btn-outline-white" id="view-schedule-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              Calendar
-            </Link>
-          </div>
-
-          <div className="nav-item">
-            <Link href="#" className="nav-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-              Resources
-            </Link>
-          </div>
-        </nav>
-
-        {/* User card at bottom */}
-        <div className="sidebar-footer">
-          <div className="user-card" onClick={() => {
-            localStorage.clear();
-            router.push("/login");
-          }}>
-            <div className="user-avatar">{getInitials(user?.name)}</div>
-            <div className="user-info">
-              <p className="user-name">{user?.name || "Dosen"}</p>
-              <p className="user-role">{user?.role === "LECTURER" ? "Dosen" : user?.role || "Akademik"}</p>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <title>Logout</title>
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </div>
-        </div>
-      </aside>
-
-      {/* ============================================================
-          MAIN CONTENT
-      ============================================================ */}
-      <main className="main-content">
-
-        {/* TOP BAR */}
-        <header className="top-bar">
-          <div>
-          </div>
-          <div className="top-bar-right">
-            <button className="icon-btn" id="notif-btn" title="Notifikasi">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 01-3.46 0" />
-              </svg>
-              <span className="notif-dot"></span>
+              Jadwal Hari Ini
             </button>
-
-            <button className="icon-btn" id="settings-btn" title="Pengaturan">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M21 12h-2M5 12H3M12 3V1M12 23v-2" />
-              </svg>
-            </button>
-
-            <button className="avatar-btn" id="profile-btn" title="Profil">{getInitials(user?.name)}</button>
           </div>
-        </header>
+        </section>
 
-        {/* DASHBOARD CONTENT */}
-        <div className="dashboard-content">
+        {/* ---- STAT CARDS ---- */}
+        <section className="stat-overview">
+          <div className="stat-card">
+            <div className="stat-card-accent accent-blue"></div>
+            <div className="stat-icon-wrap blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+              </svg>
+            </div>
+            <div className="stat-body">
+              <p className="stat-label">Mata Kuliah Aktif</p>
+              <p className="stat-value">{stats.activeCourses}</p>
+              <p className="stat-change neutral">Semester Berjalan</p>
+            </div>
+          </div>
 
-          {/* ---- WELCOME BANNER ---- */}
-          <section className="welcome-banner">
-            <div className="banner-decoration">
-              <div className="banner-circle banner-circle-1"></div>
-              <div className="banner-circle banner-circle-2"></div>
-              <div className="banner-circle banner-circle-3"></div>
-              <div className="banner-dots"></div>
+          <div className="stat-card">
+            <div className="stat-card-accent accent-green"></div>
+            <div className="stat-icon-wrap green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
+              </svg>
             </div>
-            <div className="banner-content">
-              <p className="banner-greeting">Selamat Datang Kembali</p>
-              <h2 className="banner-title">Halo, {user?.name || "Dosen"}! 👋</h2>
-              <p className="banner-subtitle">Anda memiliki <strong>{stats.pendingSubmissions} tugas mahasiswa</strong> yang menunggu untuk ditinjau hari ini.</p>
+            <div className="stat-body">
+              <p className="stat-label">Total Mahasiswa</p>
+              <p className="stat-value">{stats.totalStudents}</p>
+              <p className="stat-change up">
+                Di semua mata kuliah
+              </p>
             </div>
-            <div className="banner-actions">
-              <button className="btn-primary-white" id="review-submissions-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                Tinjau Tugas
-              </button>
-              <button className="btn-outline-white" id="view-schedule-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                Jadwal Hari Ini
-              </button>
+          </div>
+
+          <div className="stat-card alert-card">
+            <div className="stat-card-accent accent-orange"></div>
+            <div className="stat-icon-wrap orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            </div>
+            <div className="stat-body">
+              <p className="stat-label">Tugas Pending</p>
+              <p className="stat-value">{stats.pendingSubmissions}</p>
+              <p className="stat-change" style={{ color: "var(--orange)" }}>Perlu ditinjau segera</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-accent accent-purple"></div>
+            <div className="stat-icon-wrap purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            </div>
+            <div className="stat-body">
+              <p className="stat-label">Proyek Riset</p>
+              <p className="stat-value">{stats.researchProjects}</p>
+              <p className="stat-change neutral">Data statis</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ---- MAIN BODY ---- */}
+        <div className="main-body-layout">
+          {/* Course Management */}
+          <section className="course-management">
+            <div className="section-header">
+              <h3 className="section-title">Manajemen Mata Kuliah</h3>
+              <Link href="/dosen/courses" className="view-all-link">
+                Lihat Semua
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+              </Link>
+            </div>
+
+            <div className="course-grid">
+              {courses.length > 0 ? (
+                courses.map((course, index) => {
+                  const isPurple = index % 2 !== 0;
+                  return (
+                    <div className="course-card" key={course.id}>
+                      <div className="course-card-top">
+                        <div className={`course-icon-wrap ${isPurple ? "purple" : "blue"}`}>
+                          {isPurple ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                            </svg>
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="course-badge">{course.id.substring(0, 8).toUpperCase()}</span>
+                      </div>
+                      <h4 className="course-name">{course.title}</h4>
+                      <div className="course-meta">
+                        <span>{course.description ? course.description.substring(0, 20) + "..." : "Tanpa deskripsi"}</span>
+                        <span className="course-meta-dot"></span>
+                        <span>{course._count?.enrollments || 0} Mahasiswa</span>
+                      </div>
+                      <div className="progress-section">
+                        <div className="progress-label">
+                          <span className="progress-text">Penyelesaian Silabus</span>
+                          <span className="progress-pct">{isPurple ? "40%" : "65%"}</span>
+                        </div>
+                        <div className="progress-track">
+                          <div className={`progress-fill ${isPurple ? "purple" : "blue"}`} style={{ width: isPurple ? "40%" : "65%" }}></div>
+                        </div>
+                      </div>
+                      <div className="course-actions">
+                        <Link href={`/dosen/courses/${course.id}`} className="btn-outline" style={{ textDecoration: 'none', textAlign: 'center' }}>Kelola Modul</Link>
+                        <Link href={`/dosen/courses/${course.id}`} className="btn-filled" style={{ textDecoration: 'none', textAlign: 'center' }}>Detail</Link>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ padding: "30px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)" }}>
+                  <p style={{ color: "var(--text-muted)", marginBottom: "10px" }}>Anda belum memiliki mata kuliah yang diampu.</p>
+                  <button className="btn-filled">Buat Mata Kuliah Baru</button>
+                </div>
+              )}
             </div>
           </section>
 
-          {/* ---- STAT CARDS ---- */}
-          <section className="stat-overview">
-            <div className="stat-card">
-              <div className="stat-card-accent accent-blue"></div>
-              <div className="stat-icon-wrap blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                </svg>
-              </div>
-              <div className="stat-body">
-                <p className="stat-label">Mata Kuliah Aktif</p>
-                <p className="stat-value">{stats.activeCourses}</p>
-                <p className="stat-change neutral">Semester Berjalan</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-card-accent accent-green"></div>
-              <div className="stat-icon-wrap green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </div>
-              <div className="stat-body">
-                <p className="stat-label">Total Mahasiswa</p>
-                <p className="stat-value">{stats.totalStudents}</p>
-                <p className="stat-change up">
-                  Di semua mata kuliah
-                </p>
-              </div>
-            </div>
-
-            <div className="stat-card alert-card">
-              <div className="stat-card-accent accent-orange"></div>
-              <div className="stat-icon-wrap orange">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
-              </div>
-              <div className="stat-body">
-                <p className="stat-label">Tugas Pending</p>
-                <p className="stat-value">{stats.pendingSubmissions}</p>
-                <p className="stat-change" style={{ color: "var(--orange)" }}>Perlu ditinjau segera</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-card-accent accent-purple"></div>
-              <div className="stat-icon-wrap purple">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </div>
-              <div className="stat-body">
-                <p className="stat-label">Proyek Riset</p>
-                <p className="stat-value">{stats.researchProjects}</p>
-                <p className="stat-change neutral">Data statis</p>
-              </div>
-            </div>
-          </section>
-
-          {/* ---- MAIN BODY ---- */}
-          <div className="main-body-layout">
-
-            {/* Course Management */}
-            <section className="course-management">
+          {/* Recent Submissions Panel */}
+          <aside className="submissions-panel">
+            <div className="panel-header">
               <div className="section-header">
-                <h3 className="section-title">Manajemen Mata Kuliah</h3>
+                <h3 className="section-title">
+                  Tugas Terbaru
+                </h3>
                 <Link href="#" className="view-all-link">
                   Lihat Semua
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
                 </Link>
               </div>
+            </div>
 
-              <div className="course-grid">
-                {courses.length > 0 ? (
-                  courses.map((course, index) => {
-                    const isPurple = index % 2 !== 0;
-                    return (
-                      <div className="course-card" key={course.id}>
-                        <div className="course-card-top">
-                          <div className={`course-icon-wrap ${isPurple ? "purple" : "blue"}`}>
-                            {isPurple ? (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                              </svg>
-                            ) : (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-                              </svg>
-                            )}
-                          </div>
-                          <span className="course-badge">{course.id.substring(0, 8).toUpperCase()}</span>
-                        </div>
-                        <h4 className="course-name">{course.title}</h4>
-                        <div className="course-meta">
-                          <span>{course.description ? course.description.substring(0, 20) + "..." : "Tanpa deskripsi"}</span>
-                          <span className="course-meta-dot"></span>
-                          <span>{course._count?.enrollments || 0} Mahasiswa</span>
-                        </div>
-                        <div className="progress-section">
-                          <div className="progress-label">
-                            <span className="progress-text">Penyelesaian Silabus</span>
-                            <span className="progress-pct">{isPurple ? "40%" : "65%"}</span>
-                          </div>
-                          <div className="progress-track">
-                            <div className={`progress-fill ${isPurple ? "purple" : "blue"}`} style={{ width: isPurple ? "40%" : "65%" }}></div>
-                          </div>
-                        </div>
-                        <div className="course-actions">
-                          <button className="btn-outline">Kelola Modul</button>
-                          <button className="btn-filled">Nilai</button>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div style={{ padding: "30px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)" }}>
-                    <p style={{ color: "var(--text-muted)", marginBottom: "10px" }}>Anda belum memiliki mata kuliah yang diampu.</p>
-                    <button className="btn-filled">Buat Mata Kuliah Baru</button>
+            <div className="panel-body">
+              {/* Submission 1 */}
+              <div className="submission-item">
+                <div className="submission-top">
+                  <div className="submission-student">
+                    <div className="student-avatar avatar-blue">BS</div>
+                    <span className="student-name">Budi Santoso</span>
                   </div>
-                )}
-              </div>
-            </section>
-
-            {/* Recent Submissions Panel */}
-            <aside className="submissions-panel">
-              <div className="panel-header">
-                <div className="section-header">
-                  <h3 className="section-title">
-                    Tugas Terbaru
-                  </h3>
-                  <Link href="#" className="view-all-link">
-                    Lihat Semua
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-                  </Link>
+                  <span className="submission-time">2j lalu</span>
+                </div>
+                <p className="submission-title">Binary Tree Implementation</p>
+                <div className="submission-footer">
+                  <span className="tag tag-blue">Data Structures</span>
+                  <span className="status-badge status-review">Perlu Ditinjau</span>
                 </div>
               </div>
 
-              <div className="panel-body">
-                {/* Submission 1 */}
-                <div className="submission-item">
-                  <div className="submission-top">
-                    <div className="submission-student">
-                      <div className="student-avatar avatar-blue">BS</div>
-                      <span className="student-name">Budi Santoso</span>
-                    </div>
-                    <span className="submission-time">2j lalu</span>
+              {/* Submission 2 */}
+              <div className="submission-item">
+                <div className="submission-top">
+                  <div className="submission-student">
+                    <div className="student-avatar avatar-green">SA</div>
+                    <span className="student-name">Siti Aminah</span>
                   </div>
-                  <p className="submission-title">Binary Tree Implementation</p>
-                  <div className="submission-footer">
-                    <span className="tag tag-blue">Data Structures</span>
-                    <span className="status-badge status-review">Perlu Ditinjau</span>
-                  </div>
+                  <span className="submission-time">4j lalu</span>
                 </div>
-
-                {/* Submission 2 */}
-                <div className="submission-item">
-                  <div className="submission-top">
-                    <div className="submission-student">
-                      <div className="student-avatar avatar-green">SA</div>
-                      <span className="student-name">Siti Aminah</span>
-                    </div>
-                    <span className="submission-time">4j lalu</span>
-                  </div>
-                  <p className="submission-title">Graph Traversal Essay</p>
-                  <div className="submission-footer">
-                    <span className="tag tag-purple">Algorithm Analysis</span>
-                    <span className="status-badge status-review">Perlu Ditinjau</span>
-                  </div>
-                </div>
-
-                {/* Submission 3 */}
-                <div className="submission-item">
-                  <div className="submission-top">
-                    <div className="submission-student">
-                      <div className="student-avatar avatar-orange">RF</div>
-                      <span className="student-name">Reza Fahlevi</span>
-                    </div>
-                    <span className="submission-time">Kemarin</span>
-                  </div>
-                  <p className="submission-title">Neural Network Basics</p>
-                  <div className="submission-footer">
-                    <span className="tag tag-pink">Machine Learning</span>
-                    <span className="status-badge status-graded">Sudah Dinilai</span>
-                  </div>
+                <p className="submission-title">Graph Traversal Essay</p>
+                <div className="submission-footer">
+                  <span className="tag tag-purple">Algorithm Analysis</span>
+                  <span className="status-badge status-review">Perlu Ditinjau</span>
                 </div>
               </div>
 
-              <div className="panel-footer">
-                <Link href="#" className="view-all-btn" id="view-all-submissions-btn">
-                  Lihat Semua Tugas
-                </Link>
+              {/* Submission 3 */}
+              <div className="submission-item">
+                <div className="submission-top">
+                  <div className="submission-student">
+                    <div className="student-avatar avatar-orange">RF</div>
+                    <span className="student-name">Reza Fahlevi</span>
+                  </div>
+                  <span className="submission-time">Kemarin</span>
+                </div>
+                <p className="submission-title">Neural Network Basics</p>
+                <div className="submission-footer">
+                  <span className="tag tag-pink">Machine Learning</span>
+                  <span className="status-badge status-graded">Sudah Dinilai</span>
+                </div>
               </div>
-            </aside>
+            </div>
 
-          </div>
+            <div className="panel-footer">
+              <Link href="#" className="view-all-btn" id="view-all-submissions-btn">
+                Lihat Semua Tugas
+              </Link>
+            </div>
+          </aside>
         </div>
-
-        {/* FOOTER */}
-        <footer className="footer">
-          <p><strong>Ruang Dosen</strong> &copy; 2024 Platform Akademik. All rights reserved.</p>
-          <div className="footer-links">
-            <Link href="#">Kebijakan Privasi</Link>
-            <Link href="#">Syarat Layanan</Link>
-            <Link href="#">Pusat Bantuan</Link>
-            <Link href="#">Hubungi Support</Link>
-          </div>
-        </footer>
-
-      </main>
-    </div>
+      </div>
+    </DosenDashboardLayout>
   );
 }
+

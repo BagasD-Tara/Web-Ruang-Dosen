@@ -65,8 +65,54 @@ export interface LecturerManageCourseData {
 
 type LecturerManageCourseDetail = Omit<LecturerManageCourseData, 'course'>;
 
-const MANAGE_COURSE_OVERRIDES: Record<string, LecturerManageCourseDetail> = {
-  'aml-501': {
+declare global {
+  var __MANAGE_COURSE_OVERRIDES: Record<string, LecturerManageCourseDetail> | undefined;
+}
+
+function saveMockData() {
+  if (typeof window === 'undefined') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const file = path.join(process.cwd(), 'mock_persisted_data.json');
+      const courses = globalThis.__LECTURER_COURSES || [];
+      const data = {
+        courses,
+        overrides: globalThis.__MANAGE_COURSE_OVERRIDES,
+      };
+      fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+      console.error('Failed to save mock data:', err);
+    }
+  }
+}
+
+function loadMockData() {
+  if (typeof window === 'undefined') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const file = path.join(process.cwd(), 'mock_persisted_data.json');
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, 'utf8');
+        const parsed = JSON.parse(content);
+        if (parsed.overrides) {
+          globalThis.__MANAGE_COURSE_OVERRIDES = parsed.overrides;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load mock data:', err);
+    }
+  }
+}
+
+if (typeof window === 'undefined') {
+  loadMockData();
+}
+
+if (!globalThis.__MANAGE_COURSE_OVERRIDES) {
+  globalThis.__MANAGE_COURSE_OVERRIDES = {
+    'aml-501': {
     termLabel: 'Fall Semester 2026',
     credits: 3,
     enrolledStudents: 48,
@@ -191,6 +237,9 @@ const MANAGE_COURSE_OVERRIDES: Record<string, LecturerManageCourseDetail> = {
     ],
   },
 };
+}
+
+export const MANAGE_COURSE_OVERRIDES = globalThis.__MANAGE_COURSE_OVERRIDES!;
 
 export function getLecturerManageCourseById(courseId: string) {
   const course = getLecturerCourseById(courseId);
@@ -428,4 +477,379 @@ export function getLecturerAssignmentsByCourseId(courseId: string) {
     termLabel: courseData.termLabel,
     assignments,
   };
+}
+
+export function createLecturerModule(
+  courseId: string,
+  moduleData: {
+    title: string;
+    description: string;
+    sequence: string;
+    durationWeeks: string;
+    visibilityStatus: 'Published' | 'Draft';
+  }
+) {
+  let courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) {
+    const course = getLecturerCourseById(courseId);
+    if (course) {
+      courseDetail = buildDefaultManageCourseDetail(course);
+    } else {
+      courseDetail = {
+        termLabel: 'Current Semester',
+        credits: 3,
+        enrolledStudents: 0,
+        weeklyGrowth: 0,
+        modules: [],
+      };
+    }
+    MANAGE_COURSE_OVERRIDES[courseId] = courseDetail;
+  }
+
+  // Parse order sequence, e.g. "Module 4 (End of current list)" -> "M4"
+  const match = moduleData.sequence.match(/Module\s+(\d+)/);
+  const orderLabel = match ? `M${match[1]}` : `M${courseDetail.modules.length + 1}`;
+
+  const newModule: LecturerCourseModule = {
+    id: `${courseId}-m${Date.now()}`,
+    orderLabel,
+    title: moduleData.title,
+    weekLabel: `Duration: ${moduleData.durationWeeks} Weeks`,
+    status: moduleData.visibilityStatus,
+    description: moduleData.description,
+    durationWeeks: Number(moduleData.durationWeeks) || 1,
+    accessControl: 'Enrolled Students Only',
+    materials: [],
+    assessments: [],
+    defaultExpanded: true,
+  };
+
+  courseDetail.modules.push(newModule);
+  saveMockData();
+  return newModule;
+}
+
+export function updateLecturerModule(
+  courseId: string,
+  moduleId: string,
+  moduleData: {
+    title: string;
+    description: string;
+    sequence: string;
+    durationWeeks: string;
+    visibilityStatus: 'Published' | 'Draft';
+  }
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return null;
+
+  const moduleIndex = courseDetail.modules.findIndex((m) => m.id === moduleId);
+  if (moduleIndex === -1) return null;
+
+  const match = moduleData.sequence.match(/Module\s+(\d+)/);
+  const orderLabel = match ? `M${match[1]}` : courseDetail.modules[moduleIndex].orderLabel;
+
+  courseDetail.modules[moduleIndex] = {
+    ...courseDetail.modules[moduleIndex],
+    orderLabel,
+    title: moduleData.title,
+    weekLabel: `Duration: ${moduleData.durationWeeks} Weeks`,
+    status: moduleData.visibilityStatus,
+    description: moduleData.description,
+    durationWeeks: Number(moduleData.durationWeeks) || 1,
+  };
+
+  saveMockData();
+  return courseDetail.modules[moduleIndex];
+}
+
+export function deleteLecturerModule(courseId: string, moduleId: string) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return false;
+
+  const initialLength = courseDetail.modules.length;
+  courseDetail.modules = courseDetail.modules.filter((m) => m.id !== moduleId);
+  
+  saveMockData();
+  return courseDetail.modules.length < initialLength;
+}
+
+export function createLecturerMaterial(
+  courseId: string,
+  moduleId: string,
+  materialData: {
+    title: string;
+    description: string;
+    materialKind: LecturerMaterialKind;
+    visibilityStatus: LecturerMaterialVisibility;
+    externalUrl: string;
+    fileName?: string;
+    fileMeta?: string;
+  }
+) {
+  let courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) {
+    const course = getLecturerCourseById(courseId);
+    if (course) {
+      courseDetail = buildDefaultManageCourseDetail(course);
+    } else {
+      courseDetail = {
+        termLabel: 'Current Semester',
+        credits: 3,
+        enrolledStudents: 0,
+        weeklyGrowth: 0,
+        modules: [],
+      };
+    }
+    MANAGE_COURSE_OVERRIDES[courseId] = courseDetail;
+  }
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return null;
+
+  const newMaterial: LecturerModuleMaterial = {
+    id: `${moduleId}-mat-${Date.now()}`,
+    title: materialData.title,
+    kind: materialData.materialKind,
+    meta: materialData.materialKind === 'video' ? 'Video' : materialData.materialKind === 'document' ? 'PDF Document' : 'External Link',
+    description: materialData.description,
+    visibilityStatus: materialData.visibilityStatus,
+    fileName: materialData.fileName,
+    fileMeta: materialData.fileMeta,
+    externalUrl: materialData.externalUrl,
+  };
+
+  targetModule.materials.push(newMaterial);
+  saveMockData();
+  return newMaterial;
+}
+
+export function updateLecturerMaterial(
+  courseId: string,
+  moduleId: string,
+  materialId: string,
+  materialData: {
+    title: string;
+    description: string;
+    materialKind: LecturerMaterialKind;
+    visibilityStatus: LecturerMaterialVisibility;
+    externalUrl: string;
+    fileName?: string;
+    fileMeta?: string;
+  }
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return null;
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return null;
+
+  const matIndex = targetModule.materials.findIndex((m) => m.id === materialId);
+  if (matIndex === -1) return null;
+
+  targetModule.materials[matIndex] = {
+    ...targetModule.materials[matIndex],
+    title: materialData.title,
+    kind: materialData.materialKind,
+    meta: materialData.materialKind === 'video' ? 'Video' : materialData.materialKind === 'document' ? 'PDF Document' : 'External Link',
+    description: materialData.description,
+    visibilityStatus: materialData.visibilityStatus,
+    fileName: materialData.fileName ?? targetModule.materials[matIndex].fileName,
+    fileMeta: materialData.fileMeta ?? targetModule.materials[matIndex].fileMeta,
+    externalUrl: materialData.externalUrl,
+  };
+
+  saveMockData();
+  return targetModule.materials[matIndex];
+}
+
+export function deleteLecturerMaterial(
+  courseId: string,
+  moduleId: string,
+  materialId: string
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return false;
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return false;
+
+  const initialLength = targetModule.materials.length;
+  targetModule.materials = targetModule.materials.filter((m) => m.id !== materialId);
+
+  saveMockData();
+  return targetModule.materials.length < initialLength;
+}
+
+export function createLecturerAssignment(
+  courseId: string,
+  moduleId: string,
+  assignmentData: {
+    title: string;
+    description: string;
+    assignedDate: string;
+    deadline: string;
+    submissionRequirement: string;
+    status: LecturerAssignmentStatus;
+    templateName?: string;
+    templateMeta?: string;
+  }
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return null;
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return null;
+
+  const newAssignment: LecturerModuleAssessment = {
+    id: `${moduleId}-asgn-${Date.now()}`,
+    title: assignmentData.title,
+    kind: 'assignment',
+    meta: `Due ${new Date(assignmentData.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    description: assignmentData.description,
+    status: assignmentData.status,
+    assignedDate: assignmentData.assignedDate,
+    deadline: assignmentData.deadline,
+    submissionRequirement: assignmentData.submissionRequirement,
+    templateName: assignmentData.templateName,
+    templateMeta: assignmentData.templateMeta,
+    submittedCount: 0,
+    studentCount: courseDetail.enrolledStudents,
+    badgeLabel: assignmentData.status === 'Active' ? '0 Submissions' : assignmentData.status,
+    badgeTone: assignmentData.status === 'Active' ? 'brand' : 'neutral',
+  };
+
+  targetModule.assessments.push(newAssignment);
+  saveMockData();
+  return newAssignment;
+}
+
+export function updateLecturerAssignment(
+  courseId: string,
+  moduleId: string,
+  assignmentId: string,
+  assignmentData: {
+    title: string;
+    description: string;
+    assignedDate: string;
+    deadline: string;
+    submissionRequirement: string;
+    status: LecturerAssignmentStatus;
+    templateName?: string;
+    templateMeta?: string;
+  }
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return null;
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return null;
+
+  const asgIndex = targetModule.assessments.findIndex(
+    (a) => a.id === assignmentId && a.kind === 'assignment'
+  );
+  if (asgIndex === -1) return null;
+
+  targetModule.assessments[asgIndex] = {
+    ...targetModule.assessments[asgIndex],
+    title: assignmentData.title,
+    meta: `Due ${new Date(assignmentData.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    description: assignmentData.description,
+    status: assignmentData.status,
+    assignedDate: assignmentData.assignedDate,
+    deadline: assignmentData.deadline,
+    submissionRequirement: assignmentData.submissionRequirement,
+    templateName: assignmentData.templateName ?? targetModule.assessments[asgIndex].templateName,
+    templateMeta: assignmentData.templateMeta ?? targetModule.assessments[asgIndex].templateMeta,
+    badgeLabel: assignmentData.status === 'Active'
+      ? `${targetModule.assessments[asgIndex].submittedCount ?? 0} Submissions`
+      : assignmentData.status,
+    badgeTone: assignmentData.status === 'Active' ? 'brand' : 'neutral',
+  };
+
+  saveMockData();
+  return targetModule.assessments[asgIndex];
+}
+
+export function deleteLecturerAssignment(
+  courseId: string,
+  moduleId: string,
+  assignmentId: string
+) {
+  // If no override exists for this course, initialize one from the base data
+  if (!MANAGE_COURSE_OVERRIDES[courseId]) {
+    const baseData = getLecturerManageCourseById(courseId);
+    if (baseData) {
+      const { course: _course, ...rest } = baseData;
+      MANAGE_COURSE_OVERRIDES[courseId] = rest;
+    }
+  }
+
+  const courseDetail = MANAGE_COURSE_OVERRIDES[courseId];
+  if (!courseDetail) return false;
+
+  const targetModule = courseDetail.modules.find((m) => m.id === moduleId);
+  if (!targetModule) return false;
+
+  const initialLength = targetModule.assessments.length;
+  targetModule.assessments = targetModule.assessments.filter(
+    (a) => !(a.id === assignmentId && a.kind === 'assignment')
+  );
+
+  saveMockData();
+  return targetModule.assessments.length < initialLength;
 }

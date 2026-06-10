@@ -31,6 +31,8 @@ interface LecturerModuleEditorViewProps {
   termLabel: string;
   moduleCount: number;
   module?: LecturerCourseModule;
+  onSave?: (data: ModuleEditorFormState) => Promise<void>;
+  onDelete?: () => Promise<void>;
 }
 
 const MODULE_DURATION_OPTIONS = ['1', '2', '3', '4', '5'];
@@ -41,12 +43,16 @@ export function LecturerModuleEditorView({
   termLabel,
   moduleCount,
   module,
+  onSave,
+  onDelete,
 }: LecturerModuleEditorViewProps) {
   const [formState, setFormState] = React.useState<ModuleEditorFormState>(() =>
     createInitialFormState(mode, moduleCount, module)
   );
   const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const pageTitle = mode === 'create' ? 'Create New Module' : 'Edit Module';
   const submitButtonLabel = mode === 'create' ? 'Create Module' : 'Save Changes';
@@ -95,11 +101,22 @@ export function LecturerModuleEditorView({
         ) : null}
 
         <form
-          className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
+          className={`${LECTURER_CARD_CLASSNAME} overflow-visible`}
           style={{ borderColor: 'var(--color-border)' }}
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            setFeedbackMessage(getFeedbackMessage(mode));
+            if (onSave) {
+              setIsSaving(true);
+              try {
+                await onSave(formState);
+              } catch (error) {
+                console.error(error);
+                setFeedbackMessage('An error occurred while saving.');
+                setIsSaving(false);
+              }
+            } else {
+              setFeedbackMessage(getFeedbackMessage(mode));
+            }
           }}
         >
           <div className="space-y-0 px-5 py-6 sm:px-7 sm:py-7">
@@ -197,11 +214,11 @@ export function LecturerModuleEditorView({
             </Link>
             <button
               type="submit"
-              disabled={!canSubmitModule(formState)}
+              disabled={!canSubmitModule(formState) || isSaving}
               className="inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
               style={{ background: 'var(--color-brand-primary)' }}
             >
-              {submitButtonLabel}
+              {isSaving ? 'Saving...' : submitButtonLabel}
             </button>
           </div>
         </form>
@@ -211,10 +228,24 @@ export function LecturerModuleEditorView({
         <DeleteConfirmationDialog
           title="Delete Module"
           body={`This will remove "${formState.title}" from ${course.title}.`}
-          confirmLabel="Delete Module"
+          confirmLabel={isDeleting ? 'Deleting...' : 'Delete Module'}
           labelledById="delete-module-title"
           onCancel={() => setIsDeleteDialogOpen(false)}
-          onConfirm={() => setIsDeleteDialogOpen(false)}
+          onConfirm={async () => {
+            if (onDelete) {
+              setIsDeleting(true);
+              try {
+                await onDelete();
+              } catch (error) {
+                console.error(error);
+                setFeedbackMessage('An error occurred while deleting.');
+                setIsDeleting(false);
+                setIsDeleteDialogOpen(false);
+              }
+            } else {
+              setIsDeleteDialogOpen(false);
+            }
+          }}
         />
       ) : null}
     </>

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { LecturerManageEnrollmentView } from '@/components/lecturer/LecturerManageEnrollmentView';
-import { getLecturerEnrollmentData } from '@/lib/mock/lecturerEnrollment';
+import { getLecturerEnrollment } from '@/lib/api/courseRepository';
 
 export default async function LecturerManageEnrollmentPage({
   params,
@@ -8,7 +8,7 @@ export default async function LecturerManageEnrollmentPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const enrollmentData = getLecturerEnrollmentData(courseId);
+  const enrollmentData = await getLecturerEnrollment(courseId);
 
   if (!enrollmentData) {
     notFound();

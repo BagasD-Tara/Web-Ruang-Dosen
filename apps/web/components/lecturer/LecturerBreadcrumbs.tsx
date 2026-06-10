@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import './LecturerBreadcrumbs.css';
 
 interface LecturerBreadcrumbItem {
   label: string;
@@ -11,21 +12,18 @@ interface LecturerBreadcrumbsProps {
 
 export function LecturerBreadcrumbs({ items }: LecturerBreadcrumbsProps) {
   return (
-    <nav
-      className="mb-6 flex flex-wrap items-center gap-2 text-sm"
-      style={{ color: 'var(--color-text-secondary)' }}
-    >
+    <nav className="breadcrumbs">
       {items.map((item, index) => {
         const isLastItem = index === items.length - 1;
 
         return (
-          <div key={`${item.label}-${index}`} className="flex items-center gap-2">
+          <div key={`${item.label}-${index}`} className="breadcrumb-item">
             {item.href && !isLastItem ? (
-              <Link href={item.href} className="no-underline transition-opacity hover:opacity-70">
+              <Link href={item.href} className="breadcrumb-link">
                 {item.label}
               </Link>
             ) : (
-              <span style={{ color: isLastItem ? 'var(--color-text-primary)' : undefined }}>
+              <span className={isLastItem ? "breadcrumb-current" : ""}>
                 {item.label}
               </span>
             )}
