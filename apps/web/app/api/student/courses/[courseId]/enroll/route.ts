@@ -1,0 +1,27 @@
+import { NextResponse } from 'next/server';
+import { enrollInCourse } from '@/lib/api/courseApi';
+import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
+import { ApiRequestError } from '@/lib/api/httpClient';
+
+export async function POST(
+  _request: Request,
+  context: { params: Promise<{ courseId: string }> }
+) {
+  try {
+    const { courseId } = await context.params;
+    const accessToken = await getDemoStudentAccessToken();
+
+    await enrollInCourse(courseId, accessToken);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 409) {
+      return NextResponse.json({ success: true, alreadyEnrolled: true });
+    }
+
+    return NextResponse.json(
+      { success: false, message: 'Failed to enroll in course.' },
+      { status: 500 }
+    );
+  }
+}

@@ -1,0 +1,494 @@
+'use client';
+
+import Link from 'next/link';
+import React from 'react';
+import type { LecturerManageCourseData } from '@/lib/mock/lecturerCourseManagement';
+import { LECTURER_COURSES } from '@/lib/mock/lecturerCourses';
+import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
+import { DeleteConfirmationDialog } from './shared/DeleteConfirmationDialog';
+import {
+  LECTURER_CARD_CLASSNAME,
+  LECTURER_COMPACT_CONTROL_CLASSNAME,
+} from './shared/lecturerUiStyles';
+import { updateFormField } from './shared/updateFormField';
+
+type CourseStatusOption = 'Active' | 'Draft';
+
+interface CourseSettingsFormState {
+  title: string;
+  department: string;
+  semester: string;
+  credits: string;
+  enrollmentCap: string;
+  description: string;
+  status: CourseStatusOption;
+}
+
+interface LecturerCourseSettingsViewProps {
+  data: LecturerManageCourseData;
+}
+
+const SEMESTER_OPTIONS = [
+  'Fall Semester 2026',
+  'Spring Semester 2027',
+  'Short Semester 2027',
+] as const;
+const CREDIT_OPTIONS = ['2', '3', '4'] as const;
+const DEPARTMENT_OPTIONS = Array.from(
+  new Set(LECTURER_COURSES.map((course) => course.department))
+).toSorted();
+
+export function LecturerCourseSettingsView({
+  data,
+}: LecturerCourseSettingsViewProps) {
+  const [formState, setFormState] = React.useState(() => createInitialSettingsState(data));
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  return (
+    <>
+      <div className="mx-auto w-full max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
+      <LecturerBreadcrumbs
+        items={[
+          { label: 'Home', href: '/dosen' },
+          { label: 'Courses', href: '/dosen/courses' },
+          { label: data.course.title, href: `/dosen/courses/${data.course.id}` },
+          { label: 'Course Settings' },
+        ]}
+      />
+
+      <section className="mb-8">
+        <p className="text-lg" style={{ color: 'var(--color-text-secondary)' }}>
+          {data.course.code} - {data.termLabel}
+        </p>
+        <h1
+          className="mt-3 text-[34px] font-bold leading-tight sm:text-[48px]"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
+          Course Settings
+        </h1>
+        <p
+          className="mt-3 max-w-[820px] text-lg leading-8"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          Update the core course information that students and teaching staff rely on:
+          title, semester, credits, enrollment capacity, and publication state.
+        </p>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <form
+          className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
+          style={{ borderColor: 'var(--color-border)' }}
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <div className="space-y-0 px-5 py-6 sm:px-7 sm:py-7">
+            <FormSection title="Basic Information">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField label="Course Title">
+                  <TextInput
+                    value={formState.title}
+                    onChange={(value) => updateFormField('title', value, setFormState)}
+                    placeholder="Enter course title"
+                  />
+                </FormField>
+                <FormField label="Department">
+                  <SelectInput
+                    value={formState.department}
+                    onChange={(value) => updateFormField('department', value, setFormState)}
+                    options={DEPARTMENT_OPTIONS}
+                  />
+                </FormField>
+                <FormField label="Semester">
+                  <SelectInput
+                    value={formState.semester}
+                    onChange={(value) => updateFormField('semester', value, setFormState)}
+                    options={SEMESTER_OPTIONS}
+                  />
+                </FormField>
+                <FormField label="Credits">
+                  <SelectInput
+                    value={formState.credits}
+                    onChange={(value) => updateFormField('credits', value, setFormState)}
+                    options={CREDIT_OPTIONS}
+                  />
+                </FormField>
+              </div>
+            </FormSection>
+
+            <FormSection title="Course Description">
+              <FormField label="Description">
+                <TextAreaInput
+                  value={formState.description}
+                  onChange={(value) => updateFormField('description', value, setFormState)}
+                  placeholder="Describe the course goals, coverage, and expected learning outcomes."
+                />
+              </FormField>
+            </FormSection>
+
+            <FormSection title="Enrollment Settings">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField label="Enrollment Capacity">
+                  <TextInput
+                    value={formState.enrollmentCap}
+                    onChange={(value) => updateFormField('enrollmentCap', value, setFormState)}
+                    placeholder="60"
+                  />
+                </FormField>
+                <ReadOnlyMetric
+                  label="Current Students"
+                  value={`${data.enrolledStudents} enrolled`}
+                />
+              </div>
+            </FormSection>
+
+            <FormSection title="Course Status">
+              <div className="space-y-4">
+                <SimpleRadioOption
+                  checked={formState.status === 'Active'}
+                  label="Active"
+                  onSelect={() => updateFormField('status', 'Active', setFormState)}
+                />
+                <SimpleRadioOption
+                  checked={formState.status === 'Draft'}
+                  label="Draft"
+                  onSelect={() => updateFormField('status', 'Draft', setFormState)}
+                />
+              </div>
+            </FormSection>
+          </div>
+
+          <div
+            className="flex flex-col gap-3 border-t px-5 py-5 sm:flex-row sm:justify-end sm:px-7"
+            style={{ borderColor: 'rgba(195,198,214,0.75)' }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="inline-flex h-12 items-center justify-center rounded-[14px] border px-5 text-base font-semibold transition-colors hover:bg-[#FFF5F5]"
+              style={{ borderColor: '#D92D20', color: '#D92D20' }}
+            >
+              Delete Course
+            </button>
+            <Link
+              href={`/dosen/courses/${data.course.id}`}
+              className="inline-flex h-12 items-center justify-center rounded-[14px] border px-5 text-base font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
+              style={{
+                borderColor: 'var(--color-brand-primary)',
+                color: 'var(--color-brand-primary)',
+              }}
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={!canSaveSettings(formState)}
+              className="inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+              style={{ background: 'var(--color-brand-primary)' }}
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+
+        <aside className="space-y-6">
+          <div
+            className={`${LECTURER_CARD_CLASSNAME} px-5 py-6 sm:px-6`}
+            style={{ borderColor: 'var(--color-border)' }}
+          >
+            <h2
+              className="text-[22px] font-bold"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              Course Summary
+            </h2>
+            <div className="mt-4 space-y-2">
+              <SummaryRow label="Modules" value={String(data.modules.length)} />
+              <SummaryRow label="Assignments" value={String(data.course.assignmentCount)} />
+              <SummaryRow label="Students" value={String(data.enrolledStudents)} />
+              <SummaryRow label="Department" value={formState.department} />
+              <SummaryRow label="Status" value={formState.status} />
+            </div>
+          </div>
+        </aside>
+      </div>
+      </div>
+
+      {isDeleteDialogOpen ? (
+        <DeleteConfirmationDialog
+          title="Delete Course"
+          body={`This will remove "${data.course.title}" from the lecturer course list.`}
+          confirmLabel="Delete Course"
+          labelledById="delete-course-title"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => setIsDeleteDialogOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="border-b py-6 first:pt-0 last:border-b-0 last:pb-0"
+      style={{ borderColor: 'rgba(195,198,214,0.75)' }}
+    >
+      <h2 className="mb-4 text-[22px] font-bold" style={{ color: 'var(--color-text-primary)' }}>
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span
+        className="mb-2 block text-sm font-semibold uppercase tracking-[0.04em]"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      className={LECTURER_COMPACT_CONTROL_CLASSNAME}
+      style={{
+        borderColor: 'var(--color-border)',
+        background: '#FFFFFF',
+        color: 'var(--color-text-primary)',
+      }}
+    />
+  );
+}
+
+function TextAreaInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      rows={6}
+      className="w-full rounded-[14px] border px-4 py-3 text-base outline-none transition-colors focus:border-[#7DA8FF]"
+      style={{
+        borderColor: 'var(--color-border)',
+        background: '#FFFFFF',
+        color: 'var(--color-text-primary)',
+      }}
+    />
+  );
+}
+
+function SelectInput({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${LECTURER_COMPACT_CONTROL_CLASSNAME} appearance-none pr-11`}
+        style={{
+          borderColor: 'var(--color-border)',
+          background: '#FFFFFF',
+          color: 'var(--color-text-primary)',
+        }}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <span
+        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        <SelectChevronIcon />
+      </span>
+    </div>
+  );
+}
+
+function ReadOnlyMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <span
+        className="mb-2 block text-sm font-semibold uppercase tracking-[0.04em]"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        {label}
+      </span>
+      <div
+        className="flex h-12 items-center rounded-[14px] border px-4 text-base"
+        style={{
+          borderColor: 'var(--color-border)',
+          background: '#F8FAFD',
+          color: 'var(--color-text-secondary)',
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function SimpleRadioOption({
+  checked,
+  label,
+  onSelect,
+}: {
+  checked: boolean;
+  label: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button type="button" onClick={onSelect} className="flex items-center gap-4 text-left">
+      <span
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border"
+        style={{
+          borderColor: checked ? 'var(--color-brand-primary)' : 'var(--color-border)',
+          background: '#FFFFFF',
+        }}
+      >
+        {checked ? (
+          <span
+            className="block h-3.5 w-3.5 rounded-full"
+            style={{ background: 'var(--color-brand-primary)' }}
+            aria-hidden="true"
+          />
+        ) : null}
+      </span>
+      <span
+        className="text-[18px] font-medium"
+        style={{ color: 'var(--color-text-primary)' }}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div
+      className="grid grid-cols-[minmax(0,110px)_minmax(0,1fr)] items-start gap-x-3 rounded-[14px] px-3 py-2.5"
+      style={{ background: '#F8FAFD' }}
+    >
+      <span
+        className="text-sm font-semibold uppercase tracking-[0.04em]"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-right text-base font-semibold leading-6"
+        style={{
+          color: 'var(--color-text-primary)',
+          wordBreak: 'break-word',
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function createInitialSettingsState(
+  data: LecturerManageCourseData
+): CourseSettingsFormState {
+  return {
+    title: data.course.title,
+    department: data.course.department,
+    semester: data.termLabel,
+    credits: String(data.credits),
+    enrollmentCap: String(Math.max(data.enrolledStudents + 12, 60)),
+    description: createCourseDescription(data),
+    status: data.course.status,
+  };
+}
+
+function createCourseDescription(data: LecturerManageCourseData) {
+  return `${data.course.title} is a lecturer-managed course for ${data.course.department} students. The course currently includes ${data.modules.length} modules and ${data.course.assignmentCount} assignments across ${data.termLabel.toLowerCase()}.`;
+}
+
+function canSaveSettings(formState: CourseSettingsFormState) {
+  return Boolean(
+    formState.title.trim() &&
+      formState.department.trim() &&
+      formState.semester.trim() &&
+      formState.credits.trim() &&
+      formState.enrollmentCap.trim() &&
+      formState.description.trim()
+  );
+}
+
+function SelectChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 5.5 7 9l3.5-3.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
