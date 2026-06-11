@@ -61,32 +61,9 @@ body {
 }
 
 /* Sidebar responsive */
-@media (min-width: 768px) and (max-width: 1023px) {
-  aside[data-sidebar] {
-    width: 64px !important;
-    padding: 24px 8px !important;
-  }
-
-  /* Sembunyikan label, tampilkan icon saja */
-  aside[data-sidebar] a span:last-child {
-    display: none;
-  }
-
-  /* Pusatkan icon */
-  aside[data-sidebar] a {
-    justify-content: center;
-  }
-}
-
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   aside[data-sidebar] {
     width: 256px;
-    padding: 24px 16px;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  aside[data-sidebar] a span:last-child {
-    display: none;
+    padding: 24px 20px;
   }
 }

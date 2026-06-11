@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* --- DESIGN TOKENS --- */
-:root {
+.student-dashboard {
   --primary: #2563EB;
   --primary-dark: #1D4ED8;
   --primary-light: #EFF6FF;
@@ -50,17 +50,14 @@
 }
 
 /* --- RESET & BASE --- */
-* {
+.student-dashboard,
+.student-dashboard * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
-}
-
-body {
+.student-dashboard {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg);
   color: var(--text-primary);
@@ -69,16 +66,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-a {
+.student-dashboard a {
   text-decoration: none;
   color: inherit;
 }
 
-ul {
+.student-dashboard ul {
   list-style: none;
 }
 
-button {
+.student-dashboard button {
   cursor: pointer;
   border: none;
   background: transparent;
@@ -513,7 +510,7 @@ button {
   z-index: 1;
 }
 
-.btn-primary-white {
+.student-dashboard .btn-primary-white {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -527,12 +524,12 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.btn-primary-white:hover {
+.student-dashboard .btn-primary-white:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
-.btn-outline-white {
+.student-dashboard .btn-outline-white {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -547,7 +544,7 @@ button {
   transition: background-color var(--transition);
 }
 
-.btn-outline-white:hover {
+.student-dashboard .btn-outline-white:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 
@@ -1100,7 +1097,7 @@ button {
   z-index: 1;
 }
 
-.btn-cta-primary {
+.student-dashboard .btn-cta-primary {
   padding: 10px;
   background-color: white;
   color: var(--primary);
@@ -1111,12 +1108,12 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.btn-cta-primary:hover {
+.student-dashboard .btn-cta-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.btn-cta-secondary {
+.student-dashboard .btn-cta-secondary {
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
@@ -1128,7 +1125,7 @@ button {
   transition: background-color var(--transition);
 }
 
-.btn-cta-secondary:hover {
+.student-dashboard .btn-cta-secondary:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 

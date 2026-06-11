@@ -2,49 +2,43 @@ import React from 'react';
 import Link from 'next/link';
 
 const FOOTER_LINKS = [
-  { label: 'Privacy Policy', href: '#' },
-  { label: 'Terms of Service', href: '#' },
-  { label: 'Help Center', href: '#' },
-  { label: 'Contact Support', href: '#' },
+  { label: 'Kebijakan Privasi', href: '#' },
+  { label: 'Syarat Layanan', href: '#' },
+  { label: 'Pusat Bantuan', href: '#' },
+  { label: 'Hubungi Support', href: '#' },
 ];
 
 /**
- * Footer — site-wide footer with brand info and navigation links.
- * Positioned at the bottom of the content area (not fixed).
+ * Site-wide footer with the same simple visual density as the dashboard footer.
  */
 export const Footer: React.FC = () => {
   return (
     <footer
-      className="bg-white border-t"
-      style={{ borderColor: 'var(--color-border)', position: 'relative', zIndex: 41 }}
+      className="w-full overflow-hidden border-t bg-white"
+      style={{ borderColor: 'var(--color-border)', position: 'relative', zIndex: 30 }}
     >
-      <div
-        className="flex items-center justify-between px-6 py-8 max-w-[1280px] mx-auto w-full"
-        style={{ minHeight: '109px' }}
-      >
-        {/* Brand info */}
-        <div className="flex flex-col gap-2">
-          <span
-            className="font-bold text-sm"
-            style={{ color: 'var(--color-brand-primary)' }}
-          >
-            Ruang Dosen
-          </span>
+      <div className="mx-auto flex w-full max-w-[1180px] min-w-0 flex-col items-center justify-between gap-3 px-8 py-4 text-center md:flex-row md:text-left">
+        <div className="min-w-0 md:flex-1">
           <p
-            className="text-xs"
+            className="truncate text-sm font-bold"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            RuangDosen
+          </p>
+          <p
+            className="break-words text-xs leading-5"
             style={{ color: 'var(--color-text-secondary)' }}
           >
-            © 2024 Ruang Dosen Academic Platform. All rights reserved.
+            &copy; 2024 Platform Akademik. All rights reserved.
           </p>
         </div>
 
-        {/* Footer links */}
-        <nav className="flex items-center gap-6">
+        <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-5 gap-y-2 md:flex-1 md:justify-end">
           {FOOTER_LINKS.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="text-xs font-semibold no-underline transition-colors hover:opacity-70"
+              className="whitespace-nowrap text-[11px] font-semibold no-underline transition-colors hover:text-[#2563EB] sm:text-xs"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               {link.label}

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { BrandLogo } from './BrandLogo';
 
 interface TopNavBarProps {
   onToggleSidebar: () => void;
@@ -53,28 +53,29 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           >
             <HamburgerIcon />
           </button>
-          <Link href={brandHref} className="flex items-center gap-2 no-underline">
-            <BookIcon />
-            <span className="text-xl font-bold hidden sm:inline"
-              style={{ color: 'var(--color-brand-primary)' }}>
-              Ruang Dosen
-            </span>
-          </Link>
+          <BrandLogo href={brandHref} hideTextOnMobile />
         </div>
 
         {/* Center: Search — sembunyikan di mobile */}
-        <div className="hidden sm:block flex-1 max-w-[450px] mx-8">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="hidden flex-1 justify-center px-6 sm:flex">
+          <div
+            className="flex h-11 w-full max-w-[420px] items-center rounded-2xl border px-5 transition-all focus-within:border-[#2563EB] focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+            style={{
+              background: '#F1F5F9',
+              borderColor: 'var(--color-border)',
+            }}
+          >
             <input
               type="text"
-              placeholder="Search resources, courses..."
+              placeholder="Cari sesuatu..."
               value={currentQuery}
               onChange={(event) => {
                 applySearch(event.target.value);
               }}
-              className="w-full h-9 pl-10 pr-4 rounded-full text-sm outline-none"
-              style={{ background: '#F3F4F5', color: 'var(--color-text-secondary)' }}
+              className="h-full min-w-0 flex-1 bg-transparent text-center text-sm outline-none placeholder:text-slate-400"
+              style={{
+                color: 'var(--color-text-primary)',
+              }}
             />
           </div>
         </div>
@@ -86,6 +87,15 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           <button className="flex sm:hidden items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100"
             aria-label="Search">
             <SearchIcon />
+          </button>
+
+          <button
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Toggle dark or light mode"
+            title="Dark / Light Mode"
+            type="button"
+          >
+            <ThemeModeIcon />
           </button>
 
           <button
@@ -111,7 +121,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
   );
 };
 
-/* ── Icon sub-components (kept inline to avoid extra files for simple SVGs) ── */
+/* Icon sub-components kept inline because they are only used by this top bar. */
 
 const HamburgerIcon: React.FC = () => (
   <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
@@ -121,17 +131,22 @@ const HamburgerIcon: React.FC = () => (
   </svg>
 );
 
-const BookIcon: React.FC = () => (
-  <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
-    <path d="M1 1h7a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H1V1z" stroke="#003594" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M21 1h-7a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h8V1z" stroke="#003594" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 const SearchIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 18 18" fill="none">
     <circle cx="8" cy="8" r="6" stroke="#737685" strokeWidth="1.8" />
     <path d="m13 13 3 3" stroke="#737685" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
+const ThemeModeIcon: React.FC = () => (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="4" stroke="#434654" strokeWidth="1.8" />
+    <path
+      d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.64 5.64 4.22 4.22M19.78 19.78l-1.42-1.42M18.36 5.64l1.42-1.42M4.22 19.78l1.42-1.42"
+      stroke="#434654"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -148,3 +163,4 @@ const UserAvatarIcon: React.FC = () => (
     <path d="M3 17c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#003594" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
+
