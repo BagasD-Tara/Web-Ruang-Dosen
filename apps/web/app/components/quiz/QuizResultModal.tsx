@@ -41,25 +41,38 @@ export function QuizResultModal({
 
         <div className="px-6 space-y-3 pb-4">
           {/* Score */}
-          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 relative overflow-hidden">
             <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Nilai Anda</p>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between relative z-10">
               <span className="text-4xl font-bold text-gray-900">
                 {attempt.score}
                 <span className="text-xl text-gray-400">/100</span>
               </span>
-              <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
-                isLulus
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}>
-                {isLulus ? (
-                  <><CheckCircle className="w-4 h-4" /> Lulus</>
-                ) : (
-                  <><XCircle className="w-4 h-4" /> Tidak Lulus</>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                  isLulus
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}>
+                  {isLulus ? (
+                    <><CheckCircle className="w-4 h-4" /> Lulus</>
+                  ) : (
+                    <><XCircle className="w-4 h-4" /> Tidak Lulus</>
+                  )}
+                </span>
+                {isLulus && quiz.xpReward && (
+                  <span className="text-sm font-bold text-yellow-600 animate-[bounce_1s_ease-in-out_infinite]">
+                    +{quiz.xpReward} XP
+                  </span>
                 )}
-              </span>
+              </div>
             </div>
+            {/* Background XP Animation */}
+            {isLulus && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center pointer-events-none animate-[ping_2s_ease-out_1]">
+                 <span className="text-6xl opacity-10 text-yellow-500 font-black">+{quiz.xpReward} XP</span>
+              </div>
+            )}
           </div>
 
           {/* Stats row */}

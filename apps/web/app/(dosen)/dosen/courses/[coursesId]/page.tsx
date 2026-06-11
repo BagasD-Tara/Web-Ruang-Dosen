@@ -7,8 +7,26 @@ import {
   FileText, PlayCircle, Lock, ChevronDown,
   Users, HelpCircle,
 } from "lucide-react";
-import { getQuizzesByCourse, deleteQuiz } from "@/app/lib/mock/quizDosen";
-import type { Quiz } from "@/app/lib/mock/quizDosen";
+import { getQuizzesByCourse, deleteQuiz } from "@/app/lib/api/quiz";
+import type { Quiz } from "@/app/types/quiz";
+
+// Adapter: backend response → tipe Quiz resmi
+function adaptQuiz(raw: any): Quiz {
+  return {
+    id: raw.id,
+    title: raw.title,
+    courseId: raw.courseId ?? "",
+    moduleId: raw.moduleId ?? "",
+    moduleTitle: raw.moduleTitle ?? "—",
+    status: raw.status ?? "draft",
+    totalQuestions: raw._count?.questions ?? raw.totalQuestions ?? 0,
+    durationMinutes: raw.timeLimit ?? raw.durationMinutes ?? 0,
+    xpReward: raw.xpReward ?? 0,
+    minimumScore: raw.passingScore ?? raw.minimumScore ?? 0,
+    createdAt: raw.createdAt ?? "",
+    updatedAt: raw.updatedAt ?? "",
+  };
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,13 +48,24 @@ export default function CourseQuizManagementPage() {
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    getQuizzesByCourse(courseId)
-      .then(setQuizzes)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const raw = await getQuizzesByCourse(courseId);
+        setQuizzes(Array.isArray(raw) ? raw.map(adaptQuiz) : []);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data kuis. Periksa koneksi atau coba lagi.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [courseId]);
 
   // Kelompokkan quiz per modul
@@ -56,8 +85,13 @@ export default function CourseQuizManagementPage() {
 
   async function handleDeleteQuiz(quizId: string) {
     if (!confirm("Yakin ingin menghapus kuis ini?")) return;
-    await deleteQuiz(quizId);
-    setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+    try {
+      await deleteQuiz(quizId);
+      setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus kuis. Coba lagi.");
+    }
   }
 
   return (
@@ -120,6 +154,10 @@ export default function CourseQuizManagementPage() {
           <div className="space-y-4">
             {loading ? (
               <div className="text-center py-12 text-gray-400 text-sm">Memuat data...</div>
+            ) : error ? (
+              <div className="rounded-2xl bg-red-50 border border-red-200 p-8 text-center">
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </div>
             ) : moduleEntries.length === 0 ? (
               <div className="rounded-2xl bg-white border-2 border-dashed border-gray-200 p-12 text-center">
                 <HelpCircle className="mx-auto mb-3 h-8 w-8 text-gray-300" />

@@ -5,11 +5,156 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum MaterialType {
+  TEXT
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coursesTaught         Course[]               @relation("InstructorCourses")
+  enrollments           Enrollment[]
+  assignmentSubmissions AssignmentSubmission[]
+  labSubmissions        LabSubmission[]
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  instructorId String
+  instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  materials   Material[]
+  quizzes     Quiz[]
+  assignments Assignment[]
+  labs        PracticalLab[]
+  enrollments Enrollment[]
+}
+
+model Material {
+  id        String       @id @default(uuid())
+  title     String
+  url       String?
+  content   String?
+  type      MaterialType
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Quiz {
+  id           String         @id @default(uuid())
+  title        String
+  passingScore Int            @default(70)
+  xpReward     Int            @default(100)
+  timeLimit    Int            @default(30)
+  courseId     String
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions    QuizQuestion[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model QuizQuestion {
+  id            String @id @default(uuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question      String
+  options       Json
+  correctAnswer String
+}
+
+model Assignment {
+  id          String                 @id @default(uuid())
+  title       String
+  description String
+  deadline    DateTime
+  courseId    String
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions AssignmentSubmission[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl      String?
+  note         String?
+  status       String     @default("PENDING") // "PENDING" or "GRADED"
+  score        Int?
+  feedback     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([assignmentId, studentId])
+}
+
+model PracticalLab {
+  id           String          @id @default(uuid())
+  title        String
+  instructions String
+  courseId     String
+  course       Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions  LabSubmission[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model LabSubmission {
+  id        String       @id @default(uuid())
+  labId     String
+  lab       PracticalLab @relation(fields: [labId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl   String?
+  note      String?
+  status    String       @default("PENDING") // "PENDING" or "GRADED"
+  score     Int?
+  feedback  String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([labId, studentId])
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
 }

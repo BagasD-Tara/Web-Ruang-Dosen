@@ -1,11 +1,34 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, Clock, BarChart2 } from "lucide-react";
-import { MOCK_COURSES } from "@/app/lib/mock/coursesMock";
 
 export default function CoursesPage() {
   const router = useRouter();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCourses() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setCourses(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Failed to load courses", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCourses();
+  }, []);
 
   return (
     <div className="min-h-screen px-4 py-8">
@@ -18,7 +41,12 @@ export default function CoursesPage() {
         </header>
 
         <div className="space-y-3">
-          {MOCK_COURSES.map((course) => (
+          {loading ? (
+            <div className="text-center py-10 text-gray-400">Memuat kursus...</div>
+          ) : courses.length === 0 ? (
+            <div className="text-center py-10 text-gray-400">Belum ada kursus tersedia.</div>
+          ) : (
+            courses.map((course) => (
             <div
               key={course.id}
               onClick={() => router.push(`/courses/${course.id}`)}
@@ -75,7 +103,7 @@ export default function CoursesPage() {
                 </button>
               </div>
             </div>
-          ))}
+          )))}
         </div>
       </div>
     </div>

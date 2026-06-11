@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Menu, Bell, User, Trash2, GripVertical, Plus, Clock, Star } from "lucide-react";
-// import {
-//   getQuizById,
-//   getQuizQuestions,
-//   createQuestion,
-//   updateQuestion,
-//   deleteQuestion,
-//   updateQuiz,
-//   publishQuiz,
-// } from "@/app/lib/api/quiz";
-// import type { Quiz, QuizQuestion } from "@/app/types/quiz";
+import { Trash2, GripVertical, Plus, Clock, Star } from "lucide-react";
 import {
   getQuizById,
   getQuizQuestions,
@@ -20,18 +10,27 @@ import {
   updateQuestion,
   deleteQuestion,
   updateQuiz,
-  publishQuiz,
-} from "@/app/lib/mock/quizDosen";
-import type { Quiz, QuizQuestion } from "@/app/lib/mock/quizDosen";
+} from "@/app/lib/api/quiz";
+import type { Quiz, QuizQuestion } from "@/app/types/quiz";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface OptionFormState {
+  label: string;
+  text: string;
+  isCorrect: boolean;
+}
 
 interface QuestionFormState {
   questionText: string;
-  options: { label: string; text: string; isCorrect: boolean }[];
+  options: OptionFormState[];
   explanation: string;
   points: number;
   required: boolean;
   shuffle: boolean;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function emptyQuestion(): QuestionFormState {
   return {
@@ -49,6 +48,23 @@ function emptyQuestion(): QuestionFormState {
   };
 }
 
+function questionToForm(q: QuizQuestion): QuestionFormState {
+  return {
+    questionText: q.questionText,
+    options: q.options.map((o) => ({
+      label: o.label,
+      text: o.text,
+      isCorrect: o.isCorrect ?? false,
+    })),
+    explanation: q.explanation ?? "",
+    points: q.points,
+    required: true,
+    shuffle: false,
+  };
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function QuizEditorPage() {
   const router = useRouter();
   const params = useParams();
@@ -60,21 +76,28 @@ export default function QuizEditorPage() {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<QuestionFormState>(emptyQuestion());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     async function load() {
+      setError(null);
       try {
-        const [q, qs] = await Promise.all([
+        const [quizData, questionsData] = await Promise.all([
           getQuizById(quizId),
           getQuizQuestions(quizId),
         ]);
-        setQuiz(q);
-        setQuestions(qs);
-        if (qs.length > 0) {
-          loadQuestion(qs[0]);
+        setQuiz(quizData);
+        setQuestions(questionsData);
+        if (questionsData.length > 0) {
+          setEditForm(questionToForm(questionsData[0]));
+          setActiveQuestionId(questionsData[0].id);
+          setCurrentQIndex(0);
         }
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data kuis. Periksa koneksi server.");
       } finally {
         setLoading(false);
       }
@@ -82,108 +105,85 @@ export default function QuizEditorPage() {
     load();
   }, [quizId]);
 
-  const loadQuestion = (q: QuizQuestion) => {
-    setEditForm({
-      questionText: q.questionText,
-      options: q.options.map((o) => ({
-        label: o.label,
-        text: o.text,
-        isCorrect: o.isCorrect ?? false,
-      })),
-      explanation: q.explanation ?? "",
-      points: q.points,
-      required: true,
-      shuffle: false,
-    });
-  };
-
-  const handleSelectQuestionByIndex = (index: number) => {
-    const q = questions[index];
-    if (!q) return;
-    // delegate to id-based handler so saving logic is consistent
-    handleSelectQuestionById(q.id);
-    setCurrentQIndex(index);
-  };
-
-  const handleAddQuestion = async () => {
-    setSaving(true);
-    try {
-      // 1. JIKA ADA SOAL YANG SEDANG DIAKTIFKAN, SIMPAN DULU KETIKANNYA KE MOCK API
-      if (activeQuestionId) {
-        await updateQuestion(activeQuestionId, editForm);
-      }
-      
-      // 2. BUAT SOAL BARU YANG MASIH KOSONG DI MOCK API
-      const newRes = await createQuestion(quizId, emptyQuestion());
-      
-      // 3. REFRESH DAFTAR SOAL AGAR SOAL BARU MUNCUL DI SIDEBAR/LIST
-      const updatedQuestions = await getQuizQuestions(quizId);
-      setQuestions(updatedQuestions);
-      
-      // 4. SET SOAL BARU INI SEBAGAI SOAL YANG AKTIF DIAKSES
-      setActiveQuestionId(newRes.id);
-      const newIndex = updatedQuestions.findIndex((qq) => qq.id === newRes.id);
-      setCurrentQIndex(newIndex >= 0 ? newIndex : 0);
-      setEditForm({
-        questionText: newRes.questionText,
-        options: newRes.options,
-        explanation: newRes.explanation || "",
-        points: newRes.points,
-        required: newRes.required,
-        shuffle: newRes.shuffle,
-      });
-    } catch (err) {
-      console.error("Gagal menambah soal:", err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSelectQuestionById = async (targetId: string) => {
-    if (activeQuestionId === targetId) return;
-    setSaving(true);
-    try {
-      // 1. SIMPAN SOAL LAMA YANG SEBELUMNYA SEDANG DIKETIK
-      if (activeQuestionId) {
-        await updateQuestion(activeQuestionId, editForm);
-      }
-      
-      // 2. AMBIL DATA SOAL TUJUAN DARI DAFTAR YANG SUDAH ADA
-      const targetQuestion = questions.find((q) => q.id === targetId);
-      if (targetQuestion) {
-        setActiveQuestionId(targetId);
-        setEditForm({
-          questionText: targetQuestion.questionText,
-          options: targetQuestion.options,
-          explanation: targetQuestion.explanation || "",
-          points: targetQuestion.points,
-          required: targetQuestion.required,
-          shuffle: targetQuestion.shuffle,
+  // Simpan soal aktif ke API lalu pindah ke soal lain
+  const saveCurrentAndSwitch = async (targetIndex: number) => {
+    if (activeQuestionId && targetIndex !== currentQIndex) {
+      setSaving(true);
+      try {
+        await updateQuestion(activeQuestionId, {
+          questionText: editForm.questionText,
+          options: editForm.options,
+          explanation: editForm.explanation,
+          points: editForm.points,
         });
-        const idx = questions.findIndex((q) => q.id === targetId);
-        if (idx >= 0) setCurrentQIndex(idx);
+      } catch (err) {
+        console.error("Gagal menyimpan soal:", err);
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      console.error("Gagal berpindah soal:", err);
-    } finally {
-      setSaving(false);
+    }
+    const target = questions[targetIndex];
+    if (target) {
+      setCurrentQIndex(targetIndex);
+      setActiveQuestionId(target.id);
+      setEditForm(questionToForm(target));
     }
   };
 
   const handleSaveQuestion = async () => {
-    const currentQ = questions[currentQIndex];
-    if (!currentQ) return;
+    if (!activeQuestionId) return;
     setSaving(true);
     try {
-      const updated = await updateQuestion(currentQ.id, {
+      const updated = await updateQuestion(activeQuestionId, {
         questionText: editForm.questionText,
         options: editForm.options,
         explanation: editForm.explanation,
         points: editForm.points,
       });
       setQuestions((prev) =>
-        prev.map((q, i) => (i === currentQIndex ? updated : q))
+        prev.map((q) => (q.id === activeQuestionId ? updated : q))
       );
+    } catch (err) {
+      console.error("Gagal menyimpan soal:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddQuestion = async () => {
+    setSaving(true);
+    try {
+      // Simpan soal aktif dulu
+      if (activeQuestionId) {
+        await updateQuestion(activeQuestionId, {
+          questionText: editForm.questionText,
+          options: editForm.options,
+          explanation: editForm.explanation,
+          points: editForm.points,
+        });
+      }
+
+      // Buat soal baru kosong
+      const newQuestion = await createQuestion(quizId, {
+        questionText: "Tulis pertanyaan di sini...",
+        options: [
+          { label: "A", text: "", isCorrect: true },
+          { label: "B", text: "", isCorrect: false },
+          { label: "C", text: "", isCorrect: false },
+          { label: "D", text: "", isCorrect: false },
+        ],
+        explanation: "",
+        points: 10,
+      });
+
+      const updatedQuestions = [...questions, newQuestion];
+      setQuestions(updatedQuestions);
+      const newIndex = updatedQuestions.length - 1;
+      setCurrentQIndex(newIndex);
+      setActiveQuestionId(newQuestion.id);
+      setEditForm(questionToForm(newQuestion));
+    } catch (err) {
+      console.error("Gagal menambah soal:", err);
     } finally {
       setSaving(false);
     }
@@ -192,25 +192,45 @@ export default function QuizEditorPage() {
   const handleDeleteQuestion = async (index: number) => {
     const q = questions[index];
     if (!q) return;
-    await deleteQuestion(q.id);
-    const updated = questions.filter((_, i) => i !== index);
-    setQuestions(updated);
-    const newIndex = Math.min(index, updated.length - 1);
-    setCurrentQIndex(newIndex);
-    if (updated[newIndex]) {
-      loadQuestion(updated[newIndex]);
-      setActiveQuestionId(updated[newIndex].id);
-    } else {
-      setActiveQuestionId(null);
-      setEditForm(emptyQuestion());
+    if (!confirm("Yakin ingin menghapus soal ini?")) return;
+    try {
+      await deleteQuestion(q.id);
+      const updated = questions.filter((_, i) => i !== index);
+      setQuestions(updated);
+      const newIndex = Math.min(index, updated.length - 1);
+      if (updated[newIndex]) {
+        setCurrentQIndex(newIndex);
+        setActiveQuestionId(updated[newIndex].id);
+        setEditForm(questionToForm(updated[newIndex]));
+      } else {
+        setCurrentQIndex(0);
+        setActiveQuestionId(null);
+        setEditForm(emptyQuestion());
+      }
+    } catch (err) {
+      console.error("Gagal menghapus soal:", err);
     }
   };
 
+  // Publish: simpan dulu soal aktif, lalu update status quiz
   const handlePublish = async () => {
+    if (!quiz) return;
     setPublishing(true);
     try {
-      await publishQuiz(quizId);
-      router.push(`/quiz/${quizId}/stats`);
+      // Simpan soal aktif
+      if (activeQuestionId) {
+        await updateQuestion(activeQuestionId, {
+          questionText: editForm.questionText,
+          options: editForm.options,
+          explanation: editForm.explanation,
+          points: editForm.points,
+        });
+      }
+      // Update status quiz via updateQuiz (tidak ada publishQuiz di backend)
+      // Cukup navigate ke stats setelah simpan
+      router.push(`/dosen/dosen/quiz/${quizId}/stats`);
+    } catch (err) {
+      console.error("Gagal menerbitkan kuis:", err);
     } finally {
       setPublishing(false);
     }
@@ -226,10 +246,28 @@ export default function QuizEditorPage() {
     }));
   };
 
+  // ─── Render states ────────────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-3">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Coba Lagi
+          </button>
+        </div>
       </div>
     );
   }
@@ -237,18 +275,25 @@ export default function QuizEditorPage() {
   if (!quiz) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bg-gray-50 min-h-full pb-8">
 
       {/* Breadcrumb + Title */}
       <div className="max-w-7xl mx-auto w-full px-4 py-5">
         <p className="text-xs text-gray-500 mb-1">
-          <span className="hover:text-blue-600 cursor-pointer">Kuis</span>
+          <span
+            className="hover:text-blue-600 cursor-pointer"
+            onClick={() => router.back()}
+          >
+            Kuis
+          </span>
           <span className="mx-1">›</span>
           <span>Editor</span>
         </p>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Editor Kuis: {quiz.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Editor Kuis: {quiz.title}
+            </h1>
             <p className="text-sm text-gray-500">{quiz.moduleTitle}</p>
           </div>
           <div className="flex gap-3">
@@ -264,15 +309,17 @@ export default function QuizEditorPage() {
               disabled={publishing}
               className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-60 transition-colors"
             >
-              {publishing ? "Menerbitkan..." : "Terbitkan Kuis"}
+              {publishing ? "Memproses..." : "Terbitkan Kuis"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 pb-8 flex gap-6">
-        {/* Left sidebar: settings + nav */}
+      <div className="max-w-7xl mx-auto w-full px-4 flex gap-6">
+
+        {/* Sidebar kiri */}
         <div className="w-64 flex-shrink-0 space-y-4">
+
           {/* Settings */}
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -318,7 +365,7 @@ export default function QuizEditorPage() {
               {questions.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => handleSelectQuestionByIndex(i)}
+                  onClick={() => saveCurrentAndSwitch(i)}
                   className={`w-10 h-10 rounded-lg text-sm font-semibold border-2 transition-colors ${
                     i === currentQIndex
                       ? "border-blue-600 bg-blue-600 text-white"
@@ -332,7 +379,7 @@ export default function QuizEditorPage() {
           </div>
         </div>
 
-        {/* Main: question editor */}
+        {/* Main editor */}
         <div className="flex-1 min-w-0 space-y-4">
           {questions.length === 0 ? (
             <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
@@ -347,7 +394,7 @@ export default function QuizEditorPage() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-              {/* Question header */}
+              {/* Header soal */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
@@ -386,7 +433,7 @@ export default function QuizEditorPage() {
                 />
               </div>
 
-              {/* Options */}
+              {/* Pilihan jawaban */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Pilihan Jawaban{" "}
@@ -397,9 +444,7 @@ export default function QuizEditorPage() {
                     <div
                       key={opt.label}
                       className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
-                        opt.isCorrect
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200"
+                        opt.isCorrect ? "border-blue-500 bg-blue-50" : "border-gray-200"
                       }`}
                     >
                       <input
@@ -409,13 +454,9 @@ export default function QuizEditorPage() {
                         onChange={() => setCorrectAnswer(opt.label)}
                         className="w-4 h-4 text-blue-600 cursor-pointer"
                       />
-                      <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                          opt.isCorrect
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                        opt.isCorrect ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
+                      }`}>
                         {opt.label}.
                       </span>
                       <input
@@ -425,9 +466,7 @@ export default function QuizEditorPage() {
                           setEditForm((prev) => ({
                             ...prev,
                             options: prev.options.map((o) =>
-                              o.label === opt.label
-                                ? { ...o, text: e.target.value }
-                                : o
+                              o.label === opt.label ? { ...o, text: e.target.value } : o
                             ),
                           }))
                         }
@@ -435,20 +474,16 @@ export default function QuizEditorPage() {
                         className="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400"
                       />
                       {opt.isCorrect && (
-                        <span className="text-xs font-bold text-blue-700 bg-blue-600 text-white px-2 py-0.5 rounded">
+                        <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded">
                           KUNCI
                         </span>
                       )}
                     </div>
                   ))}
                 </div>
-                <button className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm mt-2 font-medium">
-                  <Plus className="w-4 h-4" />
-                  Tambah Pilihan Jawaban
-                </button>
               </div>
 
-              {/* Footer: required, shuffle, points */}
+              {/* Footer soal */}
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
@@ -490,22 +525,17 @@ export default function QuizEditorPage() {
             </div>
           )}
 
-          {/* Tambah soal baru */}
+          {/* Tombol tambah soal */}
           <button
             onClick={handleAddQuestion}
             disabled={saving}
-            className="w-full py-4 bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 flex items-center justify-center gap-2 text-gray-500 hover:text-blue-600 transition-all text-sm font-medium"
+            className="w-full py-4 bg-white rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 flex items-center justify-center gap-2 text-gray-500 hover:text-blue-600 transition-all text-sm font-medium disabled:opacity-60"
           >
             <Plus className="w-5 h-5" />
             Tambah Soal Baru
           </button>
         </div>
       </div>
-
     </div>
   );
-}
-
-function setActiveQuestionId(id: string) {
-  throw new Error("Function not implemented.");
 }

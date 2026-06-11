@@ -1,25 +1,61 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Save } from "lucide-react";
-// import { createQuiz } from "@/app/lib/api/quiz";
-import { createQuiz } from "@/app/lib/mock/quizDosen";
+import { createQuiz } from "@/app/lib/api/quiz";
+
+// Tipe course untuk dropdown
+interface CourseOption {
+  id: string;
+  title: string;
+}
 
 export default function CreateQuizPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Bisa dipre-fill dari query param kalau dipanggil dari halaman course
+  const prefillCourseId = searchParams.get("courseId") ?? "";
 
   const [form, setForm] = useState({
     title: "",
-    courseId: "",
-    moduleId: "",
+    courseId: prefillCourseId,
     xpReward: 100,
     minimumScore: 70,
     durationMinutes: 60,
-    status: "draft" as "draft" | "terkunci",
   });
+  const [courses, setCourses] = useState<CourseOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch daftar course dari API
+  useEffect(() => {
+    async function loadCourses() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!res.ok) throw new Error("Gagal fetch courses");
+        const data = await res.json();
+        // Backend course shape: { id, title, ... }
+        const options: CourseOption[] = Array.isArray(data)
+          ? data.map((c: any) => ({ id: c.id, title: c.title ?? c.name ?? c.id }))
+          : [];
+        setCourses(options);
+      } catch {
+        // Fallback ke list statis jika API courses belum siap
+        setCourses([
+          { id: "course-1", title: "Advanced Machine Learning" },
+          { id: "course-2", title: "Web Development Frontend" },
+          { id: "course-3", title: "Dasar-Dasar Algoritma & Struktur Data" },
+        ]);
+      }
+    }
+    loadCourses();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -45,18 +81,25 @@ export default function CreateQuizPage() {
     setError("");
     setSubmitting(true);
     try {
-      const quiz = await createQuiz(form);
-      router.push(`/dosen/quiz/${quiz.id}/edit`);
-    } catch {
-      setError("Gagal membuat kuis. Coba lagi.");
+      const quiz = await createQuiz({
+        title: form.title,
+        courseId: form.courseId,
+        xpReward: form.xpReward,
+        minimumScore: form.minimumScore,
+        durationMinutes: form.durationMinutes,
+      });
+      // Langsung ke editor soal setelah berhasil buat quiz
+      router.push(`/dosen/dosen/quiz/${quiz.id}/edit`);
+    } catch (err) {
+      console.error(err);
+      setError("Gagal membuat kuis. Periksa koneksi server dan coba lagi.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-
+    <div className="bg-gray-50 min-h-full">
       <div className="max-w-4xl mx-auto w-full px-4 py-8">
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Detail Kuis</h1>
@@ -71,6 +114,7 @@ export default function CreateQuizPage() {
           )}
 
           <div className="space-y-6">
+
             {/* Judul */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -82,7 +126,7 @@ export default function CreateQuizPage() {
                 value={form.title}
                 onChange={handleChange}
                 placeholder="Contoh: Ujian Tengah Semester Kalkulus I"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
 
@@ -98,14 +142,13 @@ export default function CreateQuizPage() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition appearance-none"
               >
                 <option value="">Pilih mata kuliah aktif...</option>
-                {/* Options will be loaded from API in real implementation */}
-                <option value="course-1">Advanced Machine Learning</option>
-                <option value="course-2">Dasar-Dasar Algoritma</option>
-                <option value="course-3">Basis Data</option>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
               </select>
             </div>
 
-            {/* Three fields row */}
+            {/* XP, Skor minimum, Durasi */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -125,6 +168,7 @@ export default function CreateQuizPage() {
                   </span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Skor Minimum Lulus
@@ -144,6 +188,7 @@ export default function CreateQuizPage() {
                   </span>
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Durasi (Menit)
@@ -164,42 +209,23 @@ export default function CreateQuizPage() {
               </div>
             </div>
 
-            {/* Status */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">Status Kuis Setelah Simpan:</span>
+            {/* Info */}
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
+              <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
               </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, status: "draft" }))}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    form.status === "draft"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, status: "terkunci" }))}
-                  className={`flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    form.status === "terkunci"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  🔒 Terkunci
-                </button>
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  Kuis akan disimpan sebagai <span className="text-blue-600 font-semibold">Draft</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Setelah disimpan, kamu bisa menambahkan soal di halaman editor.
+                </p>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4">
+            {/* Tombol aksi */}
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => router.back()}
@@ -220,7 +246,6 @@ export default function CreateQuizPage() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

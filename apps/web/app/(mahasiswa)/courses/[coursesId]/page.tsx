@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Play, FileText, BookOpen, HelpCircle,
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { getMockCourseById, getMockModulesByCourse } from "@/app/lib/mock/coursesMock";
-import { MOCK_QUIZZES } from "@/app/lib/mock/quizMock";
+import { getQuizzesByCourse } from "@/app/lib/api/quiz";
 import { QuizInfoModal } from "@/app/components/quiz/QuizInfoModal";
 import type { Quiz } from "@/app/types/quiz";
 
@@ -58,16 +58,15 @@ function EmptyState({ text }: { text: string }) {
 }
 
 interface QuizRowProps {
-  quizId: string;
-  onStart: (quizId: string) => void;
+  quiz: Quiz;
+  onStart: (quiz: Quiz) => void;
   onReview: (attemptId: string, quizId: string) => void;
 }
 
-function QuizRow({ quizId, onStart, onReview }: QuizRowProps) {
-  const quiz = MOCK_QUIZZES[quizId];
+function QuizRow({ quiz, onStart, onReview }: QuizRowProps) {
   if (!quiz) return null;
 
-  const completedAttemptId = getCompletedAttemptId(quizId);
+  const completedAttemptId = getCompletedAttemptId(quiz.id);
   const isCompleted = Boolean(completedAttemptId);
 
   return (
@@ -83,14 +82,14 @@ function QuizRow({ quizId, onStart, onReview }: QuizRowProps) {
       </div>
       {isCompleted ? (
         <button
-          onClick={() => onReview(completedAttemptId!, quizId)}
+          onClick={() => onReview(completedAttemptId!, quiz.id)}
           className="flex-shrink-0 rounded-lg border border-blue-700 px-4 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
         >
           Lihat Review
         </button>
       ) : (
         <button
-          onClick={() => onStart(quizId)}
+          onClick={() => onStart(quiz)}
           className="flex-shrink-0 rounded-lg bg-blue-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
         >
           Start Quiz
@@ -124,16 +123,25 @@ export default function CourseDetailPage() {
     );
   }
 
-  const courseQuizzes = Object.values(MOCK_QUIZZES).filter(
-    (q) => q.courseId === courseId
-  );
+  const [courseQuizzes, setCourseQuizzes] = useState<Quiz[]>([]);
+
+  useEffect(() => {
+    async function fetchQuizzes() {
+      try {
+        const quizzes = await getQuizzesByCourse(courseId);
+        setCourseQuizzes(quizzes);
+      } catch (err) {
+        console.error("Failed to load course quizzes", err);
+      }
+    }
+    fetchQuizzes();
+  }, [courseId]);
 
   function toggleModule(id: string) {
     setOpenModules((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function handleStartQuiz(quizId: string) {
-    const quiz = MOCK_QUIZZES[quizId];
+  function handleStartQuiz(quiz: Quiz) {
     if (quiz) setSelectedQuiz(quiz);
   }
 
@@ -287,11 +295,13 @@ export default function CourseDetailPage() {
                         })}
 
                         {/* Baris quiz */}
-                        <QuizRow
-                          quizId={modul.quizId}
-                          onStart={handleStartQuiz}
-                          onReview={handleReview}
-                        />
+                        {modul.quizId && courseQuizzes.find(q => q.id === modul.quizId) && (
+                          <QuizRow
+                            quiz={courseQuizzes.find(q => q.id === modul.quizId)!}
+                            onStart={handleStartQuiz}
+                            onReview={handleReview}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

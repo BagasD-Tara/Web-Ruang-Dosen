@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Trophy, TrendingUp, Shield, User } from "lucide-react";
-import { MOCK_LEADERBOARD } from "@/app/lib/mock/quizMock";
 import type { LeaderboardEntry } from "@/app/types/quiz";
+import { getLeaderboard } from "@/app/lib/api/quiz";
 
 // ─── Konstanta ────────────────────────────────────────────────────────────────
 
@@ -116,11 +116,12 @@ export default function LeaderboardView() {
 
   useEffect(() => {
     setLoading(true);
-    // Nanti ganti dengan: getLeaderboard(filter).then(setEntries)
-    setEntries(MOCK_LEADERBOARD);
-    setLoading(false);
+    getLeaderboard()
+      .then(setEntries)
+      .catch(() => setEntries([]))  // fallback kosong jika API gagal
+      .finally(() => setLoading(false));
   }, [filter]);
-
+  
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
   const currentUser = entries.find((e) => e.isCurrentUser);

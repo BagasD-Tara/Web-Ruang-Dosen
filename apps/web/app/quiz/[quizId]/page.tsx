@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { CountdownTimer } from "@/app/components/quiz/CountdownTimer";
 import { ChoiceButton } from "@/app/components/quiz/ChoiceButton";
 import { QuizNavGrid } from "@/app/components/quiz/QuizNavGrid";
 import { SubmitConfirmModal } from "@/app/components/quiz/SubmitConfirmModal";
 import { QuizResultModal } from "@/app/components/quiz/QuizResultModal";
-import { MOCK_QUIZZES, getMockQuestionsByQuiz } from "@/app/lib/mock/quizMock";
+import { getQuizById, getQuizQuestions, submitQuiz } from "@/app/lib/api/quiz";
 import type { Quiz, QuizQuestion, QuizResult } from "@/app/types/quiz";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -107,16 +107,36 @@ export default function QuizPage() {
   const params = useParams();
   const quizId = params.quizId as string;
 
-  const quiz = MOCK_QUIZZES[quizId] ?? MOCK_QUIZZES["quiz-1"];
-  const questions = getMockQuestionsByQuiz(quizId);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [startTime] = useState(() => Date.now());
+  const [startTime, setStartTime] = useState(() => Date.now());
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [timeExpiredToast, setTimeExpiredToast] = useState(false);
+
+  useEffect(() => {
+    async function loadQuiz() {
+      try {
+        const [quizData, questionsData] = await Promise.all([
+          getQuizById(quizId),
+          getQuizQuestions(quizId),
+        ]);
+        setQuiz(quizData);
+        setQuestions(questionsData);
+        setStartTime(Date.now()); // Reset start time when loaded
+      } catch (error) {
+        console.error("Failed to load quiz from API:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadQuiz();
+  }, [quizId]);
 
   const currentQuestion = questions[currentIndex];
 
@@ -125,15 +145,22 @@ export default function QuizPage() {
   );
   const unansweredCount = questions.length - answeredIndices.size;
 
-  const doSubmit = useCallback(async () => {
+ const doSubmit = useCallback(async () => {
+    if (!quiz) return;
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const res = calculateResult(quiz, questions, answers, startTime);
-    sessionStorage.setItem(`quiz-result-${res.attempt.id}`, JSON.stringify(res));
-    setResult(res);
-    setShowSubmitModal(false);
-    setIsSubmitting(false);
-  }, [quiz, questions, answers, startTime]);
+    try {
+      const res = await submitQuiz(quizId, answers, quiz, questions, startTime);
+      setResult(res);
+    } catch {
+      // Fallback ke kalkulasi lokal jika API gagal
+      const res = calculateResult(quiz, questions, answers, startTime);
+      sessionStorage.setItem(`quiz-result-${res.attempt.id}`, JSON.stringify(res));
+      setResult(res);
+    } finally {
+      setShowSubmitModal(false);
+      setIsSubmitting(false);
+    }
+  }, [quizId, quiz, questions, answers, startTime]);
 
   const handleSubmit = useCallback(() => {
     if (answeredIndices.size === 0) {
@@ -144,16 +171,38 @@ export default function QuizPage() {
   }, [answeredIndices.size, doSubmit]);
 
   const handleTimeExpire = useCallback(async () => {
+    if (!quiz) return;
     setTimeExpiredToast(true);
     setShowSubmitModal(false);
     await new Promise((r) => setTimeout(r, 600));
-    const res = calculateResult(quiz, questions, answers, startTime);
-    sessionStorage.setItem(`quiz-result-${res.attempt.id}`, JSON.stringify(res));
-    setResult(res);
-  }, [quiz, questions, answers, startTime]);
+    try {
+      const res = await submitQuiz(quizId, answers, quiz, questions, startTime);
+      setResult(res);
+    } catch {
+      const res = calculateResult(quiz, questions, answers, startTime);
+      sessionStorage.setItem(`quiz-result-${res.attempt.id}`, JSON.stringify(res));
+      setResult(res);
+    }
+  }, [quizId, quiz, questions, answers, startTime]);
 
   const navigatePrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
   const navigateNext = () => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1));
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-gray-400 text-sm">
+        Memuat kuis...
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-gray-400 text-sm">
+        Kuis tidak ditemukan atau gagal dimuat.
+      </div>
+    );
+  }
 
   if (!currentQuestion) {
     return (
