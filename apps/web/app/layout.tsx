@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Work_Sans, Inter, Space_Grotesk } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -10,7 +11,7 @@ const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: 
 
 export const metadata: Metadata = {
   title: "Ruang Dosen",
-  description: "Platform pembelajaran mata kuliah untuk mahasiswa",
+  description: "Platform pembelajaran online untuk dosen dan mahasiswa",
 };
 
 export default function RootLayout({
@@ -23,7 +24,11 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
-      <body>{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
+      </body>
     </html>
   );
 }

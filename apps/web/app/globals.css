@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --background: #ffffff;
+  --foreground: #171717;
+
   /* Brand Colors */
   --color-brand-primary: #003594;
   --color-brand-dark: #00174B;
@@ -8,89 +11,30 @@
   --color-brand-bg: #DBE1FF;
   --color-brand-subtle: #D5E0F8;
 
-  /* Neutral */
+  /* Neutral / Text */
   --color-text-primary: #191C1D;
   --color-text-secondary: #434654;
   --color-text-muted: #586377;
+  
+  /* Border */
   --color-border: #C3C6D6;
+  --color-border-light: #f0f0f0;
+
+  /* Background */
   --color-bg-backdrop: #EEF2F6;
   --color-bg-page: #F8F9FA;
   --color-bg-white: #FFFFFF;
   --color-bg-input: #EDEEEF;
+  
+  /* Layout */
   --page-surface-gap: clamp(12px, 1.6vw, 24px);
   --page-surface-radius: 26px;
 
   /* Status */
+  --color-success: #28a745;
   --color-danger: #BA1A1A;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  background-color: var(--color-bg-backdrop);
-  color: var(--color-text-primary);
-  font-family: 'Liberation Sans', 'Arial', sans-serif;
-}
-
-@keyframes page-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-transition {
-  animation: page-fade-in 220ms ease-out;
-}
-
-/* Scrollbar hide utility */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Sidebar responsive */
-@media (min-width: 768px) and (max-width: 1023px) {
-  aside[data-sidebar] {
-    width: 64px !important;
-    padding: 24px 8px !important;
-  }
-
-  /* Sembunyikan label, tampilkan icon saja */
-  aside[data-sidebar] a span:last-child {
-    display: none;
-  }
-
-  /* Pusatkan icon */
-  aside[data-sidebar] a {
-    justify-content: center;
-  }
-}
-
-@media (min-width: 1024px) {
-  aside[data-sidebar] {
-    width: 256px;
-    padding: 24px 16px;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  aside[data-sidebar] a span:last-child {
-    display: none;
-  }
-  --background: #f8f9ff;
-  --foreground: #0b1c30;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
 }
 
 @theme inline {
@@ -170,12 +114,17 @@ body {
   --font-headline-md: "Work Sans", sans-serif;
 }
 
-
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) transparent;
+}
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-bg-backdrop);
+  color: var(--color-text-primary);
   font-family: var(--font-body-base);
+  color-scheme: light;
 }
 
 .material-symbols-outlined {
@@ -208,7 +157,45 @@ body {
   background: var(--color-outline);
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-outline-variant) transparent;
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: page-fade-in 220ms ease-out;
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Sidebar responsive */
+@media (min-width: 768px) and (max-width: 1023px) {
+  aside[data-sidebar] {
+    width: 64px !important;
+    padding: 24px 8px !important;
+  }
+
+  /* Sembunyikan label, tampilkan icon saja */
+  aside[data-sidebar] a span:last-child {
+    display: none;
+  }
+
+  /* Pusatkan icon */
+  aside[data-sidebar] a {
+    justify-content: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  aside[data-sidebar] {
+    width: 256px;
+    padding: 24px 16px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  aside[data-sidebar] a span:last-child {
+    display: none;
+  }
 }
