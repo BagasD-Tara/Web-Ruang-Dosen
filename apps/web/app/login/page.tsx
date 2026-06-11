@@ -56,7 +56,7 @@ export default function LoginPage() {
   };
 
   return (
-    <>
+    <div className="login-page">
       <header className="navbar">
         <div className="brand">Ruang Dosen</div>
         <nav className="nav-links">
@@ -154,6 +154,6 @@ export default function LoginPage() {
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }

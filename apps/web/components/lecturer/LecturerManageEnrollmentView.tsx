@@ -55,6 +55,19 @@ export function LecturerManageEnrollmentView({
 
       <section className="mb-8 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
         <div className="min-w-0">
+          <Link
+            href={`/dosen/courses/${data.courseId}`}
+            className="mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] border px-4 text-sm font-semibold no-underline transition-colors hover:bg-[#F5F8FF]"
+            style={{
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-brand-primary)',
+              background: '#FFFFFF',
+            }}
+          >
+            <ChevronLeftIcon />
+            Back to Manage Course
+          </Link>
+
           <h1
             className="text-[34px] font-bold leading-tight sm:text-[44px]"
             style={{ color: 'var(--color-text-primary)' }}
@@ -92,9 +105,9 @@ export function LecturerManageEnrollmentView({
           helper="Based on current mock completion"
         />
         <SummaryCard
-          label="Latest Join"
-          value={getLatestJoinDate(data.students)}
-          helper="Most recent student enrollment"
+          label="On Track"
+          value={String(getOnTrackStudentCount(data.students))}
+          helper="Students with progress at 75% or higher"
         />
       </section>
 
@@ -386,12 +399,8 @@ function getAverageProgress(students: LecturerEnrollmentStudent[]) {
   return totalProgress / students.length;
 }
 
-function getLatestJoinDate(students: LecturerEnrollmentStudent[]) {
-  if (students.length === 0) {
-    return '-';
-  }
-
-  return students[students.length - 1]?.dateJoined ?? '-';
+function getOnTrackStudentCount(students: LecturerEnrollmentStudent[]) {
+  return students.filter((student) => student.progressPercentage >= 75).length;
 }
 
 function getInitials(name: string) {

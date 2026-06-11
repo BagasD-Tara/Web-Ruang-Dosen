@@ -17,7 +17,6 @@ import {
   HelpCircle,
   ClipboardList,
   Edit2,
-  Trash2,
   BookOpen
 } from 'lucide-react';
 import type {
@@ -329,7 +328,7 @@ function AssessmentRow({
 }) {
   const editHref =
     assessment.kind === 'assignment'
-      ? `/dosen/courses/${courseId}/modules/${moduleId}/assignments/${assessment.id}/edit`
+      ? `/dosen/courses/${courseId}/modules/${moduleId}/assignments/${assessment.id}/edit?from=course`
       : undefined;
 
   return (
@@ -373,9 +372,6 @@ function RowActions({ editHref }: { editHref?: string }) {
           <Edit2 size={16} />
         </button>
       )}
-      <button type="button" className="btn-icon danger" title="Delete (not yet implemented)">
-        <Trash2 size={16} />
-      </button>
     </div>
   );
 }

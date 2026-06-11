@@ -1,7 +1,66 @@
 /* =============================================
    WELCOME BANNER
    ============================================= */
-.welcome-banner {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.lecturer-dashboard {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-light: #EFF6FF;
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+  --green: #16A34A;
+  --green-light: #DCFCE7;
+  --orange: #EA580C;
+  --orange-light: #FFF7ED;
+  --bg: #F1F5F9;
+  --card-bg: #FFFFFF;
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --transition: 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lecturer-dashboard,
+.lecturer-dashboard * {
+  box-sizing: border-box;
+}
+
+.lecturer-dashboard a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lecturer-dashboard button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  outline: none;
+}
+
+.lecturer-dashboard.dashboard-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px;
+}
+
+.lecturer-dashboard .welcome-banner {
   background: linear-gradient(135deg, #1E40AF 0%, #2563EB 40%, #7C3AED 100%);
   border-radius: var(--radius-xl);
   padding: 32px 40px;
@@ -13,33 +72,33 @@
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
 }
 
-.banner-decoration {
+.lecturer-dashboard .banner-decoration {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.banner-circle {
+.lecturer-dashboard .banner-circle {
   position: absolute;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.banner-circle-1 {
+.lecturer-dashboard .banner-circle-1 {
   width: 200px;
   height: 200px;
   top: -60px;
   right: 200px;
 }
 
-.banner-circle-2 {
+.lecturer-dashboard .banner-circle-2 {
   width: 300px;
   height: 300px;
   top: -80px;
   right: 80px;
 }
 
-.banner-circle-3 {
+.lecturer-dashboard .banner-circle-3 {
   width: 160px;
   height: 160px;
   bottom: -80px;
@@ -47,7 +106,7 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.banner-dots {
+.lecturer-dashboard .banner-dots {
   position: absolute;
   right: 0;
   top: 0;
@@ -57,12 +116,12 @@
   background-size: 18px 18px;
 }
 
-.banner-content {
+.lecturer-dashboard .banner-content {
   position: relative;
   z-index: 1;
 }
 
-.banner-greeting {
+.lecturer-dashboard .banner-greeting {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -71,7 +130,7 @@
   margin-bottom: 6px;
 }
 
-.banner-title {
+.lecturer-dashboard .banner-title {
   font-size: 26px;
   font-weight: 800;
   color: white;
@@ -79,22 +138,23 @@
   letter-spacing: -0.5px;
 }
 
-.banner-subtitle {
+.lecturer-dashboard .banner-subtitle {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.75);
 }
 
-.banner-actions {
+.lecturer-dashboard .banner-actions {
   display: flex;
   gap: 12px;
   position: relative;
   z-index: 1;
 }
 
-.btn-primary-white {
+.lecturer-dashboard .btn-primary-white {
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
   background-color: white;
   color: var(--primary);
   padding: 11px 22px;
@@ -105,15 +165,16 @@
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.btn-primary-white:hover {
+.lecturer-dashboard .btn-primary-white:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
-.btn-outline-white {
+.lecturer-dashboard .btn-outline-white {
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
   padding: 11px 22px;
@@ -125,23 +186,23 @@
   transition: background-color var(--transition);
 }
 
-.btn-outline-white:hover {
+.lecturer-dashboard .btn-outline-white:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* =============================================
    STAT CARDS
    ============================================= */
-.stat-overview {
+.lecturer-dashboard .stat-overview {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 
-.stat-card {
+.lecturer-dashboard .stat-card {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 22px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -152,12 +213,12 @@
   overflow: hidden;
 }
 
-.stat-card:hover {
+.lecturer-dashboard .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.stat-card-accent {
+.lecturer-dashboard .stat-card-accent {
   position: absolute;
   top: 0;
   left: 0;
@@ -166,12 +227,12 @@
   border-radius: 3px 0 0 3px;
 }
 
-.accent-blue { background: var(--primary); }
-.accent-green { background: var(--green); }
-.accent-orange { background: var(--orange); }
-.accent-purple { background: var(--purple); }
+.lecturer-dashboard .accent-blue { background: var(--primary); }
+.lecturer-dashboard .accent-green { background: var(--green); }
+.lecturer-dashboard .accent-orange { background: var(--orange); }
+.lecturer-dashboard .accent-purple { background: var(--purple); }
 
-.stat-icon-wrap {
+.lecturer-dashboard .stat-icon-wrap {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
@@ -181,29 +242,31 @@
   flex-shrink: 0;
 }
 
-.stat-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
-.stat-icon-wrap.green { background-color: var(--green-light); color: var(--green); }
-.stat-icon-wrap.orange { background-color: var(--orange-light); color: var(--orange); }
-.stat-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
+.lecturer-dashboard .stat-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
+.lecturer-dashboard .stat-icon-wrap.green { background-color: var(--green-light); color: var(--green); }
+.lecturer-dashboard .stat-icon-wrap.orange { background-color: var(--orange-light); color: var(--orange); }
+.lecturer-dashboard .stat-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
 
-.stat-icon-wrap svg {
+.lecturer-dashboard .stat-icon-wrap svg {
   width: 22px;
   height: 22px;
 }
 
-.stat-body {
+.lecturer-dashboard .stat-body {
   flex: 1;
   min-width: 0;
 }
 
-.stat-label {
-  font-size: 12px;
+.lecturer-dashboard .stat-label {
+  font-size: 11px;
   color: var(--text-muted);
-  font-weight: 500;
-  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
 }
 
-.stat-value {
+.lecturer-dashboard .stat-value {
   font-size: 28px;
   font-weight: 800;
   color: var(--text-primary);
@@ -211,20 +274,20 @@
   letter-spacing: -1px;
 }
 
-.stat-change {
+.lecturer-dashboard .stat-change {
   font-size: 11px;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 5px;
   display: flex;
   align-items: center;
   gap: 3px;
 }
 
-.stat-change.up { color: var(--green); }
-.stat-change.neutral { color: var(--text-muted); }
+.lecturer-dashboard .stat-change.up { color: var(--green); }
+.lecturer-dashboard .stat-change.neutral { color: var(--text-muted); }
 
 /* Alert stat card (submissions) */
-.stat-card.alert-card {
+.lecturer-dashboard .stat-card.alert-card {
   border-color: rgba(220, 38, 38, 0.2);
   background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
 }
@@ -232,29 +295,29 @@
 /* =============================================
    MAIN BODY LAYOUT
    ============================================= */
-.main-body-layout {
+.lecturer-dashboard .main-body-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 320px;
   gap: 24px;
 }
 
 /* =============================================
    SECTION HEADERS
    ============================================= */
-.section-header {
+.lecturer-dashboard .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
 
-.section-title {
+.lecturer-dashboard .section-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.view-all-link {
+.lecturer-dashboard .view-all-link {
   font-size: 12.5px;
   font-weight: 600;
   color: var(--primary);
@@ -264,20 +327,20 @@
   transition: gap var(--transition);
 }
 
-.view-all-link:hover {
+.lecturer-dashboard .view-all-link:hover {
   gap: 8px;
 }
 
 /* =============================================
    COURSE CARDS
    ============================================= */
-.course-grid {
+.lecturer-dashboard .course-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-.course-card {
+.lecturer-dashboard .course-card {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -286,20 +349,20 @@
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.course-card:hover {
+.lecturer-dashboard .course-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--border-hover);
 }
 
-.course-card-top {
+.lecturer-dashboard .course-card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.course-icon-wrap {
+.lecturer-dashboard .course-icon-wrap {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
@@ -308,10 +371,10 @@
   justify-content: center;
 }
 
-.course-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
-.course-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
+.lecturer-dashboard .course-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
+.lecturer-dashboard .course-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
 
-.course-badge {
+.lecturer-dashboard .course-badge {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
@@ -322,14 +385,14 @@
   letter-spacing: 0.02em;
 }
 
-.course-name {
+.lecturer-dashboard .course-name {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
-.course-meta {
+.lecturer-dashboard .course-meta {
   font-size: 12.5px;
   color: var(--text-muted);
   display: flex;
@@ -338,58 +401,58 @@
   margin-bottom: 16px;
 }
 
-.course-meta-dot {
+.lecturer-dashboard .course-meta-dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
   background-color: var(--text-muted);
 }
 
-.progress-section {
+.lecturer-dashboard .progress-section {
   margin-bottom: 16px;
 }
 
-.progress-label {
+.lecturer-dashboard .progress-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.progress-text {
+.lecturer-dashboard .progress-text {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 500;
 }
 
-.progress-pct {
+.lecturer-dashboard .progress-pct {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.progress-track {
+.lecturer-dashboard .progress-track {
   height: 6px;
   background-color: var(--bg);
   border-radius: 99px;
   overflow: hidden;
 }
 
-.progress-fill {
+.lecturer-dashboard .progress-fill {
   height: 100%;
   border-radius: 99px;
   transition: width 0.6s ease;
 }
 
-.progress-fill.blue { background: linear-gradient(to right, #3B82F6, #2563EB); }
-.progress-fill.purple { background: linear-gradient(to right, #A78BFA, #7C3AED); }
+.lecturer-dashboard .progress-fill.blue { background: linear-gradient(to right, #3B82F6, #2563EB); }
+.lecturer-dashboard .progress-fill.purple { background: linear-gradient(to right, #A78BFA, #7C3AED); }
 
-.course-actions {
+.lecturer-dashboard .course-actions {
   display: flex;
   gap: 10px;
 }
 
-.btn-outline {
+.lecturer-dashboard .btn-outline {
   flex: 1;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
@@ -401,13 +464,13 @@
   transition: background-color var(--transition), border-color var(--transition), color var(--transition);
 }
 
-.btn-outline:hover {
+.lecturer-dashboard .btn-outline:hover {
   border-color: var(--primary);
   color: var(--primary);
   background-color: var(--primary-light);
 }
 
-.btn-filled {
+.lecturer-dashboard .btn-filled {
   flex: 1;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
@@ -415,17 +478,53 @@
   font-weight: 600;
   background-color: var(--primary);
   color: white;
+  text-decoration: none;
   transition: background-color var(--transition);
 }
 
-.btn-filled:hover {
+.lecturer-dashboard .btn-filled:hover {
   background-color: var(--primary-dark);
+}
+
+.lecturer-dashboard .empty-course-state {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 58%),
+    #ffffff;
+}
+
+.lecturer-dashboard .empty-course-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.lecturer-dashboard .empty-course-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.lecturer-dashboard .empty-course-state p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* =============================================
    RECENT SUBMISSIONS PANEL
    ============================================= */
-.submissions-panel {
+.lecturer-dashboard .submissions-panel {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -435,11 +534,11 @@
   overflow: hidden;
 }
 
-.panel-header {
+.lecturer-dashboard .panel-header {
   padding: 20px 20px 0 20px;
 }
 
-.panel-body {
+.lecturer-dashboard .panel-body {
   flex: 1;
   padding: 16px 20px;
   display: flex;
@@ -447,34 +546,34 @@
   gap: 0;
 }
 
-.submission-item {
+.lecturer-dashboard .submission-item {
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
   transition: opacity var(--transition);
 }
 
-.submission-item:last-child {
+.lecturer-dashboard .submission-item:last-child {
   border-bottom: none;
 }
 
-.submission-item:hover {
+.lecturer-dashboard .submission-item:hover {
   opacity: 0.85;
 }
 
-.submission-top {
+.lecturer-dashboard .submission-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 6px;
 }
 
-.submission-student {
+.lecturer-dashboard .submission-student {
   display: flex;
   align-items: center;
   gap: 9px;
 }
 
-.student-avatar {
+.lecturer-dashboard .student-avatar {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -487,31 +586,31 @@
   flex-shrink: 0;
 }
 
-.avatar-blue { background: linear-gradient(135deg, #3B82F6, #2563EB); }
-.avatar-green { background: linear-gradient(135deg, #34D399, #16A34A); }
-.avatar-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
+.lecturer-dashboard .avatar-blue { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+.lecturer-dashboard .avatar-green { background: linear-gradient(135deg, #34D399, #16A34A); }
+.lecturer-dashboard .avatar-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
 
-.student-name {
+.lecturer-dashboard .student-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.submission-time {
+.lecturer-dashboard .submission-time {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
   white-space: nowrap;
 }
 
-.submission-title {
+.lecturer-dashboard .submission-title {
   font-size: 12.5px;
   color: var(--text-secondary);
   margin-bottom: 8px;
   margin-left: 39px;
 }
 
-.submission-footer {
+.lecturer-dashboard .submission-footer {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -519,34 +618,34 @@
 }
 
 /* Tags */
-.tag {
+.lecturer-dashboard .tag {
   font-size: 10.5px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 99px;
 }
 
-.tag-blue { background-color: var(--primary-light); color: var(--primary); }
-.tag-purple { background-color: var(--purple-light); color: var(--purple); }
-.tag-pink { background-color: #FDF2F8; color: #DB2777; }
+.lecturer-dashboard .tag-blue { background-color: var(--primary-light); color: var(--primary); }
+.lecturer-dashboard .tag-purple { background-color: var(--purple-light); color: var(--purple); }
+.lecturer-dashboard .tag-pink { background-color: #FDF2F8; color: #DB2777; }
 
 /* Status */
-.status-badge {
+.lecturer-dashboard .status-badge {
   font-size: 10.5px;
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 99px;
 }
 
-.status-review { background-color: var(--orange-light); color: var(--orange); }
-.status-graded { background-color: var(--green-light); color: var(--green); }
+.lecturer-dashboard .status-review { background-color: var(--orange-light); color: var(--orange); }
+.lecturer-dashboard .status-graded { background-color: var(--green-light); color: var(--green); }
 
-.panel-footer {
+.lecturer-dashboard .panel-footer {
   padding: 14px 20px;
   border-top: 1px solid var(--border);
 }
 
-.view-all-btn {
+.lecturer-dashboard .view-all-btn {
   display: block;
   width: 100%;
   text-align: center;
@@ -560,7 +659,7 @@
   transition: background-color var(--transition), border-color var(--transition);
 }
 
-.view-all-btn:hover {
+.lecturer-dashboard .view-all-btn:hover {
   background-color: var(--primary-light);
   border-color: var(--primary);
 }
@@ -569,50 +668,51 @@
    RESPONSIVE
    ============================================= */
 @media (max-width: 1200px) {
-  .main-body-layout {
+  .lecturer-dashboard .main-body-layout {
     grid-template-columns: 1fr;
   }
 
-  .submissions-panel {
+  .lecturer-dashboard .submissions-panel {
     order: -1;
   }
 }
 
 @media (max-width: 1024px) {
-  .stat-overview {
+  .lecturer-dashboard .stat-overview {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .sidebar {
+  .lecturer-dashboard .sidebar {
     transform: translateX(-100%);
   }
 
-  .sidebar.open {
+  .lecturer-dashboard .sidebar.open {
     transform: translateX(0);
   }
 
-  .main-content {
+  .lecturer-dashboard .main-content {
     margin-left: 0;
   }
 
-  .welcome-banner {
+  .lecturer-dashboard .welcome-banner {
     flex-direction: column;
     gap: 20px;
     align-items: flex-start;
     padding: 24px;
   }
 
-  .dashboard-content {
+  .lecturer-dashboard.dashboard-content,
+  .lecturer-dashboard .dashboard-content {
     padding: 16px;
   }
 
-  .search-bar {
+  .lecturer-dashboard .search-bar {
     display: none;
   }
 
-  .banner-actions {
+  .lecturer-dashboard .banner-actions {
     flex-direction: column;
     width: 100%;
   }

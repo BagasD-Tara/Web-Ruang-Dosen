@@ -22,6 +22,42 @@
 
   /* Status */
   --color-danger: #BA1A1A;
+  --color-success: #16A34A;
+  --color-success-bg: #DCFCE7;
+  --color-warning: #EA580C;
+  --color-warning-bg: #FFF7ED;
+  --color-purple: #7C3AED;
+  --color-purple-bg: #EDE9FE;
+
+  /* Compatibility aliases for legacy dashboard/lecturer CSS.
+     These keep older components readable while they are migrated to --color-* tokens. */
+  --primary: var(--color-brand-primary);
+  --primary-dark: var(--color-brand-dark);
+  --primary-light: var(--color-brand-bg);
+  --primary-hover: var(--color-brand-subtle);
+  --green: var(--color-success);
+  --green-light: var(--color-success-bg);
+  --orange: var(--color-warning);
+  --orange-light: var(--color-warning-bg);
+  --purple: var(--color-purple);
+  --purple-light: var(--color-purple-bg);
+  --red: var(--color-danger);
+  --red-light: #FEF2F2;
+  --bg: var(--color-bg-backdrop);
+  --card-bg: var(--color-bg-white);
+  --sidebar-bg: var(--color-bg-white);
+  --border: var(--color-border);
+  --border-hover: #AEB4C8;
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --shadow-sm: 0 1px 3px rgba(15, 33, 74, 0.08);
+  --shadow-md: 0 8px 18px rgba(15, 33, 74, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --transition: 0.2s ease;
 }
 
 * {

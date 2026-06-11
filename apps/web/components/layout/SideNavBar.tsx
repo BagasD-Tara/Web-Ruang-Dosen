@@ -94,20 +94,36 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
   );
 
   return (
-    <aside
-      ref={asideRef}
-      data-sidebar
-      className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
-      style={{
-        top: '73px',
-        bottom: 0,
-        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
-        width: '256px',
-        background: 'var(--color-bg-white)',
-        borderRight: '1px solid var(--color-border)',
-        padding: '24px 20px',
-      }}
-    >
+    <>
+      {sidebarOpen ? (
+        <div
+          aria-hidden="true"
+          className="fixed z-30 transition-opacity duration-300"
+          style={{
+            top: '73px',
+            bottom: 0,
+            left: '255px',
+            width: '1px',
+            background: 'var(--color-border)',
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
+
+      <aside
+        ref={asideRef}
+        data-sidebar
+        className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
+        style={{
+          top: '73px',
+          bottom: 0,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
+          width: '256px',
+          background: 'var(--color-bg-white)',
+          borderRight: '1px solid var(--color-border)',
+          padding: '24px 20px',
+        }}
+      >
       <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const isActive = isNavItemActive(pathname, item);
@@ -177,8 +193,13 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-auto flex w-full items-center gap-3 rounded-lg border-t px-3 py-3 text-left transition-colors hover:bg-gray-50"
-        style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+        className="mt-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors hover:bg-[#F8FAFF]"
+        style={{
+          borderColor: 'var(--color-border)',
+          background: 'var(--color-bg-white)',
+          color: 'var(--color-text-secondary)',
+          boxShadow: '0 12px 24px rgba(15, 33, 74, 0.06)',
+        }}
         aria-label="Logout"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] text-xs font-bold text-white">
@@ -194,7 +215,8 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
         </span>
         <LogoutIcon />
       </button>
-    </aside>
+      </aside>
+    </>
   );
 };
 

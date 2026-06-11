@@ -154,6 +154,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
                   border: '1px solid rgba(195,198,214,0.72)',
                   borderRadius: 'var(--page-surface-radius)',
                   background: 'var(--color-bg-page)',
+                  color: 'var(--color-text-primary)',
                   boxShadow: '0 18px 40px rgba(15, 33, 74, 0.04)',
                 }}
               >
