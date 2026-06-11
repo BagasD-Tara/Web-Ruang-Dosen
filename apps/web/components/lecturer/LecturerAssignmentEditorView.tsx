@@ -42,6 +42,7 @@ interface LecturerAssignmentEditorViewProps {
   assignment?: LecturerModuleAssessment;
   onSave: (formData: FormData) => Promise<void>;
   onDelete?: () => Promise<void>;
+  returnHref?: string;
 }
 
 const SUBMISSION_REQUIREMENT_OPTIONS = [
@@ -63,6 +64,7 @@ export function LecturerAssignmentEditorView({
   assignment,
   onSave,
   onDelete,
+  returnHref,
 }: LecturerAssignmentEditorViewProps) {
   const [formState, setFormState] = React.useState(() =>
     createInitialFormState(mode, assignment)
@@ -74,7 +76,7 @@ export function LecturerAssignmentEditorView({
   const submitButtonLabel = mode === 'create' ? 'Create Assignment' : 'Save Changes';
   const courseHref = `/dosen/courses/${course.id}`;
   const assignmentsHref = `/dosen/courses/${course.id}/assignments`;
-  const cancelHref = mode === 'edit' ? assignmentsHref : courseHref;
+  const cancelHref = returnHref ?? (mode === 'edit' ? assignmentsHref : courseHref);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* --- DESIGN TOKENS --- */
-:root {
+.student-dashboard {
   --primary: #2563EB;
   --primary-dark: #1D4ED8;
   --primary-light: #EFF6FF;
@@ -50,17 +50,14 @@
 }
 
 /* --- RESET & BASE --- */
-* {
+.student-dashboard,
+.student-dashboard * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
-}
-
-body {
+.student-dashboard {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg);
   color: var(--text-primary);
@@ -69,16 +66,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-a {
+.student-dashboard a {
   text-decoration: none;
   color: inherit;
 }
 
-ul {
+.student-dashboard ul {
   list-style: none;
 }
 
-button {
+.student-dashboard button {
   cursor: pointer;
   border: none;
   background: transparent;
@@ -89,7 +86,7 @@ button {
 /* =============================================
    APP WRAPPER
    ============================================= */
-.app-wrapper {
+.student-dashboard .app-wrapper {
   display: flex;
   min-height: 100vh;
   background-color: var(--bg);
@@ -98,7 +95,7 @@ button {
 /* =============================================
    SIDEBAR
    ============================================= */
-.sidebar {
+.student-dashboard .sidebar {
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--border);
@@ -112,7 +109,7 @@ button {
   transition: transform var(--transition-slow);
 }
 
-.sidebar-header {
+.student-dashboard .sidebar-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -121,7 +118,7 @@ button {
   height: var(--topbar-height);
 }
 
-.logo-icon {
+.student-dashboard .logo-icon {
   width: 36px;
   height: 36px;
   background: linear-gradient(135deg, #2563EB, #7C3AED);
@@ -132,29 +129,29 @@ button {
   flex-shrink: 0;
 }
 
-.logo-icon svg {
+.student-dashboard .logo-icon svg {
   color: white;
 }
 
-.logo-text {
+.student-dashboard .logo-text {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
 }
 
-.logo-text span {
+.student-dashboard .logo-text span {
   color: var(--primary);
 }
 
 /* --- SIDEBAR NAV --- */
-.sidebar-nav {
+.student-dashboard .sidebar-nav {
   flex: 1;
   padding: 16px 12px;
   overflow-y: auto;
 }
 
-.nav-section-label {
+.student-dashboard .nav-section-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -164,15 +161,15 @@ button {
   margin: 16px 0 8px 0;
 }
 
-.nav-section-label:first-child {
+.student-dashboard .nav-section-label:first-child {
   margin-top: 0;
 }
 
-.nav-item {
+.student-dashboard .nav-item {
   margin-bottom: 2px;
 }
 
-.nav-link {
+.student-dashboard .nav-link {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -186,18 +183,18 @@ button {
   position: relative;
 }
 
-.nav-link:hover {
+.student-dashboard .nav-link:hover {
   background-color: var(--bg);
   color: var(--text-primary);
 }
 
-.nav-link.active {
+.student-dashboard .nav-link.active {
   background-color: var(--primary-light);
   color: var(--primary);
   font-weight: 600;
 }
 
-.nav-link.active::before {
+.student-dashboard .nav-link.active::before {
   content: '';
   position: absolute;
   left: -12px;
@@ -209,13 +206,13 @@ button {
   border-radius: 0 3px 3px 0;
 }
 
-.nav-link svg {
+.student-dashboard .nav-link svg {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
 }
 
-.nav-badge {
+.student-dashboard .nav-badge {
   margin-left: auto;
   background-color: var(--red);
   color: white;
@@ -228,12 +225,12 @@ button {
 }
 
 /* --- SIDEBAR FOOTER --- */
-.sidebar-footer {
+.student-dashboard .sidebar-footer {
   padding: 16px 12px;
   border-top: 1px solid var(--border);
 }
 
-.user-card {
+.student-dashboard .user-card {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -243,11 +240,11 @@ button {
   transition: background-color var(--transition);
 }
 
-.user-card:hover {
+.student-dashboard .user-card:hover {
   background-color: var(--bg);
 }
 
-.user-avatar {
+.student-dashboard .user-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -261,12 +258,12 @@ button {
   flex-shrink: 0;
 }
 
-.user-info {
+.student-dashboard .user-info {
   flex: 1;
   min-width: 0;
 }
 
-.user-name {
+.student-dashboard .user-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
@@ -275,12 +272,12 @@ button {
   text-overflow: ellipsis;
 }
 
-.user-role {
+.student-dashboard .user-role {
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.user-card svg {
+.student-dashboard .user-card svg {
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -288,7 +285,7 @@ button {
 /* =============================================
    MAIN CONTENT
    ============================================= */
-.main-content {
+.student-dashboard .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
   display: flex;
@@ -299,7 +296,7 @@ button {
 /* =============================================
    TOP BAR
    ============================================= */
-.top-bar {
+.student-dashboard .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -312,14 +309,14 @@ button {
   z-index: 50;
 }
 
-.top-bar-right {
+.student-dashboard .top-bar-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 /* Search */
-.search-bar {
+.student-dashboard .search-bar {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -331,17 +328,17 @@ button {
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.search-bar:focus-within {
+.student-dashboard .search-bar:focus-within {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.search-bar svg {
+.student-dashboard .search-bar svg {
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.search-bar input {
+.student-dashboard .search-bar input {
   flex: 1;
   border: none;
   background: transparent;
@@ -351,12 +348,12 @@ button {
   outline: none;
 }
 
-.search-bar input::placeholder {
+.student-dashboard .search-bar input::placeholder {
   color: var(--text-muted);
 }
 
 /* Icon Buttons */
-.icon-btn {
+.student-dashboard .icon-btn {
   width: 38px;
   height: 38px;
   border-radius: var(--radius-md);
@@ -370,13 +367,13 @@ button {
   position: relative;
 }
 
-.icon-btn:hover {
+.student-dashboard .icon-btn:hover {
   background-color: var(--bg);
   border-color: var(--border);
   color: var(--text-primary);
 }
 
-.notif-dot {
+.student-dashboard .notif-dot {
   position: absolute;
   top: 7px;
   right: 7px;
@@ -388,7 +385,7 @@ button {
 }
 
 /* Avatar Button */
-.avatar-btn {
+.student-dashboard .avatar-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -405,14 +402,15 @@ button {
   transition: box-shadow var(--transition);
 }
 
-.avatar-btn:hover {
+.student-dashboard .avatar-btn:hover {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 /* =============================================
    DASHBOARD CONTENT
    ============================================= */
-.dashboard-content {
+.student-dashboard.dashboard-content,
+.student-dashboard .dashboard-content {
   padding: 28px;
   flex: 1;
   display: flex;
@@ -423,7 +421,7 @@ button {
 /* =============================================
    WELCOME BANNER
    ============================================= */
-.welcome-banner {
+.student-dashboard .welcome-banner {
   background: linear-gradient(135deg, #1E40AF 0%, #2563EB 40%, #7C3AED 100%);
   border-radius: var(--radius-xl);
   padding: 32px 40px;
@@ -435,33 +433,33 @@ button {
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
 }
 
-.banner-decoration {
+.student-dashboard .banner-decoration {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.banner-circle {
+.student-dashboard .banner-circle {
   position: absolute;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.banner-circle-1 {
+.student-dashboard .banner-circle-1 {
   width: 200px;
   height: 200px;
   top: -60px;
   right: 200px;
 }
 
-.banner-circle-2 {
+.student-dashboard .banner-circle-2 {
   width: 300px;
   height: 300px;
   top: -80px;
   right: 80px;
 }
 
-.banner-circle-3 {
+.student-dashboard .banner-circle-3 {
   width: 160px;
   height: 160px;
   bottom: -80px;
@@ -469,7 +467,7 @@ button {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.banner-dots {
+.student-dashboard .banner-dots {
   position: absolute;
   right: 0;
   top: 0;
@@ -479,12 +477,12 @@ button {
   background-size: 18px 18px;
 }
 
-.banner-content {
+.student-dashboard .banner-content {
   position: relative;
   z-index: 1;
 }
 
-.banner-greeting {
+.student-dashboard .banner-greeting {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -493,7 +491,7 @@ button {
   margin-bottom: 6px;
 }
 
-.banner-title {
+.student-dashboard .banner-title {
   font-size: 26px;
   font-weight: 800;
   color: white;
@@ -501,19 +499,19 @@ button {
   letter-spacing: -0.5px;
 }
 
-.banner-subtitle {
+.student-dashboard .banner-subtitle {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.75);
 }
 
-.banner-actions {
+.student-dashboard .banner-actions {
   display: flex;
   gap: 12px;
   position: relative;
   z-index: 1;
 }
 
-.btn-primary-white {
+.student-dashboard .btn-primary-white {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -527,12 +525,12 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.btn-primary-white:hover {
+.student-dashboard .btn-primary-white:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
-.btn-outline-white {
+.student-dashboard .btn-outline-white {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -547,21 +545,21 @@ button {
   transition: background-color var(--transition);
 }
 
-.btn-outline-white:hover {
+.student-dashboard .btn-outline-white:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* =============================================
    STAT CARDS (overview row)
    ============================================= */
-.stat-overview {
+.student-dashboard .stat-overview {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 
 /* The circular progress card */
-.stat-card {
+.student-dashboard .stat-card {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 22px 20px;
@@ -575,19 +573,19 @@ button {
   overflow: hidden;
 }
 
-.stat-card:hover {
+.student-dashboard .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
 /* Progress circle card variant */
-.stat-card.progress-card {
+.student-dashboard .stat-card.progress-card {
   flex-direction: column;
   align-items: flex-start;
   gap: 14px;
 }
 
-.stat-card-accent {
+.student-dashboard .stat-card-accent {
   position: absolute;
   top: 0;
   left: 0;
@@ -596,12 +594,12 @@ button {
   border-radius: 3px 0 0 3px;
 }
 
-.accent-blue { background: var(--primary); }
-.accent-green { background: var(--green); }
-.accent-orange { background: var(--orange); }
-.accent-purple { background: var(--purple); }
+.student-dashboard .accent-blue { background: var(--primary); }
+.student-dashboard .accent-green { background: var(--green); }
+.student-dashboard .accent-orange { background: var(--orange); }
+.student-dashboard .accent-purple { background: var(--purple); }
 
-.stat-icon-wrap {
+.student-dashboard .stat-icon-wrap {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
@@ -611,22 +609,22 @@ button {
   flex-shrink: 0;
 }
 
-.stat-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
-.stat-icon-wrap.green { background-color: var(--green-light); color: var(--green); }
-.stat-icon-wrap.orange { background-color: var(--orange-light); color: var(--orange); }
-.stat-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
+.student-dashboard .stat-icon-wrap.blue { background-color: var(--primary-light); color: var(--primary); }
+.student-dashboard .stat-icon-wrap.green { background-color: var(--green-light); color: var(--green); }
+.student-dashboard .stat-icon-wrap.orange { background-color: var(--orange-light); color: var(--orange); }
+.student-dashboard .stat-icon-wrap.purple { background-color: var(--purple-light); color: var(--purple); }
 
-.stat-icon-wrap svg {
+.student-dashboard .stat-icon-wrap svg {
   width: 22px;
   height: 22px;
 }
 
-.stat-body {
+.student-dashboard .stat-body {
   flex: 1;
   min-width: 0;
 }
 
-.stat-label {
+.student-dashboard .stat-label {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 600;
@@ -635,7 +633,7 @@ button {
   margin-bottom: 6px;
 }
 
-.stat-value {
+.student-dashboard .stat-value {
   font-size: 28px;
   font-weight: 800;
   color: var(--text-primary);
@@ -643,14 +641,14 @@ button {
   letter-spacing: -1px;
 }
 
-.stat-value .stat-unit {
+.student-dashboard .stat-value .stat-unit {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0;
 }
 
-.stat-change {
+.student-dashboard .stat-change {
   font-size: 11px;
   font-weight: 600;
   margin-top: 5px;
@@ -659,40 +657,40 @@ button {
   gap: 3px;
 }
 
-.stat-change.up { color: var(--green); }
-.stat-change.neutral { color: var(--text-muted); }
-.stat-change.warning { color: var(--orange); }
+.student-dashboard .stat-change.up { color: var(--green); }
+.student-dashboard .stat-change.neutral { color: var(--text-muted); }
+.student-dashboard .stat-change.warning { color: var(--orange); }
 
 /* --- Circular progress ring --- */
-.progress-ring-wrap {
+.student-dashboard .progress-ring-wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
 }
 
-.progress-ring-info {
+.student-dashboard .progress-ring-info {
   flex: 1;
 }
 
-.ring-container {
+.student-dashboard .ring-container {
   position: relative;
   width: 72px;
   height: 72px;
   flex-shrink: 0;
 }
 
-.ring-container svg {
+.student-dashboard .ring-container svg {
   transform: rotate(-90deg);
 }
 
-.ring-bg {
+.student-dashboard .ring-bg {
   fill: none;
   stroke: var(--border);
   stroke-width: 6;
 }
 
-.ring-fill {
+.student-dashboard .ring-fill {
   fill: none;
   stroke: url(#ringGradient);
   stroke-width: 6;
@@ -702,7 +700,7 @@ button {
   transition: stroke-dashoffset 0.8s ease;
 }
 
-.ring-label {
+.student-dashboard .ring-label {
   position: absolute;
   inset: 0;
   display: flex;
@@ -717,7 +715,7 @@ button {
 /* =============================================
    MAIN BODY LAYOUT
    ============================================= */
-.main-body-layout {
+.student-dashboard .main-body-layout {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 24px;
@@ -726,20 +724,20 @@ button {
 /* =============================================
    SECTION HEADERS
    ============================================= */
-.section-header {
+.student-dashboard .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
 
-.section-title {
+.student-dashboard .section-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.view-all-link {
+.student-dashboard .view-all-link {
   font-size: 12.5px;
   font-weight: 600;
   color: var(--primary);
@@ -749,20 +747,20 @@ button {
   transition: gap var(--transition);
 }
 
-.view-all-link:hover {
+.student-dashboard .view-all-link:hover {
   gap: 8px;
 }
 
 /* =============================================
    ACTIVE COURSES
    ============================================= */
-.course-grid {
+.student-dashboard .course-grid {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.course-card {
+.student-dashboard .course-card {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -771,20 +769,20 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.course-card:hover {
+.student-dashboard .course-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--border-hover);
 }
 
-.course-card-top {
+.student-dashboard .course-card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12px;
 }
 
-.course-tag {
+.student-dashboard .course-tag {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -793,10 +791,10 @@ button {
   border-radius: 99px;
 }
 
-.course-tag.blue { background-color: var(--primary-light); color: var(--primary); }
-.course-tag.purple { background-color: var(--purple-light); color: var(--purple); }
+.student-dashboard .course-tag.blue { background-color: var(--primary-light); color: var(--primary); }
+.student-dashboard .course-tag.purple { background-color: var(--purple-light); color: var(--purple); }
 
-.course-more-btn {
+.student-dashboard .course-more-btn {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
@@ -807,19 +805,19 @@ button {
   transition: background-color var(--transition), color var(--transition);
 }
 
-.course-more-btn:hover {
+.student-dashboard .course-more-btn:hover {
   background-color: var(--bg);
   color: var(--text-primary);
 }
 
-.course-name {
+.student-dashboard .course-name {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
-.course-instructor {
+.student-dashboard .course-instructor {
   font-size: 12.5px;
   color: var(--text-muted);
   font-weight: 500;
@@ -829,46 +827,46 @@ button {
   gap: 5px;
 }
 
-.progress-section {
+.student-dashboard .progress-section {
   margin-bottom: 16px;
 }
 
-.progress-label {
+.student-dashboard .progress-label {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 7px;
 }
 
-.progress-text {
+.student-dashboard .progress-text {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 500;
 }
 
-.progress-pct {
+.student-dashboard .progress-pct {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.progress-track {
+.student-dashboard .progress-track {
   height: 6px;
   background-color: var(--bg);
   border-radius: 99px;
   overflow: hidden;
 }
 
-.progress-fill {
+.student-dashboard .progress-fill {
   height: 100%;
   border-radius: 99px;
   transition: width 0.6s ease;
 }
 
-.progress-fill.blue { background: linear-gradient(to right, #3B82F6, #2563EB); }
-.progress-fill.purple { background: linear-gradient(to right, #A78BFA, #7C3AED); }
+.student-dashboard .progress-fill.blue { background: linear-gradient(to right, #3B82F6, #2563EB); }
+.student-dashboard .progress-fill.purple { background: linear-gradient(to right, #A78BFA, #7C3AED); }
 
-.course-action-btn {
+.student-dashboard .course-action-btn {
   width: 100%;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
@@ -878,22 +876,22 @@ button {
   transition: background-color var(--transition), color var(--transition), border-color var(--transition);
 }
 
-.course-action-btn.primary {
+.student-dashboard .course-action-btn.primary {
   background-color: var(--primary);
   color: white;
 }
 
-.course-action-btn.primary:hover {
+.student-dashboard .course-action-btn.primary:hover {
   background-color: var(--primary-dark);
 }
 
-.course-action-btn.secondary {
+.student-dashboard .course-action-btn.secondary {
   background-color: white;
   color: var(--primary);
   border: 1px solid var(--border);
 }
 
-.course-action-btn.secondary:hover {
+.student-dashboard .course-action-btn.secondary:hover {
   border-color: var(--primary);
   background-color: var(--primary-light);
 }
@@ -901,14 +899,14 @@ button {
 /* =============================================
    RIGHT PANEL
    ============================================= */
-.right-panel {
+.student-dashboard .right-panel {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
 /* --- Deadlines --- */
-.deadlines-card {
+.student-dashboard .deadlines-card {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -916,7 +914,7 @@ button {
   overflow: hidden;
 }
 
-.deadlines-header {
+.student-dashboard .deadlines-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -924,14 +922,14 @@ button {
   margin-bottom: 12px;
 }
 
-.deadlines-list {
+.student-dashboard .deadlines-list {
   padding: 0 20px;
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-.deadline-item {
+.student-dashboard .deadline-item {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -939,11 +937,11 @@ button {
   border-bottom: 1px solid var(--border);
 }
 
-.deadline-item:last-child {
+.student-dashboard .deadline-item:last-child {
   border-bottom: none;
 }
 
-.deadline-date-block {
+.student-dashboard .deadline-date-block {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -956,7 +954,7 @@ button {
   border: 1px solid var(--border);
 }
 
-.deadline-month {
+.student-dashboard .deadline-month {
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -964,28 +962,28 @@ button {
   color: var(--text-muted);
 }
 
-.deadline-day {
+.student-dashboard .deadline-day {
   font-size: 18px;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1.1;
 }
 
-.deadline-date-block.urgent {
+.student-dashboard .deadline-date-block.urgent {
   background-color: var(--red-light);
   border-color: rgba(220, 38, 38, 0.2);
 }
 
-.deadline-date-block.urgent .deadline-day {
+.student-dashboard .deadline-date-block.urgent .deadline-day {
   color: var(--red);
 }
 
-.deadline-info {
+.student-dashboard .deadline-info {
   flex: 1;
   min-width: 0;
 }
 
-.deadline-title {
+.student-dashboard .deadline-title {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
@@ -995,26 +993,26 @@ button {
   text-overflow: ellipsis;
 }
 
-.deadline-course {
+.student-dashboard .deadline-course {
   font-size: 11.5px;
   color: var(--text-muted);
   font-weight: 500;
   margin-bottom: 5px;
 }
 
-.deadline-badge {
+.student-dashboard .deadline-badge {
   font-size: 10.5px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 99px;
 }
 
-.deadline-badge.urgent {
+.student-dashboard .deadline-badge.urgent {
   background-color: var(--red-light);
   color: var(--red);
 }
 
-.view-calendar-link {
+.student-dashboard .view-calendar-link {
   display: block;
   text-align: center;
   padding: 12px;
@@ -1025,12 +1023,12 @@ button {
   transition: background-color var(--transition);
 }
 
-.view-calendar-link:hover {
+.student-dashboard .view-calendar-link:hover {
   background-color: var(--primary-light);
 }
 
 /* --- Registration CTA --- */
-.registration-cta {
+.student-dashboard .registration-cta {
   background: linear-gradient(135deg, #2563EB, #7C3AED);
   border-radius: var(--radius-lg);
   padding: 22px 20px;
@@ -1039,7 +1037,7 @@ button {
   overflow: hidden;
 }
 
-.registration-cta::before {
+.student-dashboard .registration-cta::before {
   content: '';
   position: absolute;
   top: -30px;
@@ -1050,7 +1048,7 @@ button {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.registration-cta::after {
+.student-dashboard .registration-cta::after {
   content: '';
   position: absolute;
   bottom: -40px;
@@ -1061,7 +1059,7 @@ button {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.cta-icon {
+.student-dashboard .cta-icon {
   width: 40px;
   height: 40px;
   background: rgba(255, 255, 255, 0.2);
@@ -1074,7 +1072,7 @@ button {
   z-index: 1;
 }
 
-.cta-title {
+.student-dashboard .cta-title {
   font-size: 16px;
   font-weight: 800;
   color: white;
@@ -1083,7 +1081,7 @@ button {
   z-index: 1;
 }
 
-.cta-desc {
+.student-dashboard .cta-desc {
   font-size: 12.5px;
   color: rgba(255, 255, 255, 0.75);
   line-height: 1.5;
@@ -1092,7 +1090,7 @@ button {
   z-index: 1;
 }
 
-.cta-buttons {
+.student-dashboard .cta-buttons {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1100,7 +1098,7 @@ button {
   z-index: 1;
 }
 
-.btn-cta-primary {
+.student-dashboard .btn-cta-primary {
   padding: 10px;
   background-color: white;
   color: var(--primary);
@@ -1111,12 +1109,12 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.btn-cta-primary:hover {
+.student-dashboard .btn-cta-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.btn-cta-secondary {
+.student-dashboard .btn-cta-secondary {
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
@@ -1128,18 +1126,18 @@ button {
   transition: background-color var(--transition);
 }
 
-.btn-cta-secondary:hover {
+.student-dashboard .btn-cta-secondary:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* --- Performance Stats mini cards --- */
-.performance-stats {
+.student-dashboard .performance-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
 
-.stat-card-mini {
+.student-dashboard .stat-card-mini {
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -1151,12 +1149,12 @@ button {
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.stat-card-mini:hover {
+.student-dashboard .stat-card-mini:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.stat-mini-label {
+.student-dashboard .stat-mini-label {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1164,7 +1162,7 @@ button {
   color: var(--text-muted);
 }
 
-.stat-mini-value {
+.student-dashboard .stat-mini-value {
   font-size: 26px;
   font-weight: 800;
   color: var(--text-primary);
@@ -1175,7 +1173,7 @@ button {
 /* =============================================
    FOOTER
    ============================================= */
-.footer {
+.student-dashboard .footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1186,22 +1184,22 @@ button {
   background-color: var(--sidebar-bg);
 }
 
-.footer strong {
+.student-dashboard .footer strong {
   color: var(--text-primary);
   font-weight: 700;
 }
 
-.footer-links {
+.student-dashboard .footer-links {
   display: flex;
   gap: 20px;
 }
 
-.footer-links a {
+.student-dashboard .footer-links a {
   color: var(--text-muted);
   transition: color var(--transition);
 }
 
-.footer-links a:hover {
+.student-dashboard .footer-links a:hover {
   color: var(--primary);
 }
 
@@ -1209,66 +1207,67 @@ button {
    RESPONSIVE
    ============================================= */
 @media (max-width: 1200px) {
-  .main-body-layout {
+  .student-dashboard .main-body-layout {
     grid-template-columns: 1fr;
   }
 
-  .right-panel {
+  .student-dashboard .right-panel {
     order: -1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
   }
 
-  .performance-stats {
+  .student-dashboard .performance-stats {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 1024px) {
-  .stat-overview {
+  .student-dashboard .stat-overview {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .sidebar {
+  .student-dashboard .sidebar {
     transform: translateX(-100%);
   }
 
-  .sidebar.open {
+  .student-dashboard .sidebar.open {
     transform: translateX(0);
   }
 
-  .main-content {
+  .student-dashboard .main-content {
     margin-left: 0;
   }
 
-  .welcome-banner {
+  .student-dashboard .welcome-banner {
     flex-direction: column;
     gap: 20px;
     align-items: flex-start;
     padding: 24px;
   }
 
-  .dashboard-content {
+  .student-dashboard.dashboard-content,
+  .student-dashboard .dashboard-content {
     padding: 16px;
   }
 
-  .search-bar {
+  .student-dashboard .search-bar {
     display: none;
   }
 
-  .banner-actions {
+  .student-dashboard .banner-actions {
     flex-direction: column;
     width: 100%;
   }
 
-  .right-panel {
+  .student-dashboard .right-panel {
     grid-template-columns: 1fr;
   }
 
-  .stat-overview {
+  .student-dashboard .stat-overview {
     grid-template-columns: 1fr;
   }
 }

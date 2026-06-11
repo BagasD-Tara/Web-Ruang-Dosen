@@ -114,7 +114,7 @@ export default function DashboardAdminPage() {
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="admin-dashboard app-wrapper">
       {/* ============================================================
           SIDEBAR
       ============================================================ */}

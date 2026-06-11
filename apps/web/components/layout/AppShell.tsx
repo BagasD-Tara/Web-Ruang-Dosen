@@ -8,7 +8,6 @@ import { Footer } from './Footer';
 
 const TOP_NAV_HEIGHT_PX = 73;
 const DESKTOP_SIDEBAR_WIDTH_PX = 256;
-const TABLET_SIDEBAR_WIDTH_PX = 64;
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -17,7 +16,6 @@ interface AppShellProps {
 
 interface AppShellContextValue {
   isMobile: boolean;
-  isTablet: boolean;
   sidebarOpen: boolean;
   rightSidebarOpen: boolean;
   openSidebar: () => void;
@@ -33,7 +31,6 @@ const AppShellContext = createContext<AppShellContextValue | null>(null);
 export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }) => {
   const pathname = usePathname();
   const isMobile = useMediaQuery('(max-width: 767px)');
-  const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
@@ -42,7 +39,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
   const contextValue = useMemo<AppShellContextValue>(
     () => ({
       isMobile,
-      isTablet,
       sidebarOpen,
       rightSidebarOpen,
       openSidebar: () => {
@@ -99,12 +95,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
         });
       },
     }),
-    [isMobile, isTablet, rightSidebarOpen, sidebarOpen]
+    [isMobile, rightSidebarOpen, sidebarOpen]
   );
 
   const gutterWidth = getSidebarGutterWidth({
     isMobile,
-    isTablet,
     sidebarOpen,
   });
 
@@ -113,12 +108,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
       <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg-backdrop)' }}>
         <TopNavBar
           onToggleSidebar={contextValue.toggleSidebar}
-          brandHref={mode === 'lecturer' ? '/dosen/courses' : '/courses'}
+          brandHref={mode === 'lecturer' ? '/dashboard_dosen' : '/dashboard_mahasiswa'}
           searchBasePath={mode === 'lecturer' ? '/dosen/courses' : undefined}
         />
         <SideNavBar
           sidebarOpen={sidebarOpen}
-          onClose={contextValue.closeSidebar}
+          onClose={isMobile ? contextValue.closeSidebar : noop}
           mode={mode}
         />
 
@@ -159,6 +154,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
                   border: '1px solid rgba(195,198,214,0.72)',
                   borderRadius: 'var(--page-surface-radius)',
                   background: 'var(--color-bg-page)',
+                  color: 'var(--color-text-primary)',
                   boxShadow: '0 18px 40px rgba(15, 33, 74, 0.04)',
                 }}
               >
@@ -186,18 +182,20 @@ export function useAppShell() {
 
 function getSidebarGutterWidth({
   isMobile,
-  isTablet,
   sidebarOpen,
 }: {
   isMobile: boolean;
-  isTablet: boolean;
   sidebarOpen: boolean;
 }) {
   if (isMobile || !sidebarOpen) {
     return 0;
   }
 
-  return isTablet ? TABLET_SIDEBAR_WIDTH_PX : DESKTOP_SIDEBAR_WIDTH_PX;
+  return DESKTOP_SIDEBAR_WIDTH_PX;
+}
+
+function noop() {
+  return undefined;
 }
 
 function useMediaQuery(query: string) {

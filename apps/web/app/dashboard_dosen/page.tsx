@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { buildApiUrl } from "@/lib/api/apiConfig";
-import { DosenDashboardLayout } from "@/components/layout/DosenDashboardLayout";
 import "./dashboard.css";
 
 export default function DashboardPage() {
@@ -14,7 +13,6 @@ export default function DashboardPage() {
     activeCourses: 0,
     totalStudents: 0,
     pendingSubmissions: 8, // Mocked for now
-    researchProjects: 3, // Mocked for now
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -80,12 +78,15 @@ export default function DashboardPage() {
   }, [router]);
 
   if (loading) {
-    return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>Memuat...</div>;
+    return (
+      <div className="lecturer-dashboard dashboard-content">
+        <div className="stat-card">Memuat...</div>
+      </div>
+    );
   }
 
   return (
-    <DosenDashboardLayout>
-      <div className="dashboard-content">
+    <div className="lecturer-dashboard dashboard-content">
         {/* ---- WELCOME BANNER ---- */}
         <section className="welcome-banner">
           <div className="banner-decoration">
@@ -100,22 +101,30 @@ export default function DashboardPage() {
             <p className="banner-subtitle">Anda memiliki <strong>{stats.pendingSubmissions} tugas mahasiswa</strong> yang menunggu untuk ditinjau hari ini.</p>
           </div>
           <div className="banner-actions">
-            <button className="btn-primary-white" id="review-submissions-btn">
+            <Link
+              href="/dosen/courses/create"
+              className="btn-primary-white"
+              id="review-submissions-btn"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              Tinjau Tugas
-            </button>
-            <button className="btn-outline-white" id="view-schedule-btn">
+              Buat Course
+            </Link>
+            <Link
+              href="/dosen/courses"
+              className="btn-outline-white"
+              id="view-schedule-btn"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              Jadwal Hari Ini
-            </button>
+              Lihat Kelas
+            </Link>
           </div>
         </section>
 
@@ -165,19 +174,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-card-accent accent-purple"></div>
-            <div className="stat-icon-wrap purple">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-            </div>
-            <div className="stat-body">
-              <p className="stat-label">Proyek Riset</p>
-              <p className="stat-value">{stats.researchProjects}</p>
-              <p className="stat-change neutral">Data statis</p>
-            </div>
-          </div>
         </section>
 
         {/* ---- MAIN BODY ---- */}
@@ -235,9 +231,26 @@ export default function DashboardPage() {
                   );
                 })
               ) : (
-                <div style={{ padding: "30px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: "var(--radius-lg)" }}>
-                  <p style={{ color: "var(--text-muted)", marginBottom: "10px" }}>Anda belum memiliki mata kuliah yang diampu.</p>
-                  <button className="btn-filled">Buat Mata Kuliah Baru</button>
+                <div className="empty-course-state">
+                  <div className="empty-course-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4.75 6.5A2.75 2.75 0 0 1 7.5 3.75h11.75v13.5H7.5a2.75 2.75 0 0 0-2.75 2.75V6.5Z"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M4.75 20A2.75 2.75 0 0 1 7.5 17.25h11.75M8.25 8h7.5M8.25 11.25h5.25"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <p>Anda belum memiliki mata kuliah yang diampu.</p>
                 </div>
               )}
             </div>
@@ -250,10 +263,6 @@ export default function DashboardPage() {
                 <h3 className="section-title">
                   Tugas Terbaru
                 </h3>
-                <Link href="#" className="view-all-link">
-                  Lihat Semua
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-                </Link>
               </div>
             </div>
 
@@ -307,15 +316,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="panel-footer">
-              <Link href="#" className="view-all-btn" id="view-all-submissions-btn">
-                Lihat Semua Tugas
-              </Link>
-            </div>
           </aside>
         </div>
-      </div>
-    </DosenDashboardLayout>
+    </div>
   );
 }
 

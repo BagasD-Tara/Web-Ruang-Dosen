@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 
-export default function LecturerLayout({
+export default function DashboardDosenLayout({
   children,
 }: {
   children: React.ReactNode;

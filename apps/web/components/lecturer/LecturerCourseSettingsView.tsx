@@ -29,13 +29,29 @@ interface LecturerCourseSettingsViewProps {
 }
 
 const SEMESTER_OPTIONS = [
+  'Spring Semester 2026',
+  'Short Semester 2026',
   'Fall Semester 2026',
   'Spring Semester 2027',
   'Short Semester 2027',
+  'Fall Semester 2027',
 ] as const;
-const CREDIT_OPTIONS = ['2', '3', '4'] as const;
+const CREDIT_OPTIONS = ['1', '2', '3', '4', '5'] as const;
+const DEFAULT_DEPARTMENT_OPTIONS = [
+  'Computer Science',
+  'Data Science',
+  'Information Technology',
+  'Software Engineering',
+  'Cybersecurity',
+  'Information Systems',
+  'Artificial Intelligence',
+  'Business Analytics',
+] as const;
 const DEPARTMENT_OPTIONS = Array.from(
-  new Set(LECTURER_COURSES.map((course) => course.department))
+  new Set([
+    ...DEFAULT_DEPARTMENT_OPTIONS,
+    ...LECTURER_COURSES.map((course) => course.department),
+  ])
 ).toSorted();
 
 export function LecturerCourseSettingsView({
@@ -192,9 +208,18 @@ export function LecturerCourseSettingsView({
 
         <aside className="space-y-6">
           <div
-            className={`${LECTURER_CARD_CLASSNAME} px-5 py-6 sm:px-6`}
-            style={{ borderColor: 'var(--color-border)' }}
+            className={`${LECTURER_CARD_CLASSNAME} relative overflow-hidden px-5 py-6 sm:px-6`}
+            style={{
+              borderColor: 'rgba(0, 53, 148, 0.16)',
+              background:
+                'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 62%, #EEF4FF 100%)',
+            }}
           >
+            <div
+              aria-hidden="true"
+              className="absolute left-0 top-0 h-1 w-full"
+              style={{ background: 'linear-gradient(90deg, #003594, #7DA8FF)' }}
+            />
             <h2
               className="text-[22px] font-bold"
               style={{ color: 'var(--color-text-primary)' }}
@@ -202,11 +227,11 @@ export function LecturerCourseSettingsView({
               Course Summary
             </h2>
             <div className="mt-4 space-y-2">
-              <SummaryRow label="Modules" value={String(data.modules.length)} />
-              <SummaryRow label="Assignments" value={String(data.course.assignmentCount)} />
-              <SummaryRow label="Students" value={String(data.enrolledStudents)} />
-              <SummaryRow label="Department" value={formState.department} />
-              <SummaryRow label="Status" value={formState.status} />
+              <SummaryRow label="Modules" value={String(data.modules.length)} tone="blue" />
+              <SummaryRow label="Assignments" value={String(data.course.assignmentCount)} tone="purple" />
+              <SummaryRow label="Students" value={String(data.enrolledStudents)} tone="green" />
+              <SummaryRow label="Department" value={formState.department} tone="neutral" />
+              <SummaryRow label="Status" value={formState.status} tone={formState.status === 'Active' ? 'green' : 'orange'} />
             </div>
           </div>
         </aside>
@@ -421,19 +446,26 @@ function SimpleRadioOption({
 
 function SummaryRow({
   label,
+  tone,
   value,
 }: {
   label: string;
+  tone: SummaryTone;
   value: string;
 }) {
+  const style = SUMMARY_TONE_STYLE[tone];
+
   return (
     <div
-      className="grid grid-cols-[minmax(0,110px)_minmax(0,1fr)] items-start gap-x-3 rounded-[14px] px-3 py-2.5"
-      style={{ background: '#F8FAFD' }}
+      className="grid grid-cols-[minmax(0,110px)_minmax(0,1fr)] items-start gap-x-3 rounded-[14px] border px-3 py-2.5"
+      style={{
+        background: style.background,
+        borderColor: style.borderColor,
+      }}
     >
       <span
         className="text-sm font-semibold uppercase tracking-[0.04em]"
-        style={{ color: 'var(--color-text-secondary)' }}
+        style={{ color: style.labelColor }}
       >
         {label}
       </span>
@@ -449,6 +481,39 @@ function SummaryRow({
     </div>
   );
 }
+
+type SummaryTone = 'blue' | 'purple' | 'green' | 'orange' | 'neutral';
+
+const SUMMARY_TONE_STYLE: Record<
+  SummaryTone,
+  { background: string; borderColor: string; labelColor: string }
+> = {
+  blue: {
+    background: 'rgba(231, 238, 255, 0.78)',
+    borderColor: 'rgba(0, 53, 148, 0.1)',
+    labelColor: 'var(--color-brand-primary)',
+  },
+  purple: {
+    background: 'rgba(237, 233, 254, 0.72)',
+    borderColor: 'rgba(124, 58, 237, 0.12)',
+    labelColor: '#6D35C5',
+  },
+  green: {
+    background: 'rgba(220, 252, 231, 0.62)',
+    borderColor: 'rgba(22, 163, 74, 0.12)',
+    labelColor: '#187346',
+  },
+  orange: {
+    background: 'rgba(255, 247, 237, 0.82)',
+    borderColor: 'rgba(234, 88, 12, 0.14)',
+    labelColor: '#A14B08',
+  },
+  neutral: {
+    background: 'rgba(248, 250, 253, 0.86)',
+    borderColor: 'rgba(195, 198, 214, 0.45)',
+    labelColor: 'var(--color-text-secondary)',
+  },
+};
 
 function createInitialSettingsState(
   data: LecturerManageCourseData

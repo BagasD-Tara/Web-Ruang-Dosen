@@ -33,8 +33,43 @@
   /* Status */
   --color-success: #28a745;
   --color-danger: #BA1A1A;
-  --color-warning: #ffc107;
+  --color-warning: #EA580C;
+  --color-warning-bg: #FFF7ED;
   --color-info: #17a2b8;
+  --color-success: #16A34A;
+  --color-success-bg: #DCFCE7;
+  --color-purple: #7C3AED;
+  --color-purple-bg: #EDE9FE;
+
+  /* Compatibility aliases for legacy dashboard/lecturer CSS.
+     These keep older components readable while they are migrated to --color-* tokens. */
+  --primary: var(--color-brand-primary);
+  --primary-dark: var(--color-brand-dark);
+  --primary-light: var(--color-brand-bg);
+  --primary-hover: var(--color-brand-subtle);
+  --green: var(--color-success);
+  --green-light: var(--color-success-bg);
+  --orange: var(--color-warning);
+  --orange-light: var(--color-warning-bg);
+  --purple: var(--color-purple);
+  --purple-light: var(--color-purple-bg);
+  --red: var(--color-danger);
+  --red-light: #FEF2F2;
+  --bg: var(--color-bg-backdrop);
+  --card-bg: var(--color-bg-white);
+  --sidebar-bg: var(--color-bg-white);
+  --border: var(--color-border);
+  --border-hover: #AEB4C8;
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --shadow-sm: 0 1px 3px rgba(15, 33, 74, 0.08);
+  --shadow-md: 0 8px 18px rgba(15, 33, 74, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --transition: 0.2s ease;
 }
 
 @theme inline {
@@ -170,32 +205,9 @@ body {
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Sidebar responsive */
-@media (min-width: 768px) and (max-width: 1023px) {
-  aside[data-sidebar] {
-    width: 64px !important;
-    padding: 24px 8px !important;
-  }
-
-  /* Sembunyikan label, tampilkan icon saja */
-  aside[data-sidebar] a span:last-child {
-    display: none;
-  }
-
-  /* Pusatkan icon */
-  aside[data-sidebar] a {
-    justify-content: center;
-  }
-}
-
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   aside[data-sidebar] {
     width: 256px;
-    padding: 24px 16px;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  aside[data-sidebar] a span:last-child {
-    display: none;
+    padding: 24px 20px;
   }
 }

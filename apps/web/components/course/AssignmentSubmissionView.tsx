@@ -327,9 +327,9 @@ function AssignmentNavButton({
   const textColor = primary ? 'var(--color-brand-primary)' : 'var(--color-text-secondary)';
   const content = (
     <>
-      {direction === 'previous' ? <span aria-hidden>{'<-'}</span> : null}
+      {direction === 'previous' ? <AssignmentArrowIcon direction="previous" /> : null}
       {label}
-      {direction === 'next' ? <span aria-hidden>{'->'}</span> : null}
+      {direction === 'next' ? <AssignmentArrowIcon direction="next" /> : null}
     </>
   );
 
@@ -354,6 +354,27 @@ function AssignmentNavButton({
     >
       {content}
     </button>
+  );
+}
+
+function AssignmentArrowIcon({ direction }: { direction: 'previous' | 'next' }) {
+  const isPrevious = direction === 'previous';
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4 shrink-0"
+      viewBox="0 0 16 16"
+      fill="none"
+    >
+      <path
+        d={isPrevious ? 'M10 3.5 5.5 8l4.5 4.5M6 8h6.5' : 'M6 3.5 10.5 8 6 12.5M3.5 8H10'}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

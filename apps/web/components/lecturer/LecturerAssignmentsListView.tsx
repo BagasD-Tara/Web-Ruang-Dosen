@@ -35,7 +35,7 @@ export function LecturerAssignmentsListView({
           { label: 'Home', href: '/dosen' },
           { label: 'Courses', href: '/dosen/courses' },
           { label: course.title, href: `/dosen/courses/${course.id}` },
-          { label: 'Assignments' },
+          { label: 'All Assignments' },
         ]}
       />
 
@@ -45,10 +45,10 @@ export function LecturerAssignmentsListView({
             className="text-[34px] font-bold leading-tight sm:text-[44px]"
             style={{ color: 'var(--color-text-primary)' }}
           >
-            Existing Assignments
+            All Assignments
           </h1>
           <p className="mt-3 text-lg" style={{ color: 'var(--color-text-secondary)' }}>
-            Review assignments across all modules in this course.
+            Review every assignment across all modules in this course.
           </p>
         </div>
         <Link

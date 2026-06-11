@@ -1,12 +1,12 @@
 /* Reset Dasar */
-* {
+.login-page, .login-page * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
 }
 
-body {
+.login-page {
     background-color: #FFFFFF;
     color: #333333;
     height: 100vh;
@@ -15,7 +15,7 @@ body {
 }
 
 /* --- HEADER / NAVBAR --- */
-.navbar {
+.login-page .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -24,26 +24,26 @@ body {
     background-color: #FFFFFF;
 }
 
-.navbar .brand {
+.login-page .navbar .brand {
     font-size: 20px;
     font-weight: 700;
     color: #1D4ED8;
 }
 
-.nav-links {
+.login-page .nav-links {
     display: flex;
     align-items: center;
     gap: 24px;
 }
 
-.nav-links a {
+.login-page .nav-links a {
     text-decoration: none;
     color: #4B5563;
     font-size: 14px;
     font-weight: 500;
 }
 
-.btn-support {
+.login-page .btn-support {
     background-color: #2563EB;
     color: white;
     border: none;
@@ -54,14 +54,14 @@ body {
 }
 
 /* --- MAIN LAYOUT (FLEXBOX) --- */
-.login-container {
+.login-page .login-container {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
 /* --- BAGIAN KIRI (GAMBAR) --- */
-.image-section {
+.login-page .image-section {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -69,7 +69,7 @@ body {
     padding-bottom: 24px; /* Senggang di bagian bawah */
 }
 
-.campus-image {
+.login-page .campus-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -78,7 +78,7 @@ body {
 }
 
 /* --- BAGIAN KANAN (FORM LOGIN) --- */
-.form-section {
+.login-page .form-section {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -86,19 +86,19 @@ body {
     padding: 40px;
 }
 
-.form-wrapper {
+.login-page .form-wrapper {
     width: 100%;
     max-width: 400px;
 }
 
-.form-wrapper h1 {
+.login-page .form-wrapper h1 {
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 8px;
     color: #111827;
 }
 
-.form-wrapper .subtitle {
+.login-page .form-wrapper .subtitle {
     font-size: 14px;
     color: #6B7280;
     margin-bottom: 32px;
@@ -106,11 +106,11 @@ body {
 }
 
 /* Input Styles */
-.input-group {
+.login-page .input-group {
     margin-bottom: 20px;
 }
 
-.input-group label {
+.login-page .input-group label {
     display: block;
     font-size: 13px;
     font-weight: 600;
@@ -118,8 +118,8 @@ body {
     margin-bottom: 8px;
 }
 
-.input-group input[type="text"],
-.input-group input[type="password"] {
+.login-page .input-group input[type="text"],
+.login-page .input-group input[type="password"] {
     width: 100%;
     padding: 12px 16px;
     border: 1px solid #D1D5DB;
@@ -129,16 +129,16 @@ body {
     transition: border-color 0.2s;
 }
 
-.input-group input:focus {
+.login-page .input-group input:focus {
     border-color: #2563EB;
 }
 
 /* Wrapper untuk Icon Mata di Password */
-.password-wrapper {
+.login-page .password-wrapper {
     position: relative;
 }
 
-.toggle-password {
+.login-page .toggle-password {
     position: absolute;
     right: 16px;
     top: 50%;
@@ -148,7 +148,7 @@ body {
 }
 
 /* Opsi Ingat Saya & Lupa Password */
-.form-options {
+.login-page .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -156,25 +156,25 @@ body {
     font-size: 13px;
 }
 
-.remember-me {
+.login-page .remember-me {
     display: flex;
     align-items: center;
     gap: 8px;
     color: #4B5563;
 }
 
-.forgot-password {
+.login-page .forgot-password {
     color: #2563EB;
     text-decoration: none;
     font-weight: 500;
 }
 
-.forgot-password:hover {
+.login-page .forgot-password:hover {
     text-decoration: underline;
 }
 
 /* Tombol Masuk */
-.btn-login {
+.login-page .btn-login {
     width: 100%;
     background-color: #2563EB;
     color: white;
@@ -188,34 +188,34 @@ body {
     margin-bottom: 24px;
 }
 
-.btn-login:hover {
+.login-page .btn-login:hover {
     background-color: #1D4ED8;
 }
 
 /* Link Daftar */
-.register-link {
+.login-page .register-link {
     text-align: center;
     font-size: 14px;
     color: #4B5563;
 }
 
-.register-link a {
+.login-page .register-link a {
     color: #2563EB;
     text-decoration: none;
     font-weight: 500;
 }
 
-.register-link a:hover {
+.login-page .register-link a:hover {
     text-decoration: underline;
 }
 
 /* --- RESPONSIVITAS (MOBILE) --- */
 @media (max-width: 768px) {
-    .login-container {
+    .login-page .login-container {
         flex-direction: column;
     }
 
-    .image-section {
+    .login-page .image-section {
         display: none;
     }
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface NavItem {
   label: string;
@@ -18,13 +18,20 @@ interface SideNavBarProps {
   mode?: 'student' | 'lecturer';
 }
 
+interface StoredUser {
+  name?: string;
+  role?: string;
+}
+
 export const SideNavBar: React.FC<SideNavBarProps> = ({
   sidebarOpen,
   onClose,
   mode = 'student',
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const asideRef = useRef<HTMLElement>(null);
+  const [user, setUser] = useState<StoredUser | null>(null);
   const coursesHref = mode === 'lecturer' ? '/dosen/courses' : '/courses';
   const coursesActive = pathname === coursesHref || pathname.startsWith(`${coursesHref}/`);
   const [coursesOpenOverride, setCoursesOpenOverride] = useState<boolean | null>(null);
@@ -42,19 +49,38 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       aside.style.bottom = footerTop < windowHeight ? `${windowHeight - footerTop}px` : '0px';
     };
 
+    const animationFrameId = window.requestAnimationFrame(updateBottom);
+    const footer = document.querySelector('footer');
+    const resizeObserver = new ResizeObserver(updateBottom);
+
+    if (footer) {
+      resizeObserver.observe(footer);
+    }
+
     window.addEventListener('scroll', updateBottom, { passive: true });
     window.addEventListener('resize', updateBottom);
     updateBottom();
 
     return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
       window.removeEventListener('scroll', updateBottom);
       window.removeEventListener('resize', updateBottom);
     };
+  }, [pathname]);
+
+  useEffect(() => {
+    setUser(getStoredUser());
   }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
+  };
 
   const navItems = useMemo<NavItem[]>(
     () => [
-      { label: 'Home', href: mode === 'lecturer' ? '/dosen' : '/', icon: <HomeIcon />, matchMode: 'exact' },
+      { label: 'Dashboard', href: mode === 'lecturer' ? '/dashboard_dosen' : '/dashboard_mahasiswa', icon: <HomeIcon />, matchMode: 'exact' },
       {
         label: 'Courses',
         href: coursesHref,
@@ -68,42 +94,59 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
   );
 
   return (
-    <aside
-      ref={asideRef}
-      data-sidebar
-      className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
-      style={{
-        top: '73px',
-        bottom: 0,
-        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
-        width: '256px',
-        background: 'var(--color-bg-white)',
-        borderRight: '1px solid var(--color-border)',
-        padding: '24px 16px',
-      }}
-    >
-      <nav className="flex flex-col gap-1">
+    <>
+      {sidebarOpen ? (
+        <div
+          aria-hidden="true"
+          className="fixed z-30 transition-opacity duration-300"
+          style={{
+            top: '73px',
+            bottom: 0,
+            left: '255px',
+            width: '1px',
+            background: 'var(--color-border)',
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
+
+      <aside
+        ref={asideRef}
+        data-sidebar
+        className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
+        style={{
+          top: '73px',
+          bottom: 0,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
+          width: '256px',
+          background: 'var(--color-bg-white)',
+          borderRight: '1px solid var(--color-border)',
+          padding: '24px 20px',
+        }}
+      >
+      <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const isActive = isNavItemActive(pathname, item);
           const isCoursesItem = item.href === coursesHref;
           const showChildren = Boolean(item.children) && (isCoursesItem ? coursesOpen : isActive);
 
           return (
-            <div key={item.href}>
+            <div key={item.href} className="px-3">
               <div
-                className="flex items-center rounded transition-colors"
+                className="flex items-center rounded-lg transition-colors"
                 style={{
                   background: isActive ? 'var(--color-brand-bg)' : 'transparent',
                   color: isActive ? 'var(--color-brand-dark)' : 'var(--color-text-secondary)',
-                  minHeight: '40px',
+                  minHeight: '42px',
                 }}
               >
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className="flex flex-1 items-center gap-3 px-3 py-2.5 text-sm font-medium no-underline"
+                  className="flex flex-1 items-center gap-3.5 py-2.5 pr-3 text-sm font-semibold no-underline"
+                  style={{ paddingLeft: '22px' }}
                 >
-                  <span className="shrink-0">{item.icon}</span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span>
                   <span>{item.label}</span>
                 </Link>
 
@@ -112,7 +155,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
                     type="button"
                     aria-label={showChildren ? `Collapse ${item.label}` : `Expand ${item.label}`}
                     onClick={() => setCoursesOpenOverride(!showChildren)}
-                    className="mr-2 flex h-8 w-8 items-center justify-center rounded hover:bg-black/5"
+                    className="mr-1 flex h-8 w-8 items-center justify-center rounded hover:bg-black/5"
                   >
                     <ChevronDownIcon expanded={showChildren} />
                   </button>
@@ -120,7 +163,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
               </div>
 
               {showChildren ? (
-                <div className="mt-1 flex flex-col gap-1 pl-10">
+                <div className="mt-1.5 flex flex-col gap-1 pl-7 pr-3">
                   {item.children?.map((child) => {
                     const childActive = pathname === child.href;
 
@@ -129,10 +172,11 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
                         key={child.href}
                         href={child.href}
                         onClick={onClose}
-                        className="rounded px-3 py-2 text-sm font-medium no-underline transition-colors"
+                        className="flex min-h-9 items-center rounded-lg py-2 pr-3 text-sm font-medium no-underline transition-colors"
                         style={{
-                          background: childActive ? '#EEF3FF' : 'transparent',
-                          color: childActive ? 'var(--color-brand-primary)' : 'var(--color-text-secondary)',
+                          paddingLeft: '20px',
+                          background: childActive ? 'var(--color-brand-bg)' : 'transparent',
+                          color: childActive ? 'var(--color-brand-dark)' : 'var(--color-text-secondary)',
                         }}
                       >
                         {child.label}
@@ -145,13 +189,81 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
           );
         })}
       </nav>
-    </aside>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="mt-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors hover:bg-[#F8FAFF]"
+        style={{
+          borderColor: 'var(--color-border)',
+          background: 'var(--color-bg-white)',
+          color: 'var(--color-text-secondary)',
+          boxShadow: '0 12px 24px rgba(15, 33, 74, 0.06)',
+        }}
+        aria-label="Logout"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] text-xs font-bold text-white">
+          {getInitials(user?.name)}
+        </span>
+        <span className="min-w-0 flex-1" data-sidebar-footer-info>
+          <span className="block truncate text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            {user?.name || (mode === 'lecturer' ? 'Dosen' : 'Mahasiswa')}
+          </span>
+          <span className="block truncate text-xs">
+            {getRoleLabel(user?.role, mode)}
+          </span>
+        </span>
+        <LogoutIcon />
+      </button>
+      </aside>
+    </>
   );
 };
+
+function getStoredUser(): StoredUser | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function getInitials(name?: string) {
+  if (!name) {
+    return 'U';
+  }
+
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+}
+
+function getRoleLabel(role: string | undefined, mode: 'student' | 'lecturer') {
+  if (role === 'LECTURER') {
+    return 'Dosen';
+  }
+
+  if (role === 'STUDENT') {
+    return 'Mahasiswa';
+  }
+
+  return mode === 'lecturer' ? 'Dosen' : 'Mahasiswa';
+}
 
 function isNavItemActive(pathname: string, item: NavItem) {
   if (item.matchMode === 'exact') {
     return pathname === item.href;
+  }
+
+  if (item.href === '/courses' && pathname === '/courses/my') {
+    return false;
   }
 
   if (item.href === '/') {
@@ -162,11 +274,11 @@ function isNavItemActive(pathname: string, item: NavItem) {
 }
 
 const HomeIcon: React.FC = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-    <rect width="7" height="7" rx="1" />
-    <rect x="11" width="7" height="7" rx="1" />
-    <rect y="11" width="7" height="7" rx="1" />
-    <rect x="11" y="11" width="7" height="7" rx="1" />
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+    <rect x="1" y="1" width="7" height="7" rx="1" />
+    <rect x="12" y="1" width="7" height="7" rx="1" />
+    <rect x="1" y="12" width="7" height="7" rx="1" />
+    <rect x="12" y="12" width="7" height="7" rx="1" />
   </svg>
 );
 
@@ -193,5 +305,24 @@ const ChevronDownIcon: React.FC<{ expanded: boolean }> = ({ expanded }) => (
     style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s ease' }}
   >
     <path d="M1 1 5 5 9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const LogoutIcon: React.FC = () => (
+  <svg
+    data-sidebar-logout-icon
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
   </svg>
 );

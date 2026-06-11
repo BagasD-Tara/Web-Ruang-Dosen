@@ -13,12 +13,18 @@ import type { LecturerAssignmentStatus } from '@/lib/mock/lecturerCourseManageme
 
 interface LecturerEditAssignmentPageProps {
   params: Promise<{ courseId: string; moduleId: string; assignmentId: string }>;
+  searchParams: Promise<{ from?: string }>;
 }
 
 export default async function LecturerEditAssignmentPage({
   params,
+  searchParams,
 }: LecturerEditAssignmentPageProps) {
   const { courseId, moduleId, assignmentId } = await params;
+  const { from } = await searchParams;
+  const returnHref = from === 'course'
+    ? `/dosen/courses/${courseId}`
+    : `/dosen/courses/${courseId}/assignments`;
   const assignmentData = await getLecturerAssignment(courseId, moduleId, assignmentId);
   const courseAssignments = await getLecturerAssignmentsByCourse(courseId);
 
@@ -51,7 +57,7 @@ export default async function LecturerEditAssignmentPage({
 
     revalidatePath(`/dosen/courses/${courseId}`);
     revalidatePath(`/dosen/courses/${courseId}/assignments`);
-    redirect(`/dosen/courses/${courseId}/assignments`);
+    redirect(returnHref);
   }
 
   async function handleDelete() {
@@ -61,7 +67,7 @@ export default async function LecturerEditAssignmentPage({
 
     revalidatePath(`/dosen/courses/${courseId}`);
     revalidatePath(`/dosen/courses/${courseId}/assignments`);
-    redirect(`/dosen/courses/${courseId}/assignments`);
+    redirect(returnHref);
   }
 
   return (
@@ -73,6 +79,7 @@ export default async function LecturerEditAssignmentPage({
       existingAssignments={courseAssignments.assignments}
       onSave={handleSave}
       onDelete={handleDelete}
+      returnHref={returnHref}
     />
   );
 }
