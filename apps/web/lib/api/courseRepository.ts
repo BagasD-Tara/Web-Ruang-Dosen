@@ -1,4 +1,4 @@
-import { fetchCourseDetail, fetchCourses, fetchMyCourses } from '@/lib/api/courseApi';
+import { fetchCourseDetail, fetchCourses, fetchMyCourses, fetchCourseEnrollmentsApi } from '@/lib/api/courseApi';
 import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
 import { cookies } from 'next/headers';
 import {
@@ -7,25 +7,16 @@ import {
   mapApiCoursesToLecturerCourses,
   mapApiCoursesToStudentCourses,
 } from '@/lib/adapters/courseAdapter';
-import { COURSES, getCourseDetailById, type Course, type CourseDetail } from '@/lib/mock/courses';
-import { LECTURER_COURSES, type LecturerCourse } from '@/lib/mock/lecturerCourses';
-import {
-  getLecturerManageCourseById,
-  type LecturerManageCourseData,
-  MANAGE_COURSE_OVERRIDES,
-} from '@/lib/mock/lecturerCourseManagement';
-import { buildEnrollmentData } from '@/lib/mock/lecturerEnrollment';
-import { buildAssignmentSubmissionsData } from '@/lib/mock/lecturerAssignmentSubmissions';
-import { buildStudentProgressData } from '@/lib/mock/lecturerStudentProgress';
+import type { Course, CourseDetail, LecturerCourse, LecturerManageCourseData, AssignmentSubmissionsData, StudentProgressData, LecturerStudentProgressData } from '@/lib/types/course';
 
 export async function getStudentCourses(): Promise<Course[]> {
   try {
     const apiCourses = await fetchCourses();
     const enrolledCourseIds = await getStudentEnrolledCourseIds();
-
     return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
-  } catch {
-    return COURSES;
+  } catch (error) {
+    console.error('getStudentCourses error:', error);
+    return [];
   }
 }
 
@@ -38,64 +29,55 @@ export async function getStudentCourseDetail(courseId: string): Promise<CourseDe
     const enrolledCourseIds = await getStudentEnrolledCourseIds(token);
 
     return mapApiCourseDetailToStudentCourseDetail(apiCourse, enrolledCourseIds);
-  } catch {
-    const isNumeric = !isNaN(Number(courseId));
-    return isNumeric ? (getCourseDetailById(Number(courseId)) ?? null) : null;
+  } catch (error) {
+    console.error(`getStudentCourseDetail error for ${courseId}:`, error);
+    return null;
   }
 }
 
 export async function getStudentMyCourses(): Promise<Course[]> {
   try {
-    const accessToken = await getDemoStudentAccessToken();
-    const apiCourses = await fetchMyCourses(accessToken);
-    const enrolledCourseIds = apiCourses.map((course) => course.id);
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
 
-    return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
-  } catch {
-    return COURSES.filter((course) => course.status !== 'notstart');
+    const accessToken = token || await getDemoStudentAccessToken();
+    const apiCourses = await fetchMyCourses(accessToken);
+    const apiCourseIds = apiCourses.map((course) => course.id);
+    return mapApiCoursesToStudentCourses(apiCourses, apiCourseIds);
+  } catch (error) {
+    console.error('getStudentMyCourses error:', error);
+    return [];
   }
 }
 
 export async function getLecturerCourses(): Promise<LecturerCourse[]> {
   try {
     const apiCourses = await fetchCourses();
-    const mapped = mapApiCoursesToLecturerCourses(apiCourses);
-
-    // Merge with local mock courses to ensure courses created locally or fallback mock courses are visible
-    const combined = [...mapped];
-    for (const localCourse of LECTURER_COURSES) {
-      if (!combined.some((c) => c.id === localCourse.id)) {
-        combined.push(localCourse);
-      }
-    }
-    return combined;
+    return mapApiCoursesToLecturerCourses(apiCourses);
   } catch (error) {
     console.error('getLecturerCourses error:', error);
-    return LECTURER_COURSES;
+    return [];
   }
 }
 
 export async function getLecturerManageCourse(courseId: string): Promise<LecturerManageCourseData | null> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
 
     const apiCourse = await fetchCourseDetail(courseId, token);
     const mapped = mapApiCourseDetailToLecturerManageCourse(apiCourse);
-
-    // Merge locally created modules if they exist in MANAGE_COURSE_OVERRIDES
-    const localDetail = MANAGE_COURSE_OVERRIDES[courseId];
-    console.log('getLecturerManageCourse debug:', { courseId, localDetail, MANAGE_COURSE_OVERRIDES });
-    if (localDetail && localDetail.modules) {
-      // Concat the local modules to the mapped ones
-      mapped.modules = [...mapped.modules, ...localDetail.modules];
-    }
-    
-    mapped.course.moduleCount = mapped.modules.length;
     
     return mapped;
-  } catch {
-    return getLecturerManageCourseById(courseId) ?? null;
+  } catch (error) {
+    console.error(`getLecturerManageCourse error for ${courseId}:`, error);
+    return null;
   }
 }
 
@@ -142,8 +124,8 @@ export async function getLecturerAssignmentsByCourse(courseId: string) {
   const assignments = courseData.modules.flatMap((courseModule) =>
     courseModule.assessments
       .filter((assessment) => assessment.kind === 'assignment')
-      .map((assignment) => ({
-        assignment,
+      .map((assessment) => ({
+        assignment: assessment,
         module: courseModule,
       }))
   );
@@ -157,28 +139,90 @@ export async function getLecturerAssignmentsByCourse(courseId: string) {
 export async function getLecturerEnrollment(courseId: string) {
   const courseData = await getLecturerManageCourse(courseId);
   if (!courseData) return null;
-  return buildEnrollmentData(courseId, courseData);
+
+  try {
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
+
+    const enrollments = token ? await fetchCourseEnrollmentsApi(courseId, token) : [];
+
+    return {
+      courseId: courseData.course.id,
+      courseTitle: courseData.course.title,
+      courseCode: courseData.course.code,
+      termLabel: courseData.termLabel,
+      students: enrollments.map(e => ({
+        id: e.user.id,
+        name: e.user.name,
+        email: e.user.email,
+        dateJoined: new Date().toISOString(),
+        progressPercentage: 0,
+      })),
+    };
+  } catch (error) {
+    console.error(`getLecturerEnrollment error for ${courseId}:`, error);
+    return null;
+  }
 }
 
-export async function getLecturerAssignmentSubmissions(courseId: string, moduleId: string, assignmentId: string) {
+export async function getLecturerAssignmentSubmissions(courseId: string, moduleId: string, assignmentId: string): Promise<AssignmentSubmissionsData | null> {
   const assignmentData = await getLecturerAssignment(courseId, moduleId, assignmentId);
   if (!assignmentData) return null;
-  return buildAssignmentSubmissionsData(assignmentId, assignmentData);
+  
+  // Minimal stub for now, will replace with real API call later if needed
+  return {
+    assignment: assignmentData.assignment,
+    course: assignmentData.course,
+    moduleInfo: {
+      id: assignmentData.module.id,
+      title: assignmentData.module.title,
+      orderLabel: assignmentData.module.orderLabel,
+    },
+    stats: {
+      totalStudents: 0,
+      submitted: 0,
+      graded: 0,
+      averageScore: 0,
+    },
+    submissions: [],
+  };
 }
 
-export async function getLecturerStudentProgress(courseId: string, studentId: string) {
+export async function getLecturerStudentProgress(courseId: string, studentId: string): Promise<LecturerStudentProgressData | null> {
   const courseData = await getLecturerManageCourse(courseId);
   const enrollmentData = await getLecturerEnrollment(courseId);
   if (!courseData || !enrollmentData) return null;
-  return buildStudentProgressData(courseData, enrollmentData, studentId);
+  
+  const student = enrollmentData.students.find(s => s.id === studentId);
+  if (!student) return null;
+
+  return {
+    student: {
+      name: student.name,
+      email: student.email,
+      dateJoined: student.dateJoined,
+    },
+    course: courseData.course,
+    termLabel: courseData.termLabel,
+    summary: {
+      materialProgressPercentage: 0,
+      completedMaterials: 0,
+      totalMaterials: 0,
+      gradedAssignments: 0,
+      totalAssignments: 0,
+      averageAssignmentScore: null,
+    },
+    materials: [],
+    assignments: [],
+  };
 }
 
-
-// Memoize per-invocation: simpan Promise yang sedang berjalan agar concurrent call
-// dalam satu request cycle tidak melakukan login + fetch dua kali.
 let _enrolledCourseIdsPromise: Promise<string[]> | null = null;
 let _enrolledCourseIdsFetchedAt: number | null = null;
-const ENROLLED_IDS_TTL_MS = 55 * 60 * 1000; // selaraskan dengan token TTL
+const ENROLLED_IDS_TTL_MS = 55 * 60 * 1000;
 
 async function getStudentEnrolledCourseIds(userToken?: string): Promise<string[]> {
   if (userToken) {
@@ -192,7 +236,6 @@ async function getStudentEnrolledCourseIds(userToken?: string): Promise<string[]
 
   const now = Date.now();
 
-  // Kembalikan Promise yang sedang berjalan (dedup concurrent calls)
   if (
     _enrolledCourseIdsPromise &&
     _enrolledCourseIdsFetchedAt &&
@@ -208,7 +251,7 @@ async function getStudentEnrolledCourseIds(userToken?: string): Promise<string[]
       const enrolledCourses = await fetchMyCourses(accessToken);
       return enrolledCourses.map((course) => course.id);
     } catch {
-      _enrolledCourseIdsPromise = null; // reset agar retry berikutnya bisa berjalan
+      _enrolledCourseIdsPromise = null;
       _enrolledCourseIdsFetchedAt = null;
       return [];
     }

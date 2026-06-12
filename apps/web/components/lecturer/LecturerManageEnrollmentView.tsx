@@ -6,7 +6,10 @@ import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import type {
   LecturerEnrollmentData,
   LecturerEnrollmentStudent,
-} from '@/lib/mock/lecturerEnrollment';
+} from '@/lib/types/course';
+
+import { enrollStudentAction } from '@/app/actions/enrollStudent';
+import { removeStudentAction } from '@/app/actions/removeStudent';
 
 interface LecturerManageEnrollmentViewProps {
   data: LecturerEnrollmentData;
@@ -20,6 +23,7 @@ export function LecturerManageEnrollmentView({
   const [searchQuery, setSearchQuery] = React.useState('');
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [isEnrollModalOpen, setEnrollModalOpen] = React.useState(false);
 
   const filteredStudents = React.useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -82,16 +86,32 @@ export function LecturerManageEnrollmentView({
           </p>
         </div>
 
-        <div className="w-full max-w-[360px]">
-          <SearchInput
-            value={searchQuery}
-            onChange={(value) => {
-              setSearchQuery(value);
-              setCurrentPage(1);
-            }}
-          />
+        <div className="w-full max-w-[360px] flex flex-col items-end gap-3">
+          <button
+            onClick={() => setEnrollModalOpen(true)}
+            className="inline-flex h-11 items-center justify-center rounded-[14px] px-6 text-sm font-semibold text-white transition-colors hover:bg-opacity-90"
+            style={{ background: 'var(--color-brand-primary)' }}
+          >
+            Enroll Student
+          </button>
+          <div className="w-full">
+            <SearchInput
+              value={searchQuery}
+              onChange={(value) => {
+                setSearchQuery(value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       </section>
+
+      {isEnrollModalOpen && (
+        <EnrollModal
+          courseId={data.courseId}
+          onClose={() => setEnrollModalOpen(false)}
+        />
+      )}
 
       <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <SummaryCard
@@ -235,6 +255,15 @@ function EnrollmentRow({
 }) {
   const initials = getInitials(student.name);
   const progressHref = `/dosen/courses/${courseId}/enrollment/${student.id}/progress`;
+  const [isRemoving, startTransition] = React.useTransition();
+
+  const handleRemove = () => {
+    if (window.confirm(`Are you sure you want to remove ${student.name} from this course?`)) {
+      startTransition(() => {
+        removeStudentAction(courseId, student.id).catch((error) => console.error('Failed to remove:', error));
+      });
+    }
+  };
 
   return (
     <article className="px-5 py-5 sm:px-8">
@@ -254,6 +283,14 @@ function EnrollmentRow({
         </p>
         <div className="flex justify-end gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
+          <button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="inline-flex h-10 items-center justify-center rounded-[12px] border px-4 text-sm font-semibold transition-colors hover:bg-red-50 disabled:opacity-50"
+            style={{ borderColor: '#E53935', color: '#E53935' }}
+          >
+            {isRemoving ? 'Removing...' : 'Remove'}
+          </button>
         </div>
       </div>
 
@@ -276,6 +313,14 @@ function EnrollmentRow({
 
         <div className="flex gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
+          <button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="inline-flex h-10 items-center justify-center rounded-[12px] border px-4 text-sm font-semibold transition-colors hover:bg-red-50 disabled:opacity-50"
+            style={{ borderColor: '#E53935', color: '#E53935' }}
+          >
+            {isRemoving ? 'Removing...' : 'Remove'}
+          </button>
         </div>
       </div>
     </article>
@@ -463,5 +508,85 @@ function SelectChevronIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+function EnrollModal({ courseId, onClose }: { courseId: string; onClose: () => void }) {
+  const [isPending, startTransition] = React.useTransition();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => {
+      enrollStudentAction(courseId, formData)
+        .then(() => onClose())
+        .catch((error) => console.error('Failed to enroll:', error));
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Enroll Student
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 hover:bg-gray-100"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            ✕
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Student Name
+            </label>
+            <input
+              name="name"
+              type="text"
+              required
+              className="h-11 w-full rounded-xl border px-4 outline-none transition-colors focus:border-blue-500"
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+          </div>
+          
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Student Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              required
+              className="h-11 w-full rounded-xl border px-4 outline-none transition-colors focus:border-blue-500"
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+          </div>
+          
+          <div className="mt-6 flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-100"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-opacity-90 disabled:opacity-50"
+              style={{ background: 'var(--color-brand-primary)' }}
+            >
+              {isPending ? 'Enrolling...' : 'Enroll Student'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

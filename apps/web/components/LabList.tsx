@@ -8,6 +8,7 @@ interface LabListProps {
   student: StudentProfile;
   onSelectLab: (labId: string) => void;
   onNavigateToRegister: (labId: string) => void;
+  mode?: 'student' | 'lecturer';
 }
 
 export const LabList: React.FC<LabListProps> = ({
@@ -16,6 +17,7 @@ export const LabList: React.FC<LabListProps> = ({
   student,
   onSelectLab,
   onNavigateToRegister,
+  mode = 'student',
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -55,15 +57,18 @@ export const LabList: React.FC<LabListProps> = ({
 
   const renderLabCard = (lab: Lab) => {
     // Calculate completion progress
-
+    const total = lab.totalModules || 1;
+    const completed = lab.completedModules || 0;
+    const progressPercentage = Math.round((completed / total) * 100);
 
     return (
       <div
         key={lab.id}
-        className="bg-white rounded-3xl border border-slate-100 hover:border-blue-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden flex flex-col h-[350px] group"
+        onClick={() => onSelectLab(lab.id)}
+        className="bg-white rounded-3xl border border-slate-100 hover:border-blue-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 overflow-hidden flex flex-col h-[350px] group cursor-pointer"
       >
         {/* Card Visual Ribbon Accent */}
-        <div className={`h-3 ${lab.thumbnailColor}`} />
+        <div className={`h-3 ${lab.thumbnailColor || 'bg-blue-600'}`} />
 
         <div className="p-6 flex flex-col justify-between flex-1">
           {/* Header: Code & Category */}
@@ -101,12 +106,34 @@ export const LabList: React.FC<LabListProps> = ({
             {lab.isRegistered ? (
               /* Progress Indicator for Registered Students */
               <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-bold">
+                    <span className="text-slate-500 uppercase tracking-wider">Progress Lab</span>
+                    <span className="text-blue-600">{progressPercentage}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-600 rounded-full transition-all duration-500" 
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                </div>
                 <button
                   onClick={() => onSelectLab(lab.id)}
                   className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 group/btn"
                   id={`btn-open-lab-${lab.id}`}
                 >
                   Buka Laboratorium <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition" />
+                </button>
+              </div>
+            ) : mode === 'lecturer' ? (
+              <div className="flex gap-2 items-center mt-4">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSelectLab(lab.id); }}
+                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition text-center shadow-lg shadow-blue-100/50"
+                  id={`btn-manage-lab-${lab.id}`}
+                >
+                  Kelola Lab
                 </button>
               </div>
             ) : (
@@ -140,10 +167,12 @@ export const LabList: React.FC<LabListProps> = ({
       <div className="bg-linear-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="max-w-xl">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            Selamat Datang di Ruang Dosen!
+            Selamat Datang di Ruang {mode === 'lecturer' ? 'Dosen' : 'Praktikum'}!
           </h2>
           <p className="text-blue-100/90 text-sm mt-2 leading-relaxed font-medium">
-            Sistem Laboratorium Terpadu Mahasiswa. Pantau penugasan praktikum, kelola berkas submissions, dan tinjau performatika akademik Anda secara langsung.
+            {mode === 'lecturer'
+              ? 'Sistem Laboratorium Terpadu Dosen. Pantau penugasan praktikum, kelola berkas submissions, dan tinjau kelas yang Anda ampu.'
+              : 'Sistem Laboratorium Terpadu Mahasiswa. Pantau penugasan praktikum, kelola berkas submissions, dan tinjau performatika akademik Anda secara langsung.'}
           </p>
         </div>
 
@@ -151,7 +180,9 @@ export const LabList: React.FC<LabListProps> = ({
         <div className="flex shrink-0">
           <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-center min-w-[90px] md:min-w-[110px]">
             <span className="block text-xl md:text-2xl font-black">{registeredLabsCount}</span>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-200">Lab Diikuti</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-200">
+              {mode === 'lecturer' ? 'Lab Diampu' : 'Lab Diikuti'}
+            </span>
           </div>
           
         </div>
@@ -220,15 +251,24 @@ export const LabList: React.FC<LabListProps> = ({
                 <div>
                   <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                     <GraduationCap size={20} className="text-blue-600" />
-                    Laboratorium Praktikum Aktif
+                    {mode === 'lecturer' ? 'Laboratorium Praktikum yang Anda Ampu' : 'Laboratorium Praktikum Aktif'}
                   </h3>
                   <p className="text-xs text-slate-500 font-semibold mt-1">
-                    Sesi laboratorium praktikum terpadu aktif yang sedang Anda ikuti pada Semester {student.semester}.
+                    {mode === 'lecturer' 
+                      ? `Sesi laboratorium praktikum terpadu aktif yang sedang Anda ampu pada Semester ${student.semester}.`
+                      : `Sesi laboratorium praktikum terpadu aktif yang sedang Anda ikuti pada Semester ${student.semester}.`}
                   </p>
                 </div>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full shrink-0">
-                  {activeLabs.length} Sesi Diikuti
-                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
+                    {activeLabs.length} {mode === 'lecturer' ? 'Sesi Diampu' : 'Sesi Diikuti'}
+                  </span>
+                  {mode === 'lecturer' && (
+                    <button onClick={() => window.location.href = '/lecturer'} className="text-[10px] font-bold text-white bg-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-700 transition shadow-xs uppercase tracking-wider">
+                      + Tambah Course
+                    </button>
+                  )}
+                </div>
               </div>
 
               {activeLabs.length === 0 ? (
@@ -242,9 +282,10 @@ export const LabList: React.FC<LabListProps> = ({
               )}
             </div>
 
-            {/* 2. Tersedia untuk Didaftar (Not registered in current semester) */}
-            <div className="space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            {/* 2. Tersedia untuk Didaftar (Not registered in current semester) - Only for Students */}
+            {mode === 'student' && (
+              <div className="space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
                     <BookOpen size={18} className="text-indigo-600" />
@@ -269,6 +310,7 @@ export const LabList: React.FC<LabListProps> = ({
                 </div>
               )}
             </div>
+          )}
 
             {/* 3. Riwayat Praktikum Semester Lampau */}
             {pastLabs.length > 0 && (

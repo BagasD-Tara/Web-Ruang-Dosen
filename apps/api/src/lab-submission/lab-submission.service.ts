@@ -22,6 +22,7 @@ export class LabSubmissionService {
     // Validasi 1: Cek lab ada di database
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id: labId },
+      include: { module: true },
     });
 
     if (!lab) {
@@ -33,7 +34,7 @@ export class LabSubmissionService {
       where: {
         userId_courseId: {
           userId: userId,
-          courseId: lab.courseId,
+          courseId: lab.module.courseId,
         },
       },
     });
@@ -82,7 +83,7 @@ export class LabSubmissionService {
     // Cek lab ada di database beserta data course-nya
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id: labId },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!lab) {
@@ -90,7 +91,7 @@ export class LabSubmissionService {
     }
 
     // Cek bahwa userId adalah dosen pemilik course
-    if (lab.course.instructorId !== userId) {
+    if (lab.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Hanya dosen pemilik mata kuliah yang bisa melihat daftar submission.',
       );
@@ -133,7 +134,7 @@ export class LabSubmissionService {
       where: { id: submissionId },
       include: {
         lab: {
-          include: { course: true },
+          include: { module: { include: { course: true } } },
         },
       },
     });
@@ -145,7 +146,7 @@ export class LabSubmissionService {
     }
 
     // Cek bahwa userId adalah dosen pemilik course dari lab tersebut
-    if (submission.lab.course.instructorId !== userId) {
+    if (submission.lab.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Hanya dosen pemilik mata kuliah yang bisa memberikan nilai.',
       );

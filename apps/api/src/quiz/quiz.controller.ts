@@ -25,7 +25,7 @@ export class QuizController {
       type: 'object',
       properties: {
         title: { type: 'string' },
-        courseId: { type: 'string' },
+        moduleId: { type: 'string' },
         xpReward: { type: 'number' },
         passingScore: { type: 'number' },
         timeLimit: { type: 'number' },
@@ -36,7 +36,7 @@ export class QuizController {
     @Body()
     data: {
       title: string;
-      courseId: string;
+      moduleId: string;
       xpReward: number;
       passingScore: number;
       timeLimit?: number;
@@ -115,5 +115,13 @@ export class QuizController {
   @Get(':id/questions')
   getQuestions(@Param('id') id: string) {
     return this.quizService.getQuestionsForQuiz(id);
+  }
+
+  @Get(':id/submission')
+  getSubmission(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.quizService.getSubmission(id, req.user.id);
   }
 }

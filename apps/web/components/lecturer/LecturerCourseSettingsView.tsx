@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
-import type { LecturerManageCourseData } from '@/lib/mock/lecturerCourseManagement';
-import { LECTURER_COURSES } from '@/lib/mock/lecturerCourses';
+import type { LecturerManageCourseData } from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import { DeleteConfirmationDialog } from './shared/DeleteConfirmationDialog';
 import {
@@ -12,7 +11,7 @@ import {
 } from './shared/lecturerUiStyles';
 import { updateFormField } from './shared/updateFormField';
 
-type CourseStatusOption = 'Active' | 'Draft';
+type CourseStatusOption = 'Active' | 'Draft' | 'Archived';
 
 interface CourseSettingsFormState {
   title: string;
@@ -37,7 +36,7 @@ const SEMESTER_OPTIONS = [
   'Fall Semester 2027',
 ] as const;
 const CREDIT_OPTIONS = ['1', '2', '3', '4', '5'] as const;
-const DEFAULT_DEPARTMENT_OPTIONS = [
+const DEPARTMENT_OPTIONS = [
   'Computer Science',
   'Data Science',
   'Information Technology',
@@ -46,13 +45,7 @@ const DEFAULT_DEPARTMENT_OPTIONS = [
   'Information Systems',
   'Artificial Intelligence',
   'Business Analytics',
-] as const;
-const DEPARTMENT_OPTIONS = Array.from(
-  new Set([
-    ...DEFAULT_DEPARTMENT_OPTIONS,
-    ...LECTURER_COURSES.map((course) => course.department),
-  ])
-).toSorted();
+];
 
 export function LecturerCourseSettingsView({
   data,

@@ -50,6 +50,10 @@
 }
 
 /* --- RESET & BASE --- */
+html, body {
+  height: 100%;
+}
+
 .student-dashboard,
 .student-dashboard * {
   margin: 0;

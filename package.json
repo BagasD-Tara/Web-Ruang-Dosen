@@ -15,7 +15,7 @@
     "chardet": "^2.1.1",
     "cli-width": "^4.1.0",
     "dotenv": "^17.4.2",
-    "prisma": "^7.8.0",
+    "prisma": "^6.19.3",
     "turbo": "^2.0.0",
     "wrap-ansi": "^10.0.0"
   },

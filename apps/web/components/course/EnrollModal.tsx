@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Course } from '@/lib/mock/courses';
+import { Course } from '@/lib/types/course';
 
 interface EnrollModalProps {
     course: Course | null;

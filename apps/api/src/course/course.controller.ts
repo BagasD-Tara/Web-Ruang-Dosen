@@ -42,6 +42,38 @@ export class CourseController {
     return this.courseService.enroll(id, req.user.id, req.user.role);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/enroll-student')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { email: { type: 'string' } },
+    },
+  })
+  async enrollStudentByEmail(
+    @Param('id') id: string,
+    @Body() data: { email: string },
+    @Request() req: any,
+  ) {
+    return this.courseService.enrollStudentByEmail(id, data.email, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/enrollment/:studentId')
+  async removeEnrollment(
+    @Param('id') id: string,
+    @Param('studentId') studentId: string,
+    @Request() req: any,
+  ) {
+    return this.courseService.removeEnrollment(id, studentId, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/enrollments')
+  async getEnrollments(@Param('id') id: string, @Request() req: any) {
+    return this.courseService.getEnrollments(id, req.user.id);
+  }
+
   @Get()
   async findAll() {
     return this.courseService.findAll();

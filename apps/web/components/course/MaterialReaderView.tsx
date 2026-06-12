@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CourseContentItem, CourseDetail, CourseModule } from '@/lib/mock/courses';
+import { CourseContentItem, CourseDetail, CourseModule } from '@/lib/types/course';
 import { useAppShell } from '@/components/layout/AppShell';
 import type { CourseSource } from '@/lib/courseNavigation';
 import {
@@ -89,7 +89,7 @@ export function MaterialReaderView({
               <MarkdownArticle content={currentMaterial.content?.markdown ?? ''} />
             ) : null}
 
-            {currentMaterial.type === 'document' || currentMaterial.type === 'pdf' ? (
+            {currentMaterial.type === 'document' ? (
               <DocumentDownloadCard material={currentMaterial} />
             ) : null}
           </div>
@@ -184,7 +184,7 @@ function MaterialHero({ material }: { material: CourseContentItem }) {
     );
   }
 
-  if (material.type === 'document' || material.type === 'pdf') {
+  if (material.type === 'document') {
     return (
       <section
         className="rounded-[24px] border bg-white p-6 shadow-[0_14px_36px_rgba(15,33,74,0.05)]"

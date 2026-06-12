@@ -39,6 +39,7 @@ model User {
   enrollments           Enrollment[]
   assignmentSubmissions AssignmentSubmission[]
   labSubmissions        LabSubmission[]
+  quizSubmissions       QuizSubmission[]
 }
 
 model Course {
@@ -50,11 +51,24 @@ model Course {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  modules     CourseModule[]
+  enrollments Enrollment[]
+}
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  order       Int      @default(0)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   materials   Material[]
   quizzes     Quiz[]
   assignments Assignment[]
   labs        PracticalLab[]
-  enrollments Enrollment[]
 }
 
 model Material {
@@ -63,23 +77,24 @@ model Material {
   url       String?
   content   String?
   type      MaterialType
-  courseId  String
-  course    Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 }
 
 model Quiz {
-  id           String         @id @default(uuid())
+  id           String           @id @default(uuid())
   title        String
-  passingScore Int            @default(70)
-  xpReward     Int            @default(100)
-  timeLimit    Int            @default(30)
-  courseId     String
-  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  passingScore Int              @default(70)
+  xpReward     Int              @default(100)
+  timeLimit    Int              @default(30)
+  moduleId     String
+  module       CourseModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   questions    QuizQuestion[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  submissions  QuizSubmission[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 }
 
 model QuizQuestion {
@@ -96,8 +111,8 @@ model Assignment {
   title       String
   description String
   deadline    DateTime
-  courseId    String
-  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleId    String
+  module      CourseModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   submissions AssignmentSubmission[]
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
@@ -124,8 +139,8 @@ model PracticalLab {
   id           String          @id @default(uuid())
   title        String
   instructions String
-  courseId     String
-  course       Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleId     String
+  module       CourseModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   submissions  LabSubmission[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -157,4 +172,18 @@ model Enrollment {
   createdAt DateTime @default(now())
 
   @@unique([userId, courseId])
+}
+
+model QuizSubmission {
+  id        String   @id @default(uuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score     Int
+  passed    Boolean
+  details   Json
+  createdAt DateTime @default(now())
+
+  @@unique([quizId, studentId])
 }

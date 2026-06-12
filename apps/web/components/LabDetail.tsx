@@ -21,6 +21,7 @@ interface LabDetailProps {
   onSelectTask: (taskId: string) => void;
   onNavigateToRegister: () => void;
   onSubmitLab: (labId: string, fileName: string, fileSize: string, studentNote: string) => void;
+  mode?: 'student' | 'lecturer';
 }
 
 
@@ -62,7 +63,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
   onBack,
   onSelectTask,
   onNavigateToRegister,
-
+  mode = 'student',
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -121,7 +122,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
 
   const getStatusBadge = (task: Task) => {
     if (!task.submission) {
-      const now = new Date('2026-05-29T14:50:33Z');
+      const now = new Date();
       const isOverdue = task.deadlineRaw.getTime() < now.getTime();
       
       if (isOverdue) {
@@ -171,7 +172,7 @@ export const LabDetail: React.FC<LabDetailProps> = ({
 
       {/* Main Lab Showcase Banner */}
       <div className="bg-white rounded-3xl border border-slate-150 p-6 md:p-8 shadow-sm overflow-hidden relative">
-        <div className={`absolute top-0 left-0 right-0 h-2.5 ${lab.thumbnailColor}`} />
+        <div className={`absolute top-0 left-0 right-0 h-2.5 ${lab.thumbnailColor || 'bg-blue-600'}`} />
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pt-2">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -285,6 +286,13 @@ export const LabDetail: React.FC<LabDetailProps> = ({
               {/* TAB VALUE: ASSIGNMENT TASKS LISTING */}
               {activeTab === 'tugas' && (
                 <div className="space-y-6 animate-fade-in">
+                  {mode === 'lecturer' && (
+                    <div className="flex justify-end">
+                      <button onClick={() => window.location.href = '/lecturer'} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl transition shadow-sm">
+                        + Buat Tugas Baru
+                      </button>
+                    </div>
+                  )}
                   <div className="space-y-4">
                     {labTasks.length === 0 ? (
                       <div className="p-12 text-center text-slate-400">
@@ -334,10 +342,17 @@ export const LabDetail: React.FC<LabDetailProps> = ({
               {activeTab.startsWith('demo') && (
                 <div className="space-y-4 animate-fade-in">
                   <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl mb-4">
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <AlertCircle size={13} className="text-blue-600" />
-                      Informasi Demo Sesi Praktikum
-                    </h4>
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <AlertCircle size={13} className="text-blue-600" />
+                        Informasi Demo Sesi Praktikum
+                      </h4>
+                      {mode === 'lecturer' && (
+                        <button onClick={() => window.location.href = '/lecturer'} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold uppercase tracking-wider rounded-lg transition shadow-sm shrink-0">
+                          + Buat Demo Baru
+                        </button>
+                      )}
+                    </div>
                     <p className="text-[11px] text-slate-650 leading-relaxed font-semibold">
                       Demo praktikum dilakukan tatap muka atau virtual dengan asisten laboratorium untuk memverifikasi pengerjaan modul Anda. Silakan hubungi asisten dosen masing-masing untuk memesan slot waktu demo.
                     </p>
@@ -397,7 +412,11 @@ export const LabDetail: React.FC<LabDetailProps> = ({
                         {/* Dropdown Content */}
                         {expandedDemoId === demo.id && demo.status !== 'selesai' && (
                           <div className="bg-white border-t border-slate-100 p-4">
-                            {demo.status === 'belum' ? (
+                            {mode === 'lecturer' ? (
+                              <div className="flex justify-center mt-2 p-4 text-slate-400 text-xs font-semibold text-center border border-dashed border-slate-200 rounded-xl">
+                                Penilaian demo sesi praktikum ini dapat dikelola melalui Ruang Kerja Dosen.
+                              </div>
+                            ) : demo.status === 'belum' ? (
                               <div className="flex justify-center mt-2 p-4 text-slate-400 text-xs font-semibold text-center border border-dashed border-slate-200 rounded-xl">
                                 Kuis demo belum diset oleh asisten/dosen.
                               </div>

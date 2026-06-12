@@ -7,7 +7,7 @@ import { EnrollModal } from '@/components/course/EnrollModal';
 import { useCourses } from '@/hooks/useCourses';
 import { isCourseEnrolled } from '@/lib/courseEnrollment';
 import { buildCourseDetailHref } from '@/lib/courseNavigation';
-import type { Course } from '@/lib/mock/courses';
+import type { Course } from '@/lib/types/course';
 import { useEnrollmentStore } from '@/lib/stores/useEnrollmentStore';
 
 interface CoursesCatalogViewProps {

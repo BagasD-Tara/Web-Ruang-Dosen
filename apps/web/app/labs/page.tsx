@@ -24,6 +24,20 @@ function LabsContent() {
     }
   };
 
+  const [mode, setMode] = React.useState<'student' | 'lecturer'>('student');
+
+  React.useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role === 'LECTURER') {
+          setMode('lecturer');
+        }
+      } catch (e) {}
+    }
+  }, []);
+
   return (
     <LabList
       labs={labs}
@@ -31,6 +45,7 @@ function LabsContent() {
       student={student}
       onSelectLab={handleSelectLab}
       onNavigateToRegister={handleNavigateToRegister}
+      mode={mode}
     />
   );
 }

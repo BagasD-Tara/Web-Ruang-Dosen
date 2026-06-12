@@ -1,5 +1,5 @@
 import React from 'react';
-import type { CourseContentItem } from '@/lib/mock/courses';
+import type { CourseContentItem } from '@/lib/types/course';
 
 interface CourseContentVisualConfig {
   metaLabel: string;
@@ -17,7 +17,6 @@ export function getCourseContentVisualConfig(type: CourseContentItem['type']): C
         icon: <PlayIcon />,
         miniIcon: <MiniVideoIcon />,
       };
-    case 'pdf':
     case 'document':
       return {
         metaLabel: 'PDF Reading',

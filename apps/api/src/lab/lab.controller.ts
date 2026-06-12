@@ -37,16 +37,17 @@ export class LabController {
     data: {
       title: string;
       instructions: string;
-      courseId: string;
+      moduleId: string;
     },
     @Request() req: { user: { id: string } },
   ) {
-    return this.labService.create(req.user.id, data);
+    const userId = req.user.id;
+    return this.labService.create(userId, data);
   }
 
   @Get()
-  async findAll(@Query('courseId') courseId?: string) {
-    return this.labService.findAll(courseId);
+  async findAll(@Query('moduleId') moduleId?: string) {
+    return this.labService.findAll(moduleId);
   }
 
   @Get(':id')

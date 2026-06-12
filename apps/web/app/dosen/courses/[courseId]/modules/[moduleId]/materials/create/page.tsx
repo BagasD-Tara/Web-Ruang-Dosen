@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { LecturerMaterialEditorView } from '@/components/lecturer/LecturerMaterialEditorView';
 import { getLecturerModule } from '@/lib/api/courseRepository';
 import { createMaterialApi, uploadFileApi, type ApiMaterialType } from '@/lib/api/courseApi';
-import { createLecturerMaterial } from '@/lib/mock/lecturerCourseManagement';
+
 
 interface LecturerCreateMaterialPageProps {
   params: Promise<{ courseId: string; moduleId: string }>;
@@ -71,24 +71,14 @@ export default async function LecturerCreateMaterialPage({
             type: apiType,
             content: description,
             url: resolvedUrl,
-            courseId,
+            moduleId,
           },
           token
         );
       } catch (error) {
-        console.warn('Failed to create material via API, falling back to mock:', error);
+        console.error('Failed to create material via API:', error);
       }
     }
-
-    createLecturerMaterial(courseId, moduleId, {
-      title,
-      description,
-      materialKind: materialKind as any,
-      visibilityStatus: visibilityStatus as any,
-      externalUrl: resolvedUrl,
-      fileName: fileName || undefined,
-      fileMeta: fileMeta || undefined,
-    });
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);

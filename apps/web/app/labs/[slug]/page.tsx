@@ -19,7 +19,8 @@ function LabDynamicContent() {
     handleSubmitLabRegistration,
     handleSubmitLab,
     handleSubmitTask,
-    handleCancelTaskSubmission
+    handleCancelTaskSubmission,
+    handleGradeTask
   } = useAppStore();
   
   const params = useParams();
@@ -45,11 +46,27 @@ function LabDynamicContent() {
   const [currentView, setCurrentView] = useState<'lab-detail' | 'register-lab' | 'task-detail' | 'demo-quiz'>(getInitialView());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(searchParams.get('taskId'));
   const [attempts, setAttempts] = useState<StudentQuizAttempt[]>(INITIAL_QUIZ_ATTEMPTS);
+  const [userRole, setUserRole] = useState<'student' | 'lecturer'>('student');
 
   useEffect(() => {
     const viewQuery = searchParams.get('view');
     const taskIdQuery = searchParams.get('taskId');
     const tabQuery = searchParams.get('tab');
+    const modeParam = searchParams.get('mode');
+    
+    if (modeParam === 'lecturer' || modeParam === 'student') {
+      setUserRole(modeParam);
+    } else {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.role === 'LECTURER') {
+            setUserRole('lecturer');
+          }
+        } catch (e) {}
+      }
+    }
     
     setTimeout(() => {
       if (viewQuery === 'register') {
@@ -108,6 +125,7 @@ function LabDynamicContent() {
         <TaskDetailAndSubmit
           task={selectedTask}
           labTitle={lab.title}
+          mode={userRole}
           onBack={() => {
             router.replace(`/labs/${slug}`);
             setCurrentView('lab-detail');
@@ -116,6 +134,9 @@ function LabDynamicContent() {
             handleSubmitTask(selectedTask.id, fileName, fileSize, note);
           }}
           onCancelSubmission={() => handleCancelTaskSubmission(selectedTask.id)}
+          onGradeTask={(grade, feedback) => {
+            handleGradeTask(selectedTask.id, grade, feedback);
+          }}
         />
       );
 
@@ -147,6 +168,7 @@ function LabDynamicContent() {
         <LabDetail
           lab={lab}
           tasks={tasks}
+          mode={userRole}
           onBack={() => router.push('/labs')}
           onSelectTask={(taskId) => {
             // Instead of just state, update the URL for deep linking

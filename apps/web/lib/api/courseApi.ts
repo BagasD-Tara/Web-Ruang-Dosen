@@ -30,7 +30,7 @@ export interface ApiMaterial {
   url?: string | null;
   content?: string | null;
   type: ApiMaterialType;
-  courseId: string;
+  moduleId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,7 +40,7 @@ export interface ApiAssignment {
   title: string;
   description: string;
   deadline: string;
-  courseId: string;
+  moduleId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +51,7 @@ export interface ApiQuiz {
   passingScore?: number;
   xpReward?: number;
   timeLimit?: number;
-  courseId: string;
+  moduleId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,16 +60,25 @@ export interface ApiLab {
   id: string;
   title: string;
   instructions: string;
-  courseId: string;
+  moduleId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ApiCourseDetail extends ApiCourseListItem {
+export interface ApiCourseModule {
+  id: string;
+  title: string;
+  description?: string | null;
+  order: number;
+  courseId: string;
   materials: ApiMaterial[];
   assignments: ApiAssignment[];
   quizzes: ApiQuiz[];
   labs: ApiLab[];
+}
+
+export interface ApiCourseDetail extends ApiCourseListItem {
+  modules: ApiCourseModule[];
 }
 
 export function fetchCourses() {
@@ -126,7 +135,7 @@ export function createMaterialApi(
     type: ApiMaterialType;
     content?: string;
     url?: string;
-    courseId: string;
+    moduleId: string;
   },
   accessToken: string
 ) {
@@ -137,6 +146,124 @@ export function createMaterialApi(
     },
     body: JSON.stringify(data),
   });
+}
+
+// Assignment Endpoints
+export function createAssignmentApi(
+  data: {
+    title: string;
+    description: string;
+    deadline: string;
+    moduleId: string;
+  },
+  accessToken: string
+) {
+  return apiRequest<ApiAssignment>('/assignments', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateAssignmentApi(
+  id: string,
+  data: {
+    title?: string;
+    description?: string;
+    deadline?: string;
+  },
+  accessToken: string
+) {
+  return apiRequest<ApiAssignment>(`/assignments/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAssignmentApi(id: string, accessToken: string) {
+  return apiRequest<{ message?: string }>(`/assignments/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+// Module Endpoints
+export function fetchModulesApi(courseId: string, accessToken: string) {
+  return apiRequest<ApiCourseModule[]>(`/courses/${courseId}/modules`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    next: { revalidate: 0, tags: ['modules'] },
+  });
+}
+
+export function createModuleApi(
+  courseId: string,
+  data: { title: string; description?: string },
+  accessToken: string
+) {
+  return apiRequest<ApiCourseModule>(`/courses/${courseId}/modules`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateModuleApi(
+  courseId: string,
+  moduleId: string,
+  data: { title: string; description?: string },
+  accessToken: string
+) {
+  return apiRequest<ApiCourseModule>(`/courses/${courseId}/modules/${moduleId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteModuleApi(courseId: string, moduleId: string, accessToken: string) {
+  return apiRequest<{ message?: string }>(`/courses/${courseId}/modules/${moduleId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+// Enrollment Management Endpoints
+export function fetchCourseEnrollmentsApi(courseId: string, accessToken: string) {
+  return apiRequest<{ id: string; user: { id: string; name: string; email: string } }[]>(
+    `/courses/${courseId}/enrollments`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 0, tags: ['enrollments'] },
+    }
+  );
+}
+
+export function enrollStudentByEmailApi(courseId: string, email: string, accessToken: string) {
+  return apiRequest<{ id: string; user: { id: string; name: string; email: string } }>(
+    `/courses/${courseId}/enroll-student`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ email }),
+    }
+  );
+}
+
+export function removeEnrollmentApi(courseId: string, studentId: string, accessToken: string) {
+  return apiRequest<{ message?: string }>(
+    `/courses/${courseId}/enrollment/${studentId}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
 }
 
 export function updateMaterialApi(

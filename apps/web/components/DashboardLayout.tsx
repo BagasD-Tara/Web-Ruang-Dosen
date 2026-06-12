@@ -20,7 +20,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const sideNavItems = [
-    { id: 'labs', href: '/labs', label: 'Labs', icon: <BookOpen size={18} /> },
+    { id: 'labs', href: '/labs', label: 'Practical Labs', icon: <BookOpen size={18} /> },
   ];
 
   return (

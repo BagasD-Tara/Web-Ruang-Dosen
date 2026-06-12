@@ -175,14 +175,14 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 
 export async function createQuiz(payload: {
   title: string;
-  courseId: string;
+  moduleId: string;
   xpReward: number;
   minimumScore: number;
   durationMinutes: number;
 }): Promise<Quiz> {
   const { data } = await api.post("/quizzes", {
     title: payload.title,
-    courseId: payload.courseId,
+    moduleId: payload.moduleId,
     xpReward: payload.xpReward,
     passingScore: payload.minimumScore,
     timeLimit: payload.durationMinutes,

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CourseLevel } from '@/lib/mock/courses';
+import { CourseLevel } from '@/lib/types/course';
 
 export const CATEGORY_OPTIONS = ['All', 'Computer Science', 'Mathematics', 'Physics', 'Data Science', 'Literature', 'History'] as const;
 export type CategoryOption = typeof CATEGORY_OPTIONS[number];

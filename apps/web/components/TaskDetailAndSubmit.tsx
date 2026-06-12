@@ -8,6 +8,8 @@ interface TaskDetailAndSubmitProps {
   onBack: () => void;
   onSubmitTask: (fileName: string, fileSize: string, note: string) => void;
   onCancelSubmission: () => void;
+  onGradeTask?: (grade: number, feedback: string) => void;
+  mode?: 'student' | 'lecturer';
 }
 
 export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
@@ -16,8 +18,12 @@ export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
   onBack,
   onSubmitTask,
   onCancelSubmission,
+  onGradeTask,
+  mode = 'student',
 }) => {
   const [note, setNote] = useState('');
+  const [gradeInput, setGradeInput] = useState<number | ''>('');
+  const [feedbackInput, setFeedbackInput] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [uploadFile, setUploadFile] = useState<{ name: string; size: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -131,6 +137,17 @@ export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
         return 'bg-rose-50 text-rose-700 border-rose-200';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
+  const handleGradeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (gradeInput === '') {
+      setErrorMsg('Harap masukkan nilai numerik!');
+      return;
+    }
+    if (onGradeTask) {
+      onGradeTask(Number(gradeInput), feedbackInput);
     }
   };
 
@@ -261,7 +278,93 @@ export const TaskDetailAndSubmit: React.FC<TaskDetailAndSubmitProps> = ({
 
         {/* RIGHT COLUMN: SUBMISSION FORM OR STATUS DESCRIPTION */}
         <div className="lg:col-span-1">
-          {task.submission ? (
+          {mode === 'lecturer' ? (
+            /* LECTURER VIEW */
+            task.submission ? (
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base mb-1">Berikan Penilaian</h3>
+                  <p className="text-xs text-slate-400">Mahasiswa telah mengumpulkan tugas ini.</p>
+                </div>
+
+                {/* Submitted File Details */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
+                      <FileText size={20} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-bold text-slate-800 text-xs truncate" title={task.submission.fileName}>
+                        {task.submission.fileName}
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">{task.submission.fileSize}</p>
+                    </div>
+                  </div>
+                  
+                  {task.submission.note && (
+                    <div className="mt-4 pt-3 border-t border-slate-200/55">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Komentar Mahasiswa:</p>
+                      <p className="text-xs text-slate-600 mt-0.5 italic">&quot;{task.submission.note}&quot;</p>
+                    </div>
+                  )}
+                </div>
+
+                {task.submission.grade !== null ? (
+                  <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100/50">
+                    <p className="text-xs text-emerald-800 text-center leading-relaxed font-bold">
+                      Tugas telah dinilai dengan nilai {task.submission.grade}.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleGradeSubmit} className="space-y-4">
+                    {errorMsg && (
+                      <div className="flex items-start gap-2 bg-red-50 border border-red-100 text-red-700 p-3 rounded-lg text-xs leading-relaxed animate-shake">
+                        <AlertTriangle className="shrink-0 mt-0.5" size={14} />
+                        <p>{errorMsg}</p>
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Nilai (0-100)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={gradeInput}
+                        onChange={(e) => setGradeInput(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full border border-slate-200 rounded-lg p-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Catatan Koreksi (Opsional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={feedbackInput}
+                        onChange={(e) => setFeedbackInput(e.target.value)}
+                        className="w-full border border-slate-200 rounded-lg p-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      ></textarea>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                    >
+                      <Award size={16} /> Berikan Nilai
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center mt-6">
+                <AlertTriangle size={32} className="text-slate-300 mx-auto mb-3" />
+                <h4 className="font-bold text-slate-700 text-sm mb-1">Belum Ada Pengumpulan</h4>
+                <p className="text-xs text-slate-500">Mahasiswa belum mengumpulkan tugas ini.</p>
+              </div>
+            )
+          ) : task.submission ? (
             /* STATE 1: ALREADY SUBMITTED VIEW */
             <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-6">
               <div className="text-center pb-2">

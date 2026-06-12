@@ -12,14 +12,12 @@ import type {
   CourseContentType,
   CourseDetail,
   CourseModule,
-} from '@/lib/mock/courses';
-import type { LecturerCourse } from '@/lib/mock/lecturerCourses';
-import type {
+  LecturerCourse,
   LecturerCourseModule,
   LecturerManageCourseData,
   LecturerModuleAssessment,
   LecturerModuleMaterial,
-} from '@/lib/mock/lecturerCourseManagement';
+} from '@/lib/types/course';
 
 const DEFAULT_COURSE_CATEGORY = 'Computer Science';
 const DEFAULT_COURSE_LEVEL = 'Intermediate';
@@ -67,29 +65,84 @@ export function mapApiCourseToStudentCourse(
   };
 }
 
+export function mapLecturerCourseToStudentCourse(
+  course: LecturerCourse,
+  enrolledCourseIds: string[] = []
+): Course {
+  const isEnrolled = enrolledCourseIds.includes(course.id);
+  
+  return {
+    id: course.id,
+    code: course.code,
+    semester: DEFAULT_SEMESTER,
+    level: DEFAULT_COURSE_LEVEL,
+    category: course.department,
+    title: course.title,
+    bannerColorClass: DEFAULT_BANNER_CLASS,
+    bannerEmoji: createCourseInitials(course.title),
+    description: 'Course description is being prepared by the lecturer.',
+    instructorName: 'Lecturer',
+    instructorInitials: 'L',
+    instructorRole: 'Lecturer',
+    creditHours: DEFAULT_CREDIT_HOURS,
+    progressPercentage: 0,
+    status: isEnrolled ? 'ongoing' : 'notstart',
+    totalMaterials: course.moduleCount,
+    totalQuizzes: 0,
+    isNew: true,
+    durationWeeks: DEFAULT_DURATION_WEEKS,
+  };
+}
+
 export function mapApiCourseDetailToStudentCourseDetail(
   course: ApiCourseDetail,
   enrolledCourseIds: string[] = []
 ): CourseDetail {
   const baseCourse = mapApiCourseToStudentCourse(course, enrolledCourseIds);
-  const materials = mapMaterialsToContentItems(course.materials);
-  const assignments = mapAssignmentsToContentItems(course.assignments);
-  const quizzes = mapQuizzesToContentItems(course.quizzes);
-  const labs = mapLabsToContentItems(course.labs);
+
+  let totalMaterials = 0;
+  let totalQuizzes = 0;
+  const tabs = {
+    materials: [] as CourseModule[],
+    quizzes: [] as CourseModule[],
+    assignments: [] as CourseModule[],
+    labs: [] as CourseModule[],
+  };
+
+  course.modules?.forEach((apiModule, index) => {
+    const moduleName = apiModule.title || `Module ${index + 1}`;
+    
+    if (apiModule.materials?.length > 0) {
+      const items = mapMaterialsToContentItems(apiModule.materials);
+      tabs.materials.push({ id: apiModule.id, title: moduleName, items });
+      totalMaterials += items.length;
+    }
+    
+    if (apiModule.quizzes?.length > 0) {
+      const items = mapQuizzesToContentItems(apiModule.quizzes);
+      tabs.quizzes.push({ id: apiModule.id, title: moduleName, items });
+      totalQuizzes += items.length;
+    }
+
+    if (apiModule.assignments?.length > 0) {
+      const items = mapAssignmentsToContentItems(apiModule.assignments);
+      tabs.assignments.push({ id: apiModule.id, title: moduleName, items });
+    }
+
+    if (apiModule.labs?.length > 0) {
+      const items = mapLabsToContentItems(apiModule.labs);
+      tabs.labs.push({ id: apiModule.id, title: moduleName, items });
+    }
+  });
 
   return {
     ...baseCourse,
     subtitle: '',
     breadcrumbLabel: course.title,
     heroAccentLabel: 'COURSE MODULE',
-    totalMaterials: materials.length,
-    totalQuizzes: quizzes.length,
-    tabs: {
-      materials: createSingleModule('Module 1: Learning Materials', materials),
-      quizzes: createSingleModule('Quizzes', quizzes),
-      assignments: createSingleModule('Assignments', assignments),
-      labs: createSingleModule('Labs', labs),
-    },
+    totalMaterials,
+    totalQuizzes,
+    tabs,
     schedule: [],
   };
 }
@@ -110,20 +163,39 @@ export function mapApiCoursesToLecturerCourses(courses: ApiCourseListItem[]): Le
 
 export function mapApiCourseDetailToLecturerManageCourse(course: ApiCourseDetail): LecturerManageCourseData {
   const lecturerCourse = mapApiCoursesToLecturerCourses([course])[0];
-  const materials = mapApiMaterialsToLecturerMaterials(course.materials);
-  const assessments = mapApiAssignmentsToLecturerAssessments(course.assignments);
+  
+  let totalAssignments = 0;
+  
+  const modules: LecturerCourseModule[] = (course.modules || []).map((apiModule, index) => {
+    const materials = mapApiMaterialsToLecturerMaterials(apiModule.materials || []);
+    const assignments = mapApiAssignmentsToLecturerAssessments(apiModule.assignments || []);
+    
+    totalAssignments += assignments.length;
+
+    return {
+      id: apiModule.id,
+      orderLabel: `M${index + 1}`,
+      title: apiModule.title || `Module ${index + 1}`,
+      weekLabel: `Week ${index + 1}`,
+      status: 'Published',
+      durationWeeks: 1,
+      materials,
+      assessments: assignments,
+      defaultExpanded: index === 0,
+    };
+  });
 
   return {
     course: {
       ...lecturerCourse,
-      moduleCount: materials.length + assessments.length > 0 ? 1 : 0,
-      assignmentCount: assessments.length,
+      moduleCount: modules.length,
+      assignmentCount: totalAssignments,
     },
     termLabel: 'Current Semester',
     credits: DEFAULT_CREDIT_HOURS,
     enrolledStudents: course._count?.enrollments ?? 0,
     weeklyGrowth: 0,
-    modules: createLecturerModules(materials, assessments),
+    modules,
   };
 }
 

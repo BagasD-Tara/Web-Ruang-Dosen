@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
-import type { LecturerCourse } from '@/lib/mock/lecturerCourses';
+import type { LecturerCourse } from '@/lib/types/course';
 import './LecturerCoursesView.css';
 
 interface LecturerCoursesViewProps {
@@ -12,6 +12,7 @@ interface LecturerCoursesViewProps {
 const COURSE_STATUS_STYLE: Record<LecturerCourse['status'], { background: string; color: string }> = {
   Active: { background: '#E7F6EE', color: '#187346' },
   Draft: { background: '#FFF4DE', color: '#946200' },
+  Archived: { background: '#F1F2F4', color: '#6B7280' },
 };
 
 export function LecturerCoursesView({

@@ -1,8 +1,9 @@
+import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { LecturerModuleEditorView } from '@/components/lecturer/LecturerModuleEditorView';
 import { getLecturerManageCourse } from '@/lib/api/courseRepository';
-import { createLecturerModule } from '@/lib/mock/lecturerCourseManagement';
+import { createModuleApi } from '@/lib/api/courseApi';
 
 interface LecturerCreateModulePageProps {
   params: Promise<{ courseId: string }>;
@@ -21,13 +22,15 @@ export default async function LecturerCreateModulePage({
   async function handleSave(data: any) {
     'use server';
 
-    createLecturerModule(courseId, {
-      title: data.title,
-      description: data.description,
-      sequence: data.sequence,
-      durationWeeks: data.durationWeeks,
-      visibilityStatus: data.visibilityStatus,
-    });
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (token) {
+      await createModuleApi(courseId, {
+        title: data.title,
+        description: data.description,
+      }, token);
+    }
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);

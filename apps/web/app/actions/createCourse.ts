@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { addLecturerCourse, type LecturerCourse } from '@/lib/mock/lecturerCourses';
+import type { LecturerCourse } from '@/lib/types/course';
 import { createCourseApi } from '@/lib/api/courseApi';
 
 export async function createMockCourseAction(course: LecturerCourse) {
@@ -28,13 +28,9 @@ export async function createMockCourseAction(course: LecturerCourse) {
       }
     }
   } catch (error) {
-    console.warn('Failed to create course via API, falling back to mock', error);
-    // Fallback to mock if API fails
-    addLecturerCourse(course);
+    console.error('Failed to create course via API', error);
   }
 
-  // Also add to mock anyway in case the API is not returning the created course yet or caching
-  addLecturerCourse(course);
   revalidatePath('/dosen/courses');
   revalidatePath('/dashboard_dosen');
   revalidatePath('/dosen');

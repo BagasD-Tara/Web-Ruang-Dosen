@@ -15,15 +15,15 @@ export class AssignmentService {
     title: string;
     description: string;
     deadline: Date;
-    courseId: string;
+    moduleId: string;
   }): Promise<Assignment> {
-    // 1. check if course exists
-    const course = await this.prisma.course.findUnique({
-      where: { id: data.courseId },
+    const module = await this.prisma.courseModule.findUnique({
+      where: { id: data.moduleId },
+      include: { course: true },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found');
+    if (!module) {
+      throw new NotFoundException('Module not found');
     }
 
     // 2. create assignment
@@ -32,16 +32,16 @@ export class AssignmentService {
         title: data.title,
         description: data.description,
         deadline: data.deadline,
-        courseId: data.courseId,
+        moduleId: data.moduleId,
       },
     });
 
     return assignment;
   }
 
-  async findAll(courseId?: string) {
+  async findAll(moduleId?: string) {
     return this.prisma.assignment.findMany({
-      where: courseId ? { courseId } : undefined,
+      where: moduleId ? { moduleId } : undefined,
     });
   }
 
@@ -62,7 +62,7 @@ export class AssignmentService {
   ) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!assignment) {
@@ -70,7 +70,7 @@ export class AssignmentService {
     }
 
     // Validasi kepemilikan Dosen
-    if (assignment.course.instructorId !== userId) {
+    if (assignment.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Forbidden: Only the instructor can update this assignment',
       );
@@ -85,7 +85,7 @@ export class AssignmentService {
   async remove(id: string, userId: string) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!assignment) {
@@ -93,7 +93,7 @@ export class AssignmentService {
     }
 
     // Validasi kepemilikan Dosen
-    if (assignment.course.instructorId !== userId) {
+    if (assignment.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Forbidden: Only the instructor can delete this assignment',
       );
@@ -111,6 +111,7 @@ export class AssignmentService {
   ) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id: assignmentId },
+      include: { module: true },
     });
 
     if (!assignment) {
@@ -122,7 +123,7 @@ export class AssignmentService {
       where: {
         userId_courseId: {
           userId: studentId,
-          courseId: assignment.courseId,
+          courseId: assignment.module.courseId,
         },
       },
     });
@@ -165,7 +166,7 @@ export class AssignmentService {
   async getSubmissions(assignmentId: string, userId: string) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id: assignmentId },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!assignment) {
@@ -173,7 +174,7 @@ export class AssignmentService {
     }
 
     // Validation: Only course instructor can see submissions
-    if (assignment.course.instructorId !== userId) {
+    if (assignment.module.course.instructorId !== userId) {
       throw new ForbiddenException('Only the instructor can view submissions');
     }
 
@@ -205,7 +206,7 @@ export class AssignmentService {
       where: { id: submissionId },
       include: {
         assignment: {
-          include: { course: true },
+          include: { module: { include: { course: true } } },
         },
       },
     });
@@ -215,7 +216,7 @@ export class AssignmentService {
     }
 
     // Validation: Only course instructor can grade
-    if (submission.assignment.course.instructorId !== userId) {
+    if (submission.assignment.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Only the instructor can grade this submission',
       );

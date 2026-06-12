@@ -5,11 +5,8 @@ import {
   getLecturerAssignment,
   getLecturerAssignmentsByCourse,
 } from '@/lib/api/courseRepository';
-import {
-  updateLecturerAssignment,
-  deleteLecturerAssignment,
-} from '@/lib/mock/lecturerCourseManagement';
-import type { LecturerAssignmentStatus } from '@/lib/mock/lecturerCourseManagement';
+import { updateAssignmentApi, deleteAssignmentApi } from '@/lib/api/courseApi';
+import { cookies } from 'next/headers';
 
 interface LecturerEditAssignmentPageProps {
   params: Promise<{ courseId: string; moduleId: string; assignmentId: string }>;
@@ -37,23 +34,26 @@ export default async function LecturerEditAssignmentPage({
 
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const assignedDate = formData.get('assignedDate') as string;
     const deadline = formData.get('deadline') as string;
-    const submissionRequirement = formData.get('submissionRequirement') as string;
-    const status = (formData.get('status') as LecturerAssignmentStatus) ?? 'Draft';
-    const templateName = formData.get('templateName') as string | undefined;
-    const templateMeta = formData.get('templateMeta') as string | undefined;
 
-    updateLecturerAssignment(courseId, moduleId, assignmentId, {
-      title,
-      description,
-      assignedDate,
-      deadline,
-      submissionRequirement,
-      status,
-      templateName: templateName || undefined,
-      templateMeta: templateMeta || undefined,
-    });
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (token) {
+      try {
+        await updateAssignmentApi(
+          assignmentId,
+          {
+            title,
+            description,
+            deadline: new Date(deadline).toISOString(),
+          },
+          token
+        );
+      } catch (error) {
+        console.error('Failed to update assignment via API:', error);
+      }
+    }
 
     revalidatePath(`/dosen/courses/${courseId}`);
     revalidatePath(`/dosen/courses/${courseId}/assignments`);
@@ -63,7 +63,16 @@ export default async function LecturerEditAssignmentPage({
   async function handleDelete() {
     'use server';
 
-    deleteLecturerAssignment(courseId, moduleId, assignmentId);
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (token) {
+      try {
+        await deleteAssignmentApi(assignmentId, token);
+      } catch (error) {
+        console.error('Failed to delete assignment via API:', error);
+      }
+    }
 
     revalidatePath(`/dosen/courses/${courseId}`);
     revalidatePath(`/dosen/courses/${courseId}/assignments`);

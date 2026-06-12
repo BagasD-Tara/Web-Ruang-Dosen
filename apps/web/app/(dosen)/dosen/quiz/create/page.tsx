@@ -11,21 +11,29 @@ interface CourseOption {
   title: string;
 }
 
+interface ModuleOption {
+  id: string;
+  title: string;
+}
+
 export default function CreateQuizPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Bisa dipre-fill dari query param kalau dipanggil dari halaman course
   const prefillCourseId = searchParams.get("courseId") ?? "";
+  const prefillModuleId = searchParams.get("moduleId") ?? "";
 
   const [form, setForm] = useState({
     title: "",
     courseId: prefillCourseId,
+    moduleId: prefillModuleId,
     xpReward: 100,
     minimumScore: 70,
     durationMinutes: 60,
   });
   const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [modules, setModules] = useState<ModuleOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,12 +43,11 @@ export default function CreateQuizPage() {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses`,
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/my`,
           { headers: token ? { Authorization: `Bearer ${token}` } : {} }
         );
         if (!res.ok) throw new Error("Gagal fetch courses");
         const data = await res.json();
-        // Backend course shape: { id, title, ... }
         const options: CourseOption[] = Array.isArray(data)
           ? data.map((c: any) => ({ id: c.id, title: c.title ?? c.name ?? c.id }))
           : [];
@@ -49,13 +56,41 @@ export default function CreateQuizPage() {
         // Fallback ke list statis jika API courses belum siap
         setCourses([
           { id: "course-1", title: "Advanced Machine Learning" },
-          { id: "course-2", title: "Web Development Frontend" },
-          { id: "course-3", title: "Dasar-Dasar Algoritma & Struktur Data" },
         ]);
       }
     }
     loadCourses();
   }, []);
+
+  // Fetch modules when courseId changes
+  useEffect(() => {
+    async function loadModules() {
+      if (!form.courseId) {
+        setModules([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/${form.courseId}/modules`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        );
+        if (!res.ok) throw new Error("Gagal fetch modules");
+        const data = await res.json();
+        const options: ModuleOption[] = Array.isArray(data)
+          ? data.map((m: any) => ({ id: m.id, title: m.title ?? m.name ?? m.id }))
+          : [];
+        setModules(options);
+        // Reset moduleId if it's no longer valid
+        if (options.length > 0 && !options.find(o => o.id === form.moduleId)) {
+           setForm(prev => ({ ...prev, moduleId: "" }));
+        }
+      } catch {
+        setModules([]);
+      }
+    }
+    loadModules();
+  }, [form.courseId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -78,18 +113,22 @@ export default function CreateQuizPage() {
       setError("Pilih mata kuliah terlebih dahulu.");
       return;
     }
+    if (!form.moduleId) {
+      setError("Pilih modul terlebih dahulu.");
+      return;
+    }
     setError("");
     setSubmitting(true);
     try {
       const quiz = await createQuiz({
         title: form.title,
-        courseId: form.courseId,
+        moduleId: form.moduleId,
         xpReward: form.xpReward,
         minimumScore: form.minimumScore,
         durationMinutes: form.durationMinutes,
       });
       // Langsung ke editor soal setelah berhasil buat quiz
-      router.push(`/dosen/dosen/quiz/${quiz.id}/edit`);
+      router.push(`/dosen/quiz/${quiz.id}/edit`);
     } catch (err) {
       console.error(err);
       setError("Gagal membuat kuis. Periksa koneksi server dan coba lagi.");
@@ -130,22 +169,50 @@ export default function CreateQuizPage() {
               />
             </div>
 
-            {/* Mata kuliah */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pilih Mata Kuliah
-              </label>
-              <select
-                name="courseId"
-                value={form.courseId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition appearance-none"
-              >
-                <option value="">Pilih mata kuliah aktif...</option>
-                {courses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
+            {/* Mata kuliah & Modul */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mata Kuliah
+                </label>
+                <select
+                  name="courseId"
+                  value={form.courseId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition appearance-none disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={!!prefillCourseId}
+                >
+                  <option value="">Pilih mata kuliah aktif...</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                  {prefillCourseId && courses.length === 0 && (
+                     <option value={prefillCourseId}>Memuat...</option>
+                  )}
+                </select>
+              </div>
+
+              {/* Modul */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Modul
+                </label>
+                <select
+                  name="moduleId"
+                  value={form.moduleId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition appearance-none disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={!!prefillModuleId || !form.courseId || modules.length === 0}
+                >
+                  <option value="">Pilih modul aktif...</option>
+                  {modules.map((m) => (
+                    <option key={m.id} value={m.id}>{m.title}</option>
+                  ))}
+                  {prefillModuleId && modules.length === 0 && (
+                     <option value={prefillModuleId}>Memuat...</option>
+                  )}
+                </select>
+              </div>
             </div>
 
             {/* XP, Skor minimum, Durasi */}

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { AppShell } from "../../components/layout/AppShell";
-import { DosenDashboardLayout } from "../../components/layout/DosenDashboardLayout";
 
 export default function LabsLayout({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<"STUDENT" | "LECTURER">("STUDENT");
@@ -27,7 +26,7 @@ export default function LabsLayout({ children }: { children: React.ReactNode }) 
   }
 
   if (role === "LECTURER") {
-    return <DosenDashboardLayout>{children}</DosenDashboardLayout>;
+    return <AppShell mode="lecturer">{children}</AppShell>;
   }
 
   return <AppShell mode="student">{children}</AppShell>;

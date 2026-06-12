@@ -45,6 +45,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
   // Active quiz session states
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [questionId: string]: number }>({});
+  const selectedAnswersRef = React.useRef<{ [questionId: string]: number }>({});
   const [markedQuestions, setMarkedQuestions] = useState<string[]>([]); // "Flag for review" equivalent
   const [timeLeft, setTimeLeft] = useState<number>(0); // active countdown in seconds
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -71,6 +72,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
             if (saved) {
               const parsed = JSON.parse(saved);
               setSelectedAnswers(parsed.selectedAnswers || {});
+              selectedAnswersRef.current = parsed.selectedAnswers || {};
               setMarkedQuestions(parsed.markedQuestions || []);
               setTimeLeft(parsed.timeLeft || (quiz.timeLimitMinutes * 60));
               
@@ -173,6 +175,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
 
     setCurrentQuestionIndex(startIndex);
     setSelectedAnswers({});
+    selectedAnswersRef.current = {};
     setMarkedQuestions([]);
     setTimeLeft(selectedQuiz.timeLimitMinutes * 60);
     setScreen('active');
@@ -182,10 +185,14 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
 
   // Select an option for currently viewed question
   const handleSelectOption = (questionId: string, optionIndex: number) => {
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [questionId]: optionIndex
-    }));
+    setSelectedAnswers(prev => {
+      const nextAnswers = {
+        ...prev,
+        [questionId]: optionIndex
+      };
+      selectedAnswersRef.current = nextAnswers;
+      return nextAnswers;
+    });
   };
 
   // Toggle "Flag/Ragu-ragu" marker
@@ -213,7 +220,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     let correctCount = 0;
     
     questions.forEach(q => {
-      const studentAnswer = selectedAnswers[q.id];
+      const studentAnswer = selectedAnswersRef.current[q.id];
       if (studentAnswer !== undefined && studentAnswer === q.correctOptionIndex) {
         correctCount++;
       }
@@ -236,7 +243,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
         hour: '2-digit',
         minute: '2-digit'
       }) + ' WIB',
-      selectedAnswers: { ...selectedAnswers }
+      selectedAnswers: { ...selectedAnswersRef.current }
     };
 
     sessionStorage.removeItem('quiz_state_' + selectedQuiz.id);

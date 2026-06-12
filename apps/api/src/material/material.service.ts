@@ -17,20 +17,21 @@ export class MaterialService {
       type: MaterialType;
       content?: string;
       url?: string;
-      courseId: string;
+      moduleId: string;
     },
   ) {
-    const course = await this.prisma.course.findUnique({
-      where: { id: data.courseId },
+    const module = await this.prisma.courseModule.findUnique({
+      where: { id: data.moduleId },
+      include: { course: true },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found');
+    if (!module) {
+      throw new NotFoundException('Module not found');
     }
 
-    if (course.instructorId !== userId) {
+    if (module.course.instructorId !== userId) {
       throw new ForbiddenException(
-        'You are not authorized to add material to this course',
+        'You are not authorized to add material to this module',
       );
     }
 
@@ -40,7 +41,7 @@ export class MaterialService {
         type: data.type,
         content: data.content,
         url: data.url,
-        courseId: data.courseId,
+        moduleId: data.moduleId,
       },
     });
   }
@@ -69,14 +70,14 @@ export class MaterialService {
   ) {
     const material = await this.prisma.material.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!material) {
       throw new NotFoundException('Material not found');
     }
 
-    if (material.course.instructorId !== userId) {
+    if (material.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to update this material',
       );
@@ -91,14 +92,14 @@ export class MaterialService {
   async remove(id: string, userId: string) {
     const material = await this.prisma.material.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!material) {
       throw new NotFoundException('Material not found');
     }
 
-    if (material.course.instructorId !== userId) {
+    if (material.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to delete this material',
       );
