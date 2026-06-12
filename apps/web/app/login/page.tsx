@@ -42,7 +42,7 @@ export default function LoginPage() {
       document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
       
       alert("Login Berhasil! Selamat datang " + data.user.name);
-      router.push("/dashboard_dosen");
+      router.push(getDashboardPathByRole(data.user?.role));
       
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -156,4 +156,18 @@ export default function LoginPage() {
       </main>
     </div>
   );
+}
+
+function getDashboardPathByRole(role?: string) {
+  const normalizedRole = role?.toUpperCase();
+
+  if (normalizedRole === "ADMIN") {
+    return "/dashboard_admin";
+  }
+
+  if (normalizedRole === "LECTURER" || normalizedRole === "DOSEN") {
+    return "/dashboard_dosen";
+  }
+
+  return "/dashboard_mahasiswa";
 }

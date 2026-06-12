@@ -35,7 +35,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
   return (
     <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
       <nav className="mb-7 flex flex-wrap items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        <Link href="/" className="transition-opacity hover:opacity-70">
+        <Link href="/dashboard_mahasiswa" className="transition-opacity hover:opacity-70">
           Home
         </Link>
         <span>›</span>
@@ -456,3 +456,4 @@ function getContentItemHref({
 
   return undefined;
 }
+

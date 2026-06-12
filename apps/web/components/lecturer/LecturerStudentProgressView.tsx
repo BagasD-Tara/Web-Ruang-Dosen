@@ -33,7 +33,7 @@ export function LecturerStudentProgressView({ data }: LecturerStudentProgressVie
     <div className="mx-auto w-full max-w-[1180px] px-4 py-8 sm:px-6 lg:px-8">
       <LecturerBreadcrumbs
         items={[
-          { label: 'Home', href: '/dosen' },
+          { label: 'Home', href: '/dashboard_dosen' },
           { label: 'Courses', href: '/dosen/courses' },
           { label: data.course.title, href: `/dosen/courses/${data.course.id}` },
           { label: 'Enrolled Students', href: enrollmentHref },
@@ -278,3 +278,4 @@ function StatusPill<Status extends string>({
     </span>
   );
 }
+

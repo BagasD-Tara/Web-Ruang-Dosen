@@ -177,7 +177,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors hover:bg-[#F8FAFF]"
+        className="group mt-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] hover:bg-[#EFF6FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] active:translate-y-0 active:bg-[#DBEAFE]"
         style={{
           borderColor: 'var(--color-border)',
           background: 'var(--color-bg-white)',
@@ -197,7 +197,9 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
             {getRoleLabel(user?.role, mode)}
           </span>
         </span>
-        <LogoutIcon />
+        <span className="transition-colors duration-200 group-hover:text-[#2563EB] group-active:text-[#1D4ED8]">
+          <LogoutIcon />
+        </span>
       </button>
     </aside>
   );

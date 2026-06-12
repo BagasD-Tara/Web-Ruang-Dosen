@@ -98,7 +98,7 @@ export function CourseCatalogLayout({
 function CatalogBreadcrumb({ currentLabel }: { currentLabel: string }) {
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-      <Link href="/" className="transition-opacity hover:opacity-70">
+      <Link href="/dashboard_mahasiswa" className="transition-opacity hover:opacity-70">
         Home
       </Link>
       <span>&rsaquo;</span>
@@ -116,3 +116,4 @@ function CatalogBreadcrumb({ currentLabel }: { currentLabel: string }) {
     </nav>
   );
 }
+

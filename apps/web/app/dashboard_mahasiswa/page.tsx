@@ -224,6 +224,11 @@ export default function DashboardMahasiswaPage() {
         </section>
 
         <aside className="right-panel">
+          <div className="performance-stats">
+            <MiniStat label="GPA" value="3.82" />
+            <MiniStat label="RANK" value="#12" />
+          </div>
+
           <div className="deadlines-card">
             <div className="deadlines-header">
               <h3 className="section-title">Deadlines</h3>
@@ -255,11 +260,6 @@ export default function DashboardMahasiswaPage() {
               <button className="btn-cta-primary" type="button">Register Now</button>
               <button className="btn-cta-secondary" type="button">Learn More</button>
             </div>
-          </div>
-
-          <div className="performance-stats">
-            <MiniStat label="GPA" value="3.82" />
-            <MiniStat label="RANK" value="#12" />
           </div>
         </aside>
       </div>

@@ -42,7 +42,7 @@ export function LecturerManageCourseView({ data }: LecturerManageCourseViewProps
     <div className="manage-view-wrapper dashboard-content">
       <LecturerBreadcrumbs
         items={[
-          { label: 'Home', href: '/dosen' },
+          { label: 'Home', href: '/dashboard_dosen' },
           { label: 'Courses', href: '/dosen/courses' },
           { label: data.course.title },
         ]}
@@ -430,4 +430,5 @@ function AssessmentTypeIcon({ kind }: { kind: LecturerModuleAssessment['kind'] }
     <ClipboardList size={20} />
   );
 }
+
 

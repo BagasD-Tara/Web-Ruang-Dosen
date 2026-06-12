@@ -151,9 +151,26 @@ const ThemeModeIcon: React.FC = () => (
 );
 
 const BellIcon: React.FC = () => (
-  <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
-    <path d="M8 0a1 1 0 0 1 1 1v.57A7 7 0 0 1 15 8c0 4.12-1.34 6-3 7H4c-1.66-1-3-2.88-3-7a7 7 0 0 1 6-6.43V1a1 1 0 0 1 1-1z" fill="#434654" />
-    <path d="M6 17a2 2 0 0 0 4 0" fill="#434654" />
+  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M18 9.7V12c0 1.9.62 3.18 1.38 4.05A1.18 1.18 0 0 1 18.5 18H5.5a1.18 1.18 0 0 1-.88-1.95C5.38 15.18 6 13.9 6 12V9.7C6 6.6 8.6 4 12 4s6 2.6 6 5.7Z"
+      stroke="#334155"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9.75 20a2.5 2.5 0 0 0 4.5 0"
+      stroke="#334155"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 2.75V4"
+      stroke="#334155"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+    />
   </svg>
 );
 

@@ -40,7 +40,7 @@ export function MaterialReaderView({
     <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <nav className="flex flex-wrap items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          <Link href="/" className="transition-opacity hover:opacity-70">
+          <Link href="/dashboard_mahasiswa" className="transition-opacity hover:opacity-70">
             Home
           </Link>
           <span>›</span>
@@ -475,3 +475,4 @@ function RightSidebarChevronIcon({ open }: { open: boolean }) {
     </svg>
   );
 }
+

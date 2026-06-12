@@ -90,7 +90,7 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
         selectedLevel={courseFilters.selectedLevel}
         currentPage={courseFilters.currentPage}
         totalPages={courseFilters.totalPages}
-        emptyState={<EmptyState onReset={courseFilters.resetFilters} />}
+        emptyState={<EmptyState />}
         onCategoryChange={courseFilters.setSelectedCategory}
         onLevelChange={courseFilters.setSelectedLevel}
         onPageChange={courseFilters.setCurrentPage}
@@ -102,7 +102,7 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
   );
 }
 
-function EmptyState({ onReset }: { onReset: () => void }) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center py-24 text-center">
       <span className="mb-4 text-5xl grayscale">🔍</span>
@@ -112,14 +112,6 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <p className="mb-5 max-w-[280px] text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         Try adjusting your filters or search query.
       </p>
-      <button
-        type="button"
-        onClick={onReset}
-        className="text-sm font-bold hover:underline"
-        style={{ color: 'var(--color-brand-primary)' }}
-      >
-        Reset All Filters
-      </button>
     </div>
   );
 }
