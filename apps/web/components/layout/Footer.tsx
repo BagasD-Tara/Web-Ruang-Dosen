@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
   return (
     <footer
       className="w-full overflow-hidden border-t bg-white"
-      style={{ borderColor: 'var(--color-border)', position: 'relative', zIndex: 30 }}
+      style={{ borderColor: 'var(--color-border)', position: 'relative', zIndex: 60 }}
     >
       <div className="mx-auto flex w-full max-w-[1180px] min-w-0 flex-col items-center justify-between gap-3 px-8 py-4 text-center md:flex-row md:text-left">
         <div className="min-w-0 md:flex-1">

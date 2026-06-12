@@ -94,36 +94,20 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
   );
 
   return (
-    <>
-      {sidebarOpen ? (
-        <div
-          aria-hidden="true"
-          className="fixed z-30 transition-opacity duration-300"
-          style={{
-            top: '73px',
-            bottom: 0,
-            left: '255px',
-            width: '1px',
-            background: 'var(--color-border)',
-            pointerEvents: 'none',
-          }}
-        />
-      ) : null}
-
-      <aside
-        ref={asideRef}
-        data-sidebar
-        className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
-        style={{
-          top: '73px',
-          bottom: 0,
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
-          width: '256px',
-          background: 'var(--color-bg-white)',
-          borderRight: '1px solid var(--color-border)',
-          padding: '24px 20px',
-        }}
-      >
+    <aside
+      ref={asideRef}
+      data-sidebar
+      className="fixed left-0 z-40 flex flex-col overflow-y-auto transition-all duration-300"
+      style={{
+        top: '73px',
+        bottom: 0,
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-256px)',
+        width: '256px',
+        background: 'var(--color-bg-white)',
+        borderRight: '1px solid var(--color-border)',
+        padding: '24px 20px',
+      }}
+    >
       <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const isActive = isNavItemActive(pathname, item);
@@ -215,8 +199,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
         </span>
         <LogoutIcon />
       </button>
-      </aside>
-    </>
+    </aside>
   );
 };
 
