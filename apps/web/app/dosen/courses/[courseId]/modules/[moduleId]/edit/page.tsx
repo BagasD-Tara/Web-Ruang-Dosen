@@ -1,8 +1,9 @@
+import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { LecturerModuleEditorView } from '@/components/lecturer/LecturerModuleEditorView';
 import { getLecturerModule } from '@/lib/api/courseRepository';
-import { updateLecturerModule, deleteLecturerModule } from '@/lib/mock/lecturerCourseManagement';
+import { updateModuleApi, deleteModuleApi } from '@/lib/api/courseApi';
 
 interface LecturerEditModulePageProps {
   params: Promise<{ courseId: string; moduleId: string }>;
@@ -21,13 +22,15 @@ export default async function LecturerEditModulePage({
   async function handleSave(data: any) {
     'use server';
 
-    updateLecturerModule(courseId, moduleId, {
-      title: data.title,
-      description: data.description,
-      sequence: data.sequence,
-      durationWeeks: data.durationWeeks,
-      visibilityStatus: data.visibilityStatus,
-    });
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (token) {
+      await updateModuleApi(courseId, moduleId, {
+        title: data.title,
+        description: data.description,
+      }, token);
+    }
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);
@@ -36,7 +39,12 @@ export default async function LecturerEditModulePage({
   async function handleDelete() {
     'use server';
 
-    deleteLecturerModule(courseId, moduleId);
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (token) {
+      await deleteModuleApi(courseId, moduleId, token);
+    }
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);

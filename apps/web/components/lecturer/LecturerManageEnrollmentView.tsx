@@ -6,7 +6,10 @@ import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import type {
   LecturerEnrollmentData,
   LecturerEnrollmentStudent,
-} from '@/lib/mock/lecturerEnrollment';
+} from '@/lib/types/course';
+
+import { enrollStudentAction } from '@/app/actions/enrollStudent';
+import { removeStudentAction } from '@/app/actions/removeStudent';
 
 interface LecturerManageEnrollmentViewProps {
   data: LecturerEnrollmentData;
@@ -20,6 +23,7 @@ export function LecturerManageEnrollmentView({
   const [searchQuery, setSearchQuery] = React.useState('');
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [isEnrollModalOpen, setEnrollModalOpen] = React.useState(false);
 
   const filteredStudents = React.useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -82,16 +86,32 @@ export function LecturerManageEnrollmentView({
           </p>
         </div>
 
-        <div className="w-full max-w-[360px]">
-          <SearchInput
-            value={searchQuery}
-            onChange={(value) => {
-              setSearchQuery(value);
-              setCurrentPage(1);
-            }}
-          />
+        <div className="w-full max-w-[360px] flex flex-col items-end gap-3">
+          <button
+            onClick={() => setEnrollModalOpen(true)}
+            className="inline-flex h-11 items-center justify-center rounded-[14px] px-6 text-sm font-semibold text-white transition-colors hover:bg-opacity-90"
+            style={{ background: 'var(--color-brand-primary)' }}
+          >
+            Enroll Student
+          </button>
+          <div className="w-full">
+            <SearchInput
+              value={searchQuery}
+              onChange={(value) => {
+                setSearchQuery(value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
         </div>
       </section>
+
+      {isEnrollModalOpen && (
+        <EnrollModal
+          courseId={data.courseId}
+          onClose={() => setEnrollModalOpen(false)}
+        />
+      )}
 
       <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <SummaryCard
@@ -235,6 +255,15 @@ function EnrollmentRow({
 }) {
   const initials = getInitials(student.name);
   const progressHref = `/dosen/courses/${courseId}/enrollment/${student.id}/progress`;
+  const [isRemoving, startTransition] = React.useTransition();
+
+  const handleRemove = () => {
+    if (window.confirm(`Are you sure you want to remove ${student.name} from this course?`)) {
+      startTransition(() => {
+        removeStudentAction(courseId, student.id).catch((error) => console.error('Failed to remove:', error));
+      });
+    }
+  };
 
   return (
     <article className="px-5 py-5 sm:px-8">
@@ -254,6 +283,14 @@ function EnrollmentRow({
         </p>
         <div className="flex justify-end gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
+          <button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="inline-flex h-10 items-center justify-center rounded-[12px] border px-4 text-sm font-semibold transition-colors hover:bg-red-50 disabled:opacity-50"
+            style={{ borderColor: '#E53935', color: '#E53935' }}
+          >
+            {isRemoving ? 'Removing...' : 'Remove'}
+          </button>
         </div>
       </div>
 
@@ -276,6 +313,14 @@ function EnrollmentRow({
 
         <div className="flex gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
+          <button
+            onClick={handleRemove}
+            disabled={isRemoving}
+            className="inline-flex h-10 items-center justify-center rounded-[12px] border px-4 text-sm font-semibold transition-colors hover:bg-red-50 disabled:opacity-50"
+            style={{ borderColor: '#E53935', color: '#E53935' }}
+          >
+            {isRemoving ? 'Removing...' : 'Remove'}
+          </button>
         </div>
       </div>
     </article>
@@ -465,4 +510,3 @@ function SelectChevronIcon() {
     </svg>
   );
 }
-

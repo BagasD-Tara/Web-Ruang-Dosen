@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Course, CourseLevel } from '@/lib/mock/courses';
+import { Course, CourseLevel } from '@/lib/types/course';
 import { CategoryOption } from '@/components/course/CourseFilters';
 
 const ITEMS_PER_PAGE = 6;

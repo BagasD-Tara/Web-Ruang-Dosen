@@ -4,8 +4,8 @@ import Link from 'next/link';
 import React from 'react';
 import type {
   LecturerCourseModule,
-} from '@/lib/mock/lecturerCourseManagement';
-import type { LecturerCourse } from '@/lib/mock/lecturerCourses';
+} from '@/lib/types/course';
+import type { LecturerCourse } from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import { DeleteConfirmationDialog } from './shared/DeleteConfirmationDialog';
 import {

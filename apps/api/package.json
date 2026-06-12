@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "npm run start:dev",
+    "dev": "nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -27,7 +27,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.24",
-    "@nestjs/swagger": "^11.4.3",
+    "@nestjs/swagger": "^11.4.4",
     "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
     "passport": "^0.7.0",

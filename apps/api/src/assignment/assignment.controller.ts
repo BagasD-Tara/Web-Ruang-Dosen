@@ -39,7 +39,7 @@ export class AssignmentController {
       title: string;
       description: string;
       deadline: string;
-      courseId: string;
+      moduleId: string;
     },
   ): Promise<Assignment> {
     return this.assignmentService.create({

@@ -42,7 +42,7 @@ export default function LoginPage() {
       document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
       
       alert("Login Berhasil! Selamat datang " + data.user.name);
-      router.push(getDashboardPathByRole(data.user?.role));
+      router.push("/dashboard_dosen");
       
     } catch (err: unknown) {
       if (err instanceof Error) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Course } from '@/lib/mock/courses';
+import { Course } from '@/lib/types/course';
 
 interface CourseCardProps {
   course: Course;

@@ -1,11 +1,11 @@
 {
   "name": "ruang-dosen",
   "private": true,
+  "packageManager": "npm@11.12.1",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "packageManager": "npm@11.12.1",
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
@@ -20,6 +20,9 @@
     "wrap-ansi": "^10.0.0"
   },
   "dependencies": {
-    "is-promise": "^4.0.0"
+    "clsx": "^2.1.1",
+    "is-promise": "^4.0.0",
+    "lucide-react": "^1.17.0",
+    "tailwind-merge": "^3.6.0"
   }
 }

@@ -6,7 +6,7 @@ import type {
   ProgressItemStatus,
   StudentAssignmentProgress,
   StudentMaterialProgress,
-} from '@/lib/mock/lecturerStudentProgress';
+} from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 
 interface LecturerStudentProgressViewProps {

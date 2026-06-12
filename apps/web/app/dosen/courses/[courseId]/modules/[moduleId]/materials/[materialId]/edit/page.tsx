@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { LecturerMaterialEditorView } from '@/components/lecturer/LecturerMaterialEditorView';
 import { getLecturerMaterial } from '@/lib/api/courseRepository';
 import { updateMaterialApi, deleteMaterialApi, uploadFileApi, type ApiMaterialType } from '@/lib/api/courseApi';
-import { updateLecturerMaterial, deleteLecturerMaterial } from '@/lib/mock/lecturerCourseManagement';
+
 
 interface LecturerEditMaterialPageProps {
   params: Promise<{ courseId: string; moduleId: string; materialId: string }>;
@@ -76,19 +76,9 @@ export default async function LecturerEditMaterialPage({
           token
         );
       } catch (error) {
-        console.warn('Failed to update material via API, falling back to mock:', error);
+        console.error('Failed to update material via API:', error);
       }
     }
-
-    updateLecturerMaterial(courseId, moduleId, materialId, {
-      title,
-      description,
-      materialKind: materialKind as any,
-      visibilityStatus: visibilityStatus as any,
-      externalUrl: resolvedUrl,
-      fileName: fileName || undefined,
-      fileMeta: fileMeta || undefined,
-    });
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);
@@ -104,11 +94,9 @@ export default async function LecturerEditMaterialPage({
       try {
         await deleteMaterialApi(materialId, token);
       } catch (error) {
-        console.warn('Failed to delete material via API, falling back to mock:', error);
+        console.error('Failed to delete material via API:', error);
       }
     }
-
-    deleteLecturerMaterial(courseId, moduleId, materialId);
 
     revalidatePath(`/dosen/courses/${courseId}`);
     redirect(`/dosen/courses/${courseId}`);

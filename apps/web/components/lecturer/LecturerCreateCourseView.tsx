@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { LECTURER_COURSES, type LecturerCourse } from '@/lib/mock/lecturerCourses';
+import type { LecturerCourse } from '@/lib/types/course';
 import { createMockCourseAction } from '@/app/actions/createCourse';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import './LecturerCreateCourseView.css';
@@ -33,9 +33,16 @@ const TEACHING_FORMAT_OPTIONS: TeachingFormat[] = [
   'Project-Based',
   'Research Seminar',
 ];
-const DEPARTMENT_OPTIONS = Array.from(
-  new Set(LECTURER_COURSES.map((course) => course.department))
-).toSorted();
+const DEPARTMENT_OPTIONS = [
+  'Computer Science',
+  'Data Science',
+  'Information Technology',
+  'Software Engineering',
+  'Cybersecurity',
+  'Information Systems',
+  'Artificial Intelligence',
+  'Business Analytics',
+];
 
 const INITIAL_FORM_STATE: CourseDraftFormState = {
   title: 'Advanced Machine Learning',

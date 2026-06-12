@@ -290,7 +290,7 @@ async function fetchStudentCourses(token: string, studentId?: string) {
     return [];
   }
 
-  const response = await fetch(buildApiUrl("/courses"), {
+  const response = await fetch(buildApiUrl("/courses/my"), {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -299,9 +299,7 @@ async function fetchStudentCourses(token: string, studentId?: string) {
   }
 
   const courses: EnrolledCourse[] = await response.json();
-  return courses.filter((course) =>
-    course.enrollments?.some((enrollment) => enrollment.studentId === studentId)
-  );
+  return courses;
 }
 
 function getStoredUser(): DashboardUser | null {

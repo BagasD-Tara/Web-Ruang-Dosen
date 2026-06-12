@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -44,10 +48,10 @@ describe('Main Flow Integration (e2e)', () => {
       where: { email: 'lecturer.e2e@test.com' },
     });
     await prisma.user.update({
-      where: { id: lecUser.id },
+      where: { id: lecUser!.id },
       data: { role: 'LECTURER' },
     });
-    lecturerId = lecUser.id;
+    lecturerId = lecUser!.id;
 
     const lecLogin = await request(app.getHttpServer())
       .post('/auth/login')
@@ -73,7 +77,7 @@ describe('Main Flow Integration (e2e)', () => {
     const stuUser = await prisma.user.findUnique({
       where: { email: 'student.flow@test.com' },
     });
-    studentId = stuUser.id;
+    studentId = stuUser!.id;
   });
 
   afterAll(async () => {

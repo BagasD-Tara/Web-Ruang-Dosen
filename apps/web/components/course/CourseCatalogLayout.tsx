@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CourseCard } from '@/components/course/CourseCard';
 import { CourseFilters, type CategoryOption } from '@/components/course/CourseFilters';
 import { CoursePagination } from '@/components/course/CoursePagination';
-import type { Course, CourseLevel } from '@/lib/mock/courses';
+import type { Course, CourseLevel } from '@/lib/types/course';
 
 interface CourseCatalogLayoutProps {
   title: string;

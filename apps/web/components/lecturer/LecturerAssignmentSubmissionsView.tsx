@@ -3,37 +3,29 @@
 import Link from 'next/link';
 import React from 'react';
 import type {
-  AssignmentSubmissionStatus,
-  LecturerAssignmentSubmission,
-} from '@/lib/mock/lecturerAssignmentSubmissions';
-import type {
-  LecturerCourseModule,
-  LecturerModuleAssessment,
-} from '@/lib/mock/lecturerCourseManagement';
-import type { LecturerCourse } from '@/lib/mock/lecturerCourses';
+  AssignmentSubmission,
+  AssignmentSubmissionsData,
+} from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 
-interface LecturerAssignmentSubmissionsViewProps {
-  course: LecturerCourse;
-  module: LecturerCourseModule;
-  assignment: LecturerModuleAssessment;
-  submissions: LecturerAssignmentSubmission[];
-}
+type AssignmentSubmissionStatus = 'Pending' | 'Graded' | 'Late';
+
+interface LecturerAssignmentSubmissionsViewProps extends AssignmentSubmissionsData {}
 
 const STATUS_STYLE: Record<AssignmentSubmissionStatus, { background: string; color: string }> = {
-  'Needs Grading': { background: '#FFF3D6', color: '#9A5B00' },
+  Pending: { background: '#FFF3D6', color: '#9A5B00' },
   Graded: { background: '#E7F6EE', color: '#187346' },
-  Returned: { background: '#FFECEC', color: '#B42318' },
+  Late: { background: '#FFECEC', color: '#B42318' },
 };
 
 export function LecturerAssignmentSubmissionsView({
   course,
-  module,
+  moduleInfo,
   assignment,
   submissions,
 }: LecturerAssignmentSubmissionsViewProps) {
   const [selectedSubmission, setSelectedSubmission] =
-    React.useState<LecturerAssignmentSubmission | null>(null);
+    React.useState<AssignmentSubmission | null>(null);
   const returnHref = `/dosen/courses/${course.id}/assignments`;
 
   return (
@@ -51,7 +43,7 @@ export function LecturerAssignmentSubmissionsView({
 
         <HeaderSection
           courseId={course.id}
-          moduleLabel={module.orderLabel}
+          moduleLabel={moduleInfo.orderLabel}
           assignmentTitle={assignment.title}
         />
 
@@ -121,8 +113,8 @@ function SubmissionList({
   submissions,
   onGrade,
 }: {
-  submissions: LecturerAssignmentSubmission[];
-  onGrade: (submission: LecturerAssignmentSubmission) => void;
+  submissions: AssignmentSubmission[];
+  onGrade: (submission: AssignmentSubmission) => void;
 }) {
   return (
     <section
@@ -154,8 +146,8 @@ function SubmissionRow({
   submission,
   onGrade,
 }: {
-  submission: LecturerAssignmentSubmission;
-  onGrade: (submission: LecturerAssignmentSubmission) => void;
+  submission: AssignmentSubmission;
+  onGrade: (submission: AssignmentSubmission) => void;
 }) {
   return (
     <article className="grid grid-cols-1 gap-4 px-5 py-5 lg:grid-cols-[minmax(220px,1.2fr)_minmax(180px,0.8fr)_180px_140px_120px] lg:items-center lg:px-6">
@@ -175,35 +167,35 @@ function SubmissionRow({
   );
 }
 
-function StudentIdentity({ submission }: { submission: LecturerAssignmentSubmission }) {
+function StudentIdentity({ submission }: { submission: AssignmentSubmission }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <div
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold"
         style={{ background: '#E7EEFF', color: 'var(--color-brand-primary)' }}
       >
-        {createInitials(submission.studentName)}
+        {createInitials(submission.student.name)}
       </div>
       <div className="min-w-0">
         <p className="truncate text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>
-          {submission.studentName}
+          {submission.student.name}
         </p>
         <p className="truncate text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {submission.studentEmail}
+          {submission.student.email}
         </p>
       </div>
     </div>
   );
 }
 
-function SubmittedFile({ submission }: { submission: LecturerAssignmentSubmission }) {
+function SubmittedFile({ submission }: { submission: AssignmentSubmission }) {
   return (
     <div className="min-w-0">
       <p className="truncate text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        {submission.fileName}
+        {submission.fileUrl ? 'Submitted File' : 'No File'}
       </p>
       <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        {submission.fileMeta}
+        {submission.fileUrl ? '1.2 MB' : ''}
       </p>
     </div>
   );
@@ -256,7 +248,7 @@ function GradeSubmissionDialog({
   assignmentTitle,
   onClose,
 }: {
-  submission: LecturerAssignmentSubmission | null;
+  submission: AssignmentSubmission | null;
   assignmentTitle: string;
   onClose: () => void;
 }) {
@@ -272,7 +264,7 @@ function GradeSubmissionDialog({
             Grade Submission
           </p>
           <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {submission.studentName}
+            {submission.student.name}
           </h2>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
             {assignmentTitle}

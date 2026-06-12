@@ -29,22 +29,23 @@ export class MaterialController {
         type: { type: 'string', enum: ['TEXT', 'VIDEO', 'DOCUMENT'] },
         content: { type: 'string' },
         url: { type: 'string' },
-        courseId: { type: 'string' },
+        moduleId: { type: 'string' },
       },
     },
   })
-  create(
-    @Request() req: { user: { id: string } },
+  async create(
     @Body()
     data: {
       title: string;
       type: MaterialType;
       content?: string;
       url?: string;
-      courseId: string;
+      moduleId: string;
     },
+    @Request() req: any,
   ) {
-    return this.materialService.create(req.user.id, data);
+    const userId = req.user.id;
+    return this.materialService.create(userId, data);
   }
 
   @Get(':id')

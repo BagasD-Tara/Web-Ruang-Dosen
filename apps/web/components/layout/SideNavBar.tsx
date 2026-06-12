@@ -89,6 +89,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
         matchMode: 'section',
       },
       { label: 'Calendar', href: mode === 'lecturer' ? '/dosen/calendar' : '/calendar', icon: <CalendarIcon />, matchMode: 'section' },
+      { label: 'Practical Labs', href: '/labs', icon: <LabsIcon />, matchMode: 'section' },
     ],
     [coursesHref, mode]
   );
@@ -278,6 +279,13 @@ const CalendarIcon: React.FC = () => (
   <svg width="18" height="20" viewBox="0 0 18 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1" y="3" width="16" height="16" rx="2" />
     <path d="M13 1v4M5 1v4M1 7h16" />
+  </svg>
+);
+
+const LabsIcon: React.FC = () => (
+  <svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
   </svg>
 );
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CourseCatalogLayout } from '@/components/course/CourseCatalogLayout';
 import { useCourses } from '@/hooks/useCourses';
 import { buildCourseDetailHref } from '@/lib/courseNavigation';
-import type { Course } from '@/lib/mock/courses';
+import type { Course } from '@/lib/types/course';
 
 interface MyCoursesCatalogViewProps {
   courses: Course[];
