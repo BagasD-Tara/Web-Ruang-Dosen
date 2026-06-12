@@ -96,7 +96,7 @@ export function fetchCourseDetail(courseId: string, accessToken?: string) {
   }
   return apiRequest<ApiCourseDetail>(`/courses/${courseId}`, {
     headers,
-    next: { revalidate: 30 },
+    next: { revalidate: 0, tags: ['courses', `course-${courseId}`] },
   });
 }
 

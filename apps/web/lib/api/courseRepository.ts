@@ -71,10 +71,22 @@ export async function getLecturerManageCourse(courseId: string): Promise<Lecture
       token = cookieStore.get('token')?.value;
     } catch {}
 
-    const apiCourse = await fetchCourseDetail(courseId, token);
-    const mapped = mapApiCourseDetailToLecturerManageCourse(apiCourse);
-    
-    return mapped;
+    const [apiCourse, enrollments] = await Promise.all([
+      fetchCourseDetail(courseId, token),
+      token ? fetchCourseEnrollmentsApi(courseId, token) : Promise.resolve([]),
+    ]);
+
+    const mappedCourse = mapApiCourseDetailToLecturerManageCourse(apiCourse);
+    const enrolledStudentsCount = enrollments.length;
+
+    return {
+      ...mappedCourse,
+      enrolledStudents: enrolledStudentsCount,
+      course: {
+        ...mappedCourse.course,
+        studentCount: enrolledStudentsCount,
+      },
+    };
   } catch (error) {
     console.error(`getLecturerManageCourse error for ${courseId}:`, error);
     return null;

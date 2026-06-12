@@ -113,7 +113,7 @@ export function LecturerManageEnrollmentView({
         />
       )}
 
-      <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <SummaryCard
           label="Total Students"
           value={String(data.students.length)}
@@ -206,7 +206,7 @@ function SummaryCard({
 }) {
   return (
     <article
-      className="rounded-[24px] border bg-white px-5 py-5 shadow-[0_10px_22px_rgba(15,33,74,0.04)]"
+      className="flex h-full flex-col rounded-[24px] border bg-white px-5 py-5 shadow-[0_10px_22px_rgba(15,33,74,0.04)]"
       style={{ borderColor: 'var(--color-border)' }}
     >
       <p className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
@@ -266,7 +266,11 @@ function EnrollModal({
         onClose();
       } catch (error) {
         console.error('Failed to enroll student:', error);
-        setErrorMessage('Failed to enroll student. Please check the email and try again.');
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Failed to enroll student. Please check the email and try again.'
+        );
       }
     });
   }
@@ -286,24 +290,11 @@ function EnrollModal({
             Enroll Student
           </h2>
           <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Add a student to this course using their university email.
+            Add a student to this course using the email of an existing student account.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              Student Name
-            </span>
-            <input
-              name="name"
-              type="text"
-              placeholder="e.g. Alex Johnson"
-              className="h-12 w-full rounded-[14px] border px-4 text-base outline-none focus:border-[#7DA8FF]"
-              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
-            />
-          </label>
-
           <label className="block">
             <span className="mb-2 block text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
               Email Address

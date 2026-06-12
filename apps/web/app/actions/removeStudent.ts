@@ -17,6 +17,7 @@ export async function removeStudentAction(courseId: string, studentId: string) {
   }
 
   revalidateTag('courses', 'max');
+  revalidateTag(`course-${courseId}`, 'max');
   revalidateTag('enrollments', 'max');
   revalidatePath(`/dosen/courses/${courseId}`);
   revalidatePath(`/dosen/courses/${courseId}/enrollment`);

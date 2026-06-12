@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { getQuizById } from "@/app/lib/api/quiz";
 import type { Quiz } from "@/app/types/quiz";
+import { LecturerBreadcrumbs } from "@/components/lecturer/LecturerBreadcrumbs";
 
 interface QuizStats {
   totalParticipants: number;
@@ -110,23 +111,19 @@ export default function QuizStatsPage() {
 
   if (!quiz || !stats) return null;
 
+  const courseHref = quiz.courseId ? `/dosen/courses/${quiz.courseId}` : "/dosen/courses";
+
   return (
     <div className="bg-gray-50 min-h-full pb-8">
       <div className="max-w-7xl mx-auto w-full px-4 py-6">
-
-        {/* Breadcrumb + Title */}
-        <div className="text-xs text-gray-500 mb-3">
-          <span
-            className="hover:text-blue-600 cursor-pointer"
-            onClick={() => router.back()}
-          >
-            Courses
-          </span>
-          <span className="mx-1">›</span>
-          <span className="hover:text-blue-600 cursor-pointer">{quiz.moduleTitle}</span>
-          <span className="mx-1">›</span>
-          <span className="text-blue-600 font-medium">Statistik Kuis</span>
-        </div>
+        <LecturerBreadcrumbs
+          items={[
+            { label: "Home", href: "/dashboard_dosen" },
+            { label: "Courses", href: "/dosen/courses" },
+            { label: "Manage Course", href: courseHref },
+            { label: "Quiz Statistics" },
+          ]}
+        />
 
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>

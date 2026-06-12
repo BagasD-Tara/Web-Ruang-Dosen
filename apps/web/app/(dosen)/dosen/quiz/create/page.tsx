@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Save } from "lucide-react";
+import { Save, Send } from "lucide-react";
 import { createQuiz } from "@/app/lib/api/quiz";
+import { LecturerBreadcrumbs } from "@/components/lecturer/LecturerBreadcrumbs";
 
 interface ModuleOption {
   id: string;
@@ -11,6 +12,24 @@ interface ModuleOption {
 }
 
 type QuizPublishStatus = "DRAFT" | "PUBLISHED";
+
+interface QuizCreateFormState {
+  title: string;
+  courseId: string;
+  moduleId: string;
+  xpReward: number;
+  minimumScore: number;
+  durationMinutes: number;
+}
+
+const DEFAULT_FORM_STATE = {
+  title: "",
+  courseId: "",
+  moduleId: "",
+  xpReward: 100,
+  minimumScore: 70,
+  durationMinutes: 60,
+} satisfies QuizCreateFormState;
 
 export default function CreateQuizPage() {
   return (
@@ -22,306 +41,277 @@ export default function CreateQuizPage() {
 
 function CreateQuizLoadingState() {
   return (
-    <div className="bg-gray-50 min-h-full">
-      <div className="max-w-4xl mx-auto w-full px-4 py-8">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <p className="text-sm text-gray-500">Memuat form kuis...</p>
+    <div className="min-h-full bg-slate-50">
+      <div className="mx-auto w-full max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">Memuat form kuis...</p>
         </div>
       </div>
     </div>
-  );
-}
-
-function StatusOption({
-  label,
-  selected,
-  onSelect,
-}: {
-  label: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
-        selected
-          ? "border-blue-600 bg-blue-50 text-blue-700"
-          : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-      }`}
-    >
-      {label}
-    </button>
   );
 }
 
 function CreateQuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const prefilledCourseId = searchParams.get("courseId") ?? "";
+  const prefilledModuleId = searchParams.get("moduleId") ?? "";
+  const returnHref = prefilledCourseId ? `/dosen/courses/${prefilledCourseId}` : "/dosen/courses";
 
-  // Bisa dipre-fill dari query param kalau dipanggil dari halaman course
-  const prefillCourseId = searchParams.get("courseId") ?? "";
-  const prefillModuleId = searchParams.get("moduleId") ?? "";
-
-  const [form, setForm] = useState({
-    title: "",
-    courseId: prefillCourseId,
-    moduleId: prefillModuleId,
-    xpReward: 100,
-    minimumScore: 70,
-    durationMinutes: 60,
-    status: "DRAFT" as QuizPublishStatus,
+  const [formState, setFormState] = useState<QuizCreateFormState>({
+    ...DEFAULT_FORM_STATE,
+    courseId: prefilledCourseId,
+    moduleId: prefilledModuleId,
   });
   const [modules, setModules] = useState<ModuleOption[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [submittingStatus, setSubmittingStatus] = useState<QuizPublishStatus | null>(null);
 
   useEffect(() => {
     async function loadModules() {
-      if (!form.courseId) {
+      if (!formState.courseId) {
         setModules([]);
         return;
       }
+
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/${form.courseId}/modules`,
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/${formState.courseId}/modules`,
           { headers: token ? { Authorization: `Bearer ${token}` } : {} }
         );
-        if (!res.ok) throw new Error("Gagal fetch modules");
-        const data = await res.json();
-        const options: ModuleOption[] = Array.isArray(data)
-          ? data.map((m: any) => ({ id: m.id, title: m.title ?? m.name ?? m.id }))
-          : [];
-        setModules(options);
-        // Reset moduleId if it's no longer valid
-        if (!prefillModuleId && options.length > 0) {
-          setForm((prev) =>
-            options.some((option) => option.id === prev.moduleId)
-              ? prev
-              : { ...prev, moduleId: "" }
-          );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch modules");
         }
-      } catch {
+
+        const payload = await response.json();
+        const nextModules = Array.isArray(payload)
+          ? payload.map((moduleItem: { id: string; title?: string; name?: string }) => ({
+              id: moduleItem.id,
+              title: moduleItem.title ?? moduleItem.name ?? moduleItem.id,
+            }))
+          : [];
+
+        setModules(nextModules);
+
+        if (!prefilledModuleId && !nextModules.some((moduleItem) => moduleItem.id === formState.moduleId)) {
+          setFormState((currentState) => ({ ...currentState, moduleId: "" }));
+        }
+      } catch (error) {
+        console.error(error);
         setModules([]);
       }
     }
+
     loadModules();
-  }, [form.courseId, prefillModuleId]);
+  }, [formState.courseId, formState.moduleId, prefilledModuleId]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: ["xpReward", "minimumScore", "durationMinutes"].includes(name)
-        ? Number(value)
-        : value,
+  function updateField(fieldName: keyof QuizCreateFormState, value: string | number) {
+    setFormState((currentState) => ({
+      ...currentState,
+      [fieldName]: value,
     }));
-  };
+  }
 
-  const handleSubmit = async () => {
-    if (!form.title.trim()) {
-      setError("Judul kuis tidak boleh kosong.");
+  async function submitQuiz(status: QuizPublishStatus) {
+    const validationMessage = validateQuizForm(formState);
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
       return;
     }
-    if (!form.moduleId) {
-      setError("Pilih modul terlebih dahulu.");
-      return;
-    }
-    setError("");
-    setSubmitting(true);
+
+    setErrorMessage("");
+    setSubmittingStatus(status);
+
     try {
-      const quiz = await createQuiz({
-        title: form.title,
-        moduleId: form.moduleId,
-        xpReward: form.xpReward,
-        minimumScore: form.minimumScore,
-        durationMinutes: form.durationMinutes,
-        status: form.status,
+      const createdQuiz = await createQuiz({
+        title: formState.title,
+        moduleId: formState.moduleId,
+        xpReward: formState.xpReward,
+        minimumScore: formState.minimumScore,
+        durationMinutes: formState.durationMinutes,
+        status,
       });
-      router.push(`/dosen/quiz/${quiz.id}/edit`);
-    } catch (err) {
-      console.error(err);
-      setError("Gagal membuat kuis. Periksa koneksi server dan coba lagi.");
+
+      router.push(`/dosen/quiz/${createdQuiz.id}/edit`);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Gagal membuat kuis. Periksa koneksi server dan coba lagi.");
     } finally {
-      setSubmitting(false);
+      setSubmittingStatus(null);
     }
-  };
+  }
 
   return (
-    <div className="bg-gray-50 min-h-full">
-      <div className="max-w-4xl mx-auto w-full px-4 py-8">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Detail Kuis</h1>
-          <p className="text-sm text-gray-500 mb-8">
-            Isi informasi dasar untuk membuat kuis baru bagi mahasiswa.
+    <div className="min-h-full bg-slate-50">
+      <div className="mx-auto w-full max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
+        <LecturerBreadcrumbs
+          items={[
+            { label: "Home", href: "/dashboard_dosen" },
+            { label: "Courses", href: "/dosen/courses" },
+            ...(prefilledCourseId ? [{ label: "Manage Course", href: returnHref }] : []),
+            { label: "Create Quiz" },
+          ]}
+        />
+
+        <section className="mb-8">
+          <h1 className="text-[34px] font-bold leading-tight text-slate-950 sm:text-[44px]">
+            Create Quiz
+          </h1>
+          <p className="mt-3 text-lg text-slate-500">
+            Isi informasi dasar kuis sebelum menambahkan pertanyaan di editor.
           </p>
+        </section>
 
-          {error && (
-            <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="space-y-7 px-5 py-6 sm:px-7 sm:py-7">
+            {errorMessage ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            ) : null}
 
-          <div className="space-y-6">
-
-            {/* Judul */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Judul Kuis
-              </label>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">Judul Quiz</label>
               <input
                 type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Contoh: Ujian Tengah Semester Kalkulus I"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={formState.title}
+                onChange={(event) => updateField("title", event.target.value)}
+                placeholder="Contoh: Quiz Pengenalan Machine Learning"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Modul
-                </label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Modul</label>
                 <select
-                  name="moduleId"
-                  value={form.moduleId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition appearance-none disabled:opacity-70 disabled:cursor-not-allowed"
-                  disabled={!!prefillModuleId || !form.courseId || modules.length === 0}
+                  value={formState.moduleId}
+                  onChange={(event) => updateField("moduleId", event.target.value)}
+                  disabled={Boolean(prefilledModuleId) || !formState.courseId || modules.length === 0}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
                 >
-                  <option value="">Pilih modul aktif...</option>
-                  {modules.map((m) => (
-                    <option key={m.id} value={m.id}>{m.title}</option>
+                  <option value="">Pilih modul...</option>
+                  {modules.map((moduleItem) => (
+                    <option key={moduleItem.id} value={moduleItem.id}>
+                      {moduleItem.title}
+                    </option>
                   ))}
-                  {prefillModuleId && modules.length === 0 && (
-                     <option value={prefillModuleId}>Memuat...</option>
-                  )}
+                  {prefilledModuleId && modules.length === 0 ? <option value={prefilledModuleId}>Memuat...</option> : null}
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status Publikasi
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <StatusOption
-                    label="Draft"
-                    selected={form.status === "DRAFT"}
-                    onSelect={() => setForm((prev) => ({ ...prev, status: "DRAFT" }))}
-                  />
-                  <StatusOption
-                    label="Publish"
-                    selected={form.status === "PUBLISHED"}
-                    onSelect={() => setForm((prev) => ({ ...prev, status: "PUBLISHED" }))}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* XP, Skor minimum, Durasi */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reward XP
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="xpReward"
-                    value={form.xpReward}
-                    onChange={handleChange}
-                    min={0}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-red-500">
-                    XP
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skor Minimum Lulus
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="minimumScore"
-                    value={form.minimumScore}
-                    onChange={handleChange}
-                    min={0}
-                    max={100}
-                    className="w-full px-4 py-3 pr-8 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">
-                    %
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Durasi (Menit)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="durationMinutes"
-                    value={form.durationMinutes}
-                    onChange={handleChange}
-                    min={1}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    min
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Kuis akan disimpan sebagai <span className="text-blue-600 font-semibold">{form.status === "DRAFT" ? "Draft" : "Published"}</span>
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Setelah disimpan, kamu bisa menambahkan soal di halaman editor.
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+                <p className="text-sm font-semibold text-slate-800">Alur pembuatan quiz</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Setelah quiz dibuat, Anda akan diarahkan ke editor untuk menambahkan dan mengatur pertanyaan.
                 </p>
               </div>
             </div>
 
-            {/* Tombol aksi */}
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-60 transition-colors"
-              >
-                <Save className="w-4 h-4" />
-                {submitting ? "Menyimpan..." : "Simpan Kuis"}
-              </button>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <NumberField
+                label="Reward XP"
+                value={formState.xpReward}
+                min={0}
+                suffix="XP"
+                onChange={(value) => updateField("xpReward", value)}
+              />
+              <NumberField
+                label="Skor Minimum Lulus"
+                value={formState.minimumScore}
+                min={0}
+                max={100}
+                suffix="%"
+                onChange={(value) => updateField("minimumScore", value)}
+              />
+              <NumberField
+                label="Durasi"
+                value={formState.durationMinutes}
+                min={1}
+                suffix="min"
+                onChange={(value) => updateField("durationMinutes", value)}
+              />
             </div>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 px-5 py-5 sm:flex-row sm:justify-end sm:px-7">
+            <button
+              type="button"
+              onClick={() => router.push(returnHref)}
+              className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => submitQuiz("DRAFT")}
+              disabled={submittingStatus !== null}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-200 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Save className="h-4 w-4" />
+              {submittingStatus === "DRAFT" ? "Saving..." : "Save as Draft"}
+            </button>
+            <button
+              type="button"
+              onClick={() => submitQuiz("PUBLISHED")}
+              disabled={submittingStatus !== null}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Send className="h-4 w-4" />
+              {submittingStatus === "PUBLISHED" ? "Publishing..." : "Publish Quiz"}
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  suffix,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max?: number;
+  suffix: string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
+      <div className="relative">
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          onChange={(event) => onChange(Number(event.target.value))}
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+          {suffix}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function validateQuizForm(formState: QuizCreateFormState) {
+  if (!formState.title.trim()) {
+    return "Judul quiz tidak boleh kosong.";
+  }
+
+  if (!formState.moduleId) {
+    return "Pilih modul terlebih dahulu.";
+  }
+
+  return "";
 }

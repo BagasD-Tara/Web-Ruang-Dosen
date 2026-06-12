@@ -5,7 +5,6 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { enrollStudentByEmailApi } from '@/lib/api/courseApi';
 
 export async function enrollStudentAction(courseId: string, formData: FormData) {
-  const name = formData.get('name') as string;
   const email = formData.get('email') as string;
 
   if (!email) {
@@ -20,6 +19,7 @@ export async function enrollStudentAction(courseId: string, formData: FormData) 
   }
 
   revalidateTag('courses', 'max');
+  revalidateTag(`course-${courseId}`, 'max');
   revalidateTag('enrollments', 'max');
   revalidatePath(`/dosen/courses/${courseId}`);
   revalidatePath(`/dosen/courses/${courseId}/enrollment`);

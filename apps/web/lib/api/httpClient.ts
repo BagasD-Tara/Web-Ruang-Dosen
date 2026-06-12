@@ -35,11 +35,54 @@ export async function apiRequest<ResponseBody>(
     });
 
     if (!response.ok) {
-      throw new ApiRequestError(`API request failed: ${path}`, response.status);
+      throw new ApiRequestError(
+        await buildApiErrorMessage(path, response),
+        response.status
+      );
     }
 
     return response.json() as Promise<ResponseBody>;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function buildApiErrorMessage(path: string, response: Response) {
+  try {
+    const responseBody = await response.json();
+    const apiMessage = extractApiMessage(responseBody);
+
+    if (apiMessage) {
+      return apiMessage;
+    }
+  } catch {
+    try {
+      const responseText = await response.text();
+      if (responseText.trim()) {
+        return responseText;
+      }
+    } catch {
+      return `API request failed: ${path}`;
+    }
+  }
+
+  return `API request failed: ${path}`;
+}
+
+function extractApiMessage(responseBody: unknown): string | null {
+  if (!responseBody || typeof responseBody !== 'object') {
+    return null;
+  }
+
+  const message = Reflect.get(responseBody, 'message');
+
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  if (Array.isArray(message) && message.length > 0) {
+    return message.join(', ');
+  }
+
+  return null;
 }
