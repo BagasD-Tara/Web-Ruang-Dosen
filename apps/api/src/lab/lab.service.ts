@@ -11,17 +11,18 @@ export class LabService {
 
   async create(
     userId: string,
-    data: { title: string; instructions: string; courseId: string },
+    data: { title: string; instructions: string; moduleId: string },
   ) {
-    const course = await this.prisma.course.findUnique({
-      where: { id: data.courseId },
+    const module = await this.prisma.courseModule.findUnique({
+      where: { id: data.moduleId },
+      include: { course: true },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found');
+    if (!module) {
+      throw new NotFoundException('Module not found');
     }
 
-    if (course.instructorId !== userId) {
+    if (module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Forbidden: Only the instructor can create a lab for this course',
       );
@@ -31,14 +32,14 @@ export class LabService {
       data: {
         title: data.title,
         instructions: data.instructions,
-        courseId: data.courseId,
+        moduleId: data.moduleId,
       },
     });
   }
 
-  async findAll(courseId?: string) {
+  async findAll(moduleId?: string) {
     return this.prisma.practicalLab.findMany({
-      where: courseId ? { courseId } : {},
+      where: moduleId ? { moduleId } : {},
       select: {
         id: true,
         title: true,
@@ -66,14 +67,14 @@ export class LabService {
   ) {
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!lab) {
       throw new NotFoundException('Lab not found');
     }
 
-    if (lab.course.instructorId !== userId) {
+    if (lab.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Forbidden: Only the instructor can update this lab',
       );
@@ -88,14 +89,14 @@ export class LabService {
   async remove(id: string, userId: string) {
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!lab) {
       throw new NotFoundException('Lab not found');
     }
 
-    if (lab.course.instructorId !== userId) {
+    if (lab.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'Forbidden: Only the instructor can delete this lab',
       );

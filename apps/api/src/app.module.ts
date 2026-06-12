@@ -1,27 +1,33 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { QuizModule } from './quiz/quiz.module';
 import { CourseModule } from './course/course.module';
+import { CourseModuleModule } from './module/module.module';
 import { AssignmentModule } from './assignment/assignment.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AdminModule } from './admin/admin.module';
 import { MaterialModule } from './material/material.module';
 import { LabSubmissionModule } from './lab-submission/lab-submission.module';
 import { LabModule } from './lab/lab.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     QuizModule,
     CourseModule,
+    CourseModuleModule,
     AssignmentModule,
     LeaderboardModule,
     AdminModule,
     MaterialModule,
     LabSubmissionModule,
     LabModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

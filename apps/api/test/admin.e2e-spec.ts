@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -48,7 +53,7 @@ describe('AdminController (e2e)', () => {
     const adminRecord = await prisma.user.findUnique({
       where: { email: 'admin.e2e@test.com' },
     });
-    adminId = adminRecord.id;
+    adminId = adminRecord!.id;
     await prisma.user.update({
       where: { id: adminId },
       data: { role: 'ADMIN' },
@@ -63,7 +68,7 @@ describe('AdminController (e2e)', () => {
     const studentRecord = await prisma.user.findUnique({
       where: { email: 'student.e2e@test.com' },
     });
-    studentId = studentRecord.id;
+    studentId = studentRecord!.id;
 
     // C. Login Admin to get Token
     const loginRes = await request(app.getHttpServer())

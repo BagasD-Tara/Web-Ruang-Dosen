@@ -28,6 +28,7 @@ export class AssignmentController {
       properties: {
         title: { type: 'string' },
         description: { type: 'string' },
+        status: { type: 'string', enum: ['DRAFT', 'ACTIVE'] },
         deadline: { type: 'string', format: 'date-time' },
         courseId: { type: 'string' },
       },
@@ -38,8 +39,9 @@ export class AssignmentController {
     data: {
       title: string;
       description: string;
+      status?: string;
       deadline: string;
-      courseId: string;
+      moduleId: string;
     },
   ): Promise<Assignment> {
     return this.assignmentService.create({
@@ -66,13 +68,14 @@ export class AssignmentController {
       properties: {
         title: { type: 'string' },
         description: { type: 'string' },
+        status: { type: 'string', enum: ['DRAFT', 'ACTIVE'] },
         deadline: { type: 'string', format: 'date-time' },
       },
     },
   })
   async update(
     @Param('id') id: string,
-    @Body() data: { title?: string; description?: string; deadline?: string },
+    @Body() data: { title?: string; description?: string; deadline?: string; status?: string },
     @Request() req: any,
   ) {
     return this.assignmentService.update(id, req.user.id, {

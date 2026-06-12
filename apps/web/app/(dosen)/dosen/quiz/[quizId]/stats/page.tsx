@@ -7,9 +7,28 @@ import {
   Download, RefreshCw, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { getQuizById } from "@/app/lib/api/quiz";
-import { getQuizStats } from "@/app/lib/mock/quizDosen";
 import type { Quiz } from "@/app/types/quiz";
-import type { QuizStats } from "@/app/lib/mock/quizDosen";
+import { LecturerBreadcrumbs } from "@/components/lecturer/LecturerBreadcrumbs";
+
+interface QuizStats {
+  totalParticipants: number;
+  totalEnrolled: number;
+  averageScore: number;
+  highestScore: number;
+  lowestScore: number;
+  studentResults: QuizStudentResult[];
+}
+
+interface QuizStudentResult {
+  studentId: string;
+  studentName: string;
+  nim: string;
+  initials: string;
+  avatarColor: string;
+  durationSeconds: number | null;
+  status: string;
+  score: number | null;
+}
 
 // ─── Konstanta ────────────────────────────────────────────────────────────────
 
@@ -39,13 +58,9 @@ export default function QuizStatsPage() {
     async function load() {
       setError(null);
       try {
-        // Quiz dari API, stats dari mock (endpoint stats belum ada di backend)
-        const [quizData, statsData] = await Promise.all([
-          getQuizById(quizId),
-          getQuizStats(quizId),
-        ]);
+        const quizData = await getQuizById(quizId);
         setQuiz(quizData);
-        setStats(statsData);
+        setStats(createEmptyQuizStats());
       } catch (err) {
         console.error(err);
         setError("Gagal memuat statistik kuis.");
@@ -96,23 +111,19 @@ export default function QuizStatsPage() {
 
   if (!quiz || !stats) return null;
 
+  const courseHref = quiz.courseId ? `/dosen/courses/${quiz.courseId}` : "/dosen/courses";
+
   return (
     <div className="bg-gray-50 min-h-full pb-8">
       <div className="max-w-7xl mx-auto w-full px-4 py-6">
-
-        {/* Breadcrumb + Title */}
-        <div className="text-xs text-gray-500 mb-3">
-          <span
-            className="hover:text-blue-600 cursor-pointer"
-            onClick={() => router.back()}
-          >
-            Courses
-          </span>
-          <span className="mx-1">›</span>
-          <span className="hover:text-blue-600 cursor-pointer">{quiz.moduleTitle}</span>
-          <span className="mx-1">›</span>
-          <span className="text-blue-600 font-medium">Statistik Kuis</span>
-        </div>
+        <LecturerBreadcrumbs
+          items={[
+            { label: "Home", href: "/dashboard_dosen" },
+            { label: "Courses", href: "/dosen/courses" },
+            { label: "Manage Course", href: courseHref },
+            { label: "Quiz Statistics" },
+          ]}
+        />
 
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
@@ -327,4 +338,15 @@ function StatCard({
       {children}
     </div>
   );
+}
+
+function createEmptyQuizStats(): QuizStats {
+  return {
+    totalParticipants: 0,
+    totalEnrolled: 0,
+    averageScore: 0,
+    highestScore: 0,
+    lowestScore: 0,
+    studentResults: [],
+  };
 }

@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Course } from '@prisma/client';
@@ -42,7 +42,12 @@ export class CourseService {
     return course;
   }
 
-  async enroll(courseId: string, userId: string) {
+  async enroll(courseId: string, userId: string, userRole: string) {
+    // 0. Only students can enroll
+    if (userRole !== 'STUDENT') {
+      throw new ForbiddenException('Only students can enroll in courses');
+    }
+
     // 1. Check if course exists
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
@@ -63,7 +68,7 @@ export class CourseService {
     });
 
     if (existingEnrollment) {
-      throw new BadRequestException('You are already enrolled in this course');
+      throw new ConflictException('You are already enrolled in this course');
     }
 
     // 3. Create enrollment
@@ -71,6 +76,59 @@ export class CourseService {
       data: {
         userId,
         courseId,
+      },
+    });
+  }
+
+  async enrollStudentByEmail(courseId: string, email: string, instructorId: string) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can enroll students');
+
+    const student = await this.prisma.user.findUnique({ where: { email } });
+    if (!student) throw new NotFoundException('Student not found');
+    if (student.role !== 'STUDENT') throw new ForbiddenException('User is not a student');
+
+    const existingEnrollment = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: student.id, courseId } },
+    });
+    if (existingEnrollment) throw new ConflictException('Student is already enrolled');
+
+    return this.prisma.enrollment.create({
+      data: {
+        userId: student.id,
+        courseId,
+      },
+      include: { user: true },
+    });
+  }
+
+  async removeEnrollment(courseId: string, studentId: string, instructorId: string) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can remove students');
+
+    const existingEnrollment = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: studentId, courseId } },
+    });
+    if (!existingEnrollment) throw new NotFoundException('Enrollment not found');
+
+    return this.prisma.enrollment.delete({
+      where: { id: existingEnrollment.id },
+    });
+  }
+
+  async getEnrollments(courseId: string, instructorId: string) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can view enrollments');
+
+    return this.prisma.enrollment.findMany({
+      where: { courseId },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
       },
     });
   }
@@ -115,10 +173,14 @@ export class CourseService {
     const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
-        materials: true,
-        quizzes: true,
-        assignments: true,
-        labs: true,
+        modules: {
+          include: {
+            materials: true,
+            quizzes: true,
+            assignments: true,
+            labs: true,
+          },
+        },
       },
     });
 
@@ -129,7 +191,11 @@ export class CourseService {
     return course;
   }
 
-  async update(id: string, data: any, userId: string) {
+  async update(
+    id: string,
+    data: { title?: string; description?: string },
+    userId: string,
+  ) {
     const course = await this.prisma.course.findUnique({
       where: { id },
     });
@@ -144,7 +210,12 @@ export class CourseService {
 
     return this.prisma.course.update({
       where: { id },
-      data,
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+      },
     });
   }
 
@@ -160,6 +231,11 @@ export class CourseService {
     if (course.instructorId !== userId) {
       throw new ForbiddenException('You are not the instructor of this course');
     }
+
+    // Delete enrollments first to avoid foreign key constraint errors
+    await this.prisma.enrollment.deleteMany({
+      where: { courseId: id },
+    });
 
     return this.prisma.course.delete({
       where: { id },

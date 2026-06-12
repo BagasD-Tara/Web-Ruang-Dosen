@@ -1,11 +1,16 @@
 'use client';
 
-import { AppShell } from '@/app/components/layout/AppShell';
+import { Suspense } from 'react';
+import { AppShell } from '@/components/layout/AppShell';
 
 export default function DosenLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell mode="lecturer">{children}</AppShell>;
+  return (
+    <Suspense fallback={null}>
+      <AppShell mode="lecturer">{children}</AppShell>
+    </Suspense>
+  );
 }

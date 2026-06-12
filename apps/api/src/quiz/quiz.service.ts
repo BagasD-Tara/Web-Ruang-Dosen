@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ForbiddenException,
   Injectable,
@@ -11,40 +12,47 @@ export class QuizService {
 
   async create(data: {
     title: string;
-    courseId: string;
+    moduleId: string;
     xpReward: number;
     passingScore: number;
     timeLimit?: number;
+    status?: string;
   }) {
-    // 1. check if course exists
-    const course = await this.prisma.course.findUnique({
-      where: { id: data.courseId },
+    const module = await this.prisma.courseModule.findUnique({
+      where: { id: data.moduleId },
+      include: { course: true },
     });
 
-    if (!course) {
-      throw new NotFoundException('Course not found');
+    if (!module) {
+      throw new NotFoundException('Module not found');
     }
 
     // 2. create quiz
     const quiz = await this.prisma.quiz.create({
       data: {
         title: data.title,
-        courseId: data.courseId,
+        moduleId: data.moduleId,
         xpReward: data.xpReward,
         passingScore: data.passingScore,
         timeLimit: data.timeLimit ?? 30,
+        status: data.status ?? 'DRAFT',
       },
     });
 
     return quiz;
   }
 
-  async findAll(courseId?: string) {
+  async findAll(filters: { courseId?: string; moduleId?: string } = {}) {
     return this.prisma.quiz.findMany({
-      where: courseId ? { courseId } : {},
+      where: {
+        ...(filters.moduleId ? { moduleId: filters.moduleId } : {}),
+        ...(filters.courseId ? { module: { courseId: filters.courseId } } : {}),
+      },
       select: {
         id: true,
         title: true,
+        status: true,
+        moduleId: true,
         xpReward: true,
         passingScore: true,
         timeLimit: true,
@@ -87,11 +95,12 @@ export class QuizService {
       timeLimit?: number;
       xpReward?: number;
       passingScore?: number;
+      status?: string;
     },
   ) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!quiz) {
@@ -99,7 +108,7 @@ export class QuizService {
     }
 
     // Validation: Only course instructor can update
-    if (quiz.course.instructorId !== userId) {
+    if (quiz.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to update this quiz',
       );
@@ -114,7 +123,7 @@ export class QuizService {
   async remove(id: string, userId: string) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!quiz) {
@@ -122,7 +131,7 @@ export class QuizService {
     }
 
     // Validation: Only course instructor can remove
-    if (quiz.course.instructorId !== userId) {
+    if (quiz.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to delete this quiz',
       );
@@ -147,9 +156,28 @@ export class QuizService {
       throw new NotFoundException('Quiz not found');
     }
 
+    const existingSubmission = await this.prisma.quizSubmission.findUnique({
+      where: {
+        quizId_studentId: {
+          quizId: id,
+          studentId: userId,
+        },
+      },
+    });
+
+    if (existingSubmission) {
+      throw new ForbiddenException('You have already submitted this quiz');
+    }
+
     let correctCount = 0;
     const totalQuestions = quiz.questions.length;
-    const details: any[] = [];
+    const details: {
+      questionId: string;
+      question: string;
+      correctAnswer: string;
+      studentAnswer: string | null;
+      isCorrect: boolean;
+    }[] = [];
 
     for (const q of quiz.questions) {
       const studentAnswer =
@@ -185,6 +213,16 @@ export class QuizService {
       });
     }
 
+    await this.prisma.quizSubmission.create({
+      data: {
+        quizId: id,
+        studentId: userId,
+        score,
+        passed,
+        details,
+      },
+    });
+
     return {
       score,
       passed,
@@ -207,14 +245,14 @@ export class QuizService {
   ) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: data.quizId },
-      include: { course: true },
+      include: { module: { include: { course: true } } },
     });
 
     if (!quiz) {
       throw new NotFoundException('Quiz not found');
     }
 
-    if (quiz.course.instructorId !== userId) {
+    if (quiz.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to add questions to this quiz',
       );
@@ -278,7 +316,7 @@ export class QuizService {
       include: {
         quiz: {
           include: {
-            course: true,
+            module: { include: { course: true } },
           },
         },
       },
@@ -288,7 +326,7 @@ export class QuizService {
       throw new NotFoundException('Quiz question not found');
     }
 
-    if (question.quiz.course.instructorId !== userId) {
+    if (question.quiz.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to update this question',
       );
@@ -318,7 +356,7 @@ export class QuizService {
       include: {
         quiz: {
           include: {
-            course: true,
+            module: { include: { course: true } },
           },
         },
       },
@@ -328,7 +366,7 @@ export class QuizService {
       throw new NotFoundException('Quiz question not found');
     }
 
-    if (question.quiz.course.instructorId !== userId) {
+    if (question.quiz.module.course.instructorId !== userId) {
       throw new ForbiddenException(
         'You are not authorized to delete this question',
       );
@@ -337,5 +375,22 @@ export class QuizService {
     return this.prisma.quizQuestion.delete({
       where: { id },
     });
+  }
+
+  async getSubmission(quizId: string, studentId: string) {
+    const submission = await this.prisma.quizSubmission.findUnique({
+      where: {
+        quizId_studentId: {
+          quizId,
+          studentId,
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new NotFoundException('Quiz submission not found');
+    }
+
+    return submission;
   }
 }

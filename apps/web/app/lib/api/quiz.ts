@@ -32,7 +32,7 @@ function mapQuiz(raw: any): Quiz {
     courseId: raw.courseId ?? "",
     moduleId: raw.moduleId ?? "",
     moduleTitle: raw.moduleTitle ?? "",
-    status: raw.status ?? "aktif",
+    status: raw.status ?? "DRAFT",
     totalQuestions: raw._count?.questions ?? raw.totalQuestions ?? 0,
     durationMinutes: raw.timeLimit ?? raw.durationMinutes ?? 30,
     xpReward: raw.xpReward ?? 0,
@@ -119,6 +119,11 @@ export async function getQuizzesByCourse(courseId: string): Promise<Quiz[]> {
   return Array.isArray(data) ? data.map(mapQuiz) : [];
 }
 
+export async function getQuizzes(): Promise<Quiz[]> {
+  const { data } = await api.get("/quizzes");
+  return Array.isArray(data) ? data.map(mapQuiz) : [];
+}
+
 export async function getQuizById(quizId: string): Promise<Quiz> {
   const { data } = await api.get(`/quizzes/${quizId}`);
   return mapQuiz(data);
@@ -175,17 +180,19 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 
 export async function createQuiz(payload: {
   title: string;
-  courseId: string;
+  moduleId: string;
   xpReward: number;
   minimumScore: number;
   durationMinutes: number;
+  status?: string;
 }): Promise<Quiz> {
   const { data } = await api.post("/quizzes", {
     title: payload.title,
-    courseId: payload.courseId,
+    moduleId: payload.moduleId,
     xpReward: payload.xpReward,
     passingScore: payload.minimumScore,
     timeLimit: payload.durationMinutes,
+    status: payload.status ?? "DRAFT",
   });
   return mapQuiz(data);
 }
@@ -197,6 +204,7 @@ export async function updateQuiz(
     xpReward: number;
     minimumScore: number;
     durationMinutes: number;
+    status: string;
   }>
 ): Promise<Quiz> {
   const body: Record<string, unknown> = {};
@@ -204,6 +212,7 @@ export async function updateQuiz(
   if (payload.xpReward !== undefined) body.xpReward = payload.xpReward;
   if (payload.minimumScore !== undefined) body.passingScore = payload.minimumScore;
   if (payload.durationMinutes !== undefined) body.timeLimit = payload.durationMinutes;
+  if (payload.status !== undefined) body.status = payload.status;
 
   const { data } = await api.patch(`/quizzes/${quizId}`, body);
   return mapQuiz(data);
