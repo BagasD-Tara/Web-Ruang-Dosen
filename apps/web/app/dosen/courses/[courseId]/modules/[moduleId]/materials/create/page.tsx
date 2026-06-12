@@ -26,26 +26,26 @@ export default async function LecturerCreateMaterialPage({
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const materialKind = formData.get('materialKind') as string;
-    const visibilityStatus = formData.get('visibilityStatus') as string;
     const externalUrl = formData.get('externalUrl') as string;
     const videoSourceMode = formData.get('videoSourceMode') as string;
     const file = formData.get('file') as File | null;
 
     let fileUrl = '';
-    let fileName = '';
-    let fileMeta = '';
 
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    if (file && file.size > 0 && token) {
+    if (!token) {
+      throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
+    }
+
+    if (file && file.size > 0) {
       try {
         const uploadResult = await uploadFileApi(file, token);
         fileUrl = uploadResult.url;
-        fileName = uploadResult.fileName;
-        fileMeta = `${(uploadResult.size / (1024 * 1024)).toFixed(2)} MB`;
       } catch (error) {
         console.error('File upload failed:', error);
+        throw new Error('Gagal mengunggah file material.');
       }
     }
 
@@ -63,21 +63,20 @@ export default async function LecturerCreateMaterialPage({
       resolvedUrl = externalUrl;
     }
 
-    if (token) {
-      try {
-        await createMaterialApi(
-          {
-            title,
-            type: apiType,
-            content: description,
-            url: resolvedUrl,
-            moduleId,
-          },
-          token
-        );
-      } catch (error) {
-        console.error('Failed to create material via API:', error);
-      }
+    try {
+      await createMaterialApi(
+        {
+          title,
+          type: apiType,
+          content: description,
+          url: resolvedUrl,
+          moduleId,
+        },
+        token
+      );
+    } catch (error) {
+      console.error('Failed to create material via API:', error);
+      throw new Error('Gagal membuat material. Periksa koneksi API dan coba lagi.');
     }
 
     revalidatePath(`/dosen/courses/${courseId}`);

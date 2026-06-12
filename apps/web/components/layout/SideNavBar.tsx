@@ -3,10 +3,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
 
 interface NavItem {
   label: string;
   href: string;
+  activePath?: string;
   icon: React.ReactNode;
   children?: Array<{ label: string; href: string }>;
   matchMode?: 'exact' | 'section';
@@ -32,8 +34,9 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
   const router = useRouter();
   const asideRef = useRef<HTMLElement>(null);
   const [user, setUser] = useState<StoredUser | null>(null);
-  const coursesHref = mode === 'lecturer' ? '/dosen/courses' : '/courses';
-  const coursesActive = pathname === coursesHref || pathname.startsWith(`${coursesHref}/`);
+  const coursesPath = mode === 'lecturer' ? '/dosen/courses' : '/courses';
+  const coursesHref = mode === 'lecturer' ? coursesPath : COURSE_CATALOG_HREF;
+  const coursesActive = pathname === coursesPath || pathname.startsWith(`${coursesPath}/`);
   const [coursesOpenOverride, setCoursesOpenOverride] = useState<boolean | null>(null);
   const coursesOpen = coursesOpenOverride ?? coursesActive;
 
@@ -84,12 +87,13 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       {
         label: 'Courses',
         href: coursesHref,
+        activePath: coursesPath,
         icon: <CoursesIcon />,
         children: mode === 'student' ? [{ label: 'My Courses', href: '/courses/my' }] : undefined,
         matchMode: 'section',
       },
       { label: 'Calendar', href: mode === 'lecturer' ? '/dosen/calendar' : '/calendar', icon: <CalendarIcon />, matchMode: 'section' },
-      { label: 'Practical Labs', href: '/labs', icon: <LabsIcon />, matchMode: 'section' },
+      { label: 'Practical Lab', href: '/labs', icon: <LabsIcon />, matchMode: 'section' },
     ],
     [coursesHref, mode]
   );
@@ -112,7 +116,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const isActive = isNavItemActive(pathname, item);
-          const isCoursesItem = item.href === coursesHref;
+          const isCoursesItem = item.activePath === coursesPath;
           const showChildren = Boolean(item.children) && (isCoursesItem ? coursesOpen : isActive);
 
           return (
@@ -244,19 +248,21 @@ function getRoleLabel(role: string | undefined, mode: 'student' | 'lecturer') {
 }
 
 function isNavItemActive(pathname: string, item: NavItem) {
+  const activePath = item.activePath ?? item.href.split('?')[0];
+
   if (item.matchMode === 'exact') {
-    return pathname === item.href;
+    return pathname === activePath;
   }
 
-  if (item.href === '/courses' && pathname === '/courses/my') {
+  if (activePath === '/courses' && pathname === '/courses/my') {
     return false;
   }
 
-  if (item.href === '/') {
+  if (activePath === '/') {
     return pathname === '/';
   }
 
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return pathname === activePath || pathname.startsWith(`${activePath}/`);
 }
 
 const HomeIcon: React.FC = () => (

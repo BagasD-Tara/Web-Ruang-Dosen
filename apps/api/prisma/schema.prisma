@@ -86,6 +86,7 @@ model Material {
 model Quiz {
   id           String           @id @default(uuid())
   title        String
+  status       String           @default("DRAFT")
   passingScore Int              @default(70)
   xpReward     Int              @default(100)
   timeLimit    Int              @default(30)
@@ -110,6 +111,7 @@ model Assignment {
   id          String                 @id @default(uuid())
   title       String
   description String
+  status      String                 @default("DRAFT")
   deadline    DateTime
   moduleId    String
   module      CourseModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)

@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import type { LecturerCourse } from '@/lib/types/course';
 import { createCourseApi } from '@/lib/api/courseApi';
 
-export async function createMockCourseAction(course: LecturerCourse) {
+export async function createCourseAction(course: LecturerCourse) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;

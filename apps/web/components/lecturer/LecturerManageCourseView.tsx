@@ -1,434 +1,566 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Settings,
-  Plus,
-  Users,
-  TrendingUp,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Lock,
-  FileText,
-  Video,
-  Link as LinkIcon,
-  HelpCircle,
-  ClipboardList,
-  Edit2,
-  BookOpen,
-  Pencil,
-  Trash2,
   BarChart2,
-  PlayCircle
+  BookOpen,
+  ChevronDown,
+  FileText,
+  HelpCircle,
+  Link as LinkIcon,
+  Lock,
+  Pencil,
+  PlayCircle,
+  Plus,
+  Settings,
+  Users,
 } from 'lucide-react';
-import { getQuizzesByCourse, deleteQuiz } from '@/app/lib/api/quiz';
+import { getQuizzesByCourse } from '@/app/lib/api/quiz';
 import type { Quiz } from '@/app/types/quiz';
 import type {
   LecturerCourseModule,
   LecturerManageCourseData,
   LecturerMaterialKind,
-  LecturerModuleAssessment,
-  LecturerModuleMaterial,
 } from '@/lib/types/course';
-
-// Adapter: backend response → tipe Quiz resmi
-function adaptQuiz(raw: any): Quiz {
-  return {
-    id: raw.id,
-    title: raw.title,
-    courseId: raw.courseId ?? "",
-    moduleId: raw.moduleId ?? "",
-    moduleTitle: raw.moduleTitle ?? "—",
-    status: raw.status ?? "draft",
-    totalQuestions: raw._count?.questions ?? raw.totalQuestions ?? 0,
-    durationMinutes: raw.timeLimit ?? raw.durationMinutes ?? 0,
-    xpReward: raw.xpReward ?? 0,
-    minimumScore: raw.passingScore ?? raw.minimumScore ?? 0,
-    createdAt: raw.createdAt ?? "",
-    updatedAt: raw.updatedAt ?? "",
-  };
-}
+import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 
 interface LecturerManageCourseViewProps {
   data: LecturerManageCourseData;
 }
 
+type RawQuizResponse = Partial<Quiz> & {
+  _count?: {
+    questions?: number;
+  };
+  timeLimit?: number;
+  passingScore?: number;
+};
+
+const MODULE_STATUS_STYLES = {
+  Published: 'border-green-200 bg-green-50 text-green-700',
+  Draft: 'border-amber-200 bg-amber-50 text-amber-700',
+  Hidden: 'border-slate-200 bg-slate-50 text-slate-600',
+} as const;
+
 export function LecturerManageCourseView({ data }: LecturerManageCourseViewProps) {
   const router = useRouter();
   const courseId = data.course.id.toString();
-
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
-  const [errorQuizzes, setErrorQuizzes] = useState<string | null>(null);
-
-  // Default expand all modules
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(
-    Object.fromEntries(data.modules.map(m => [m.id, true]))
+  const [quizError, setQuizError] = useState<string | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>(() =>
+    getInitialExpandedModules(data.modules)
   );
 
   useEffect(() => {
-    async function load() {
-      setLoadingQuizzes(true);
-      setErrorQuizzes(null);
+    let isMounted = true;
+
+    async function loadQuizzes() {
       try {
-        const raw = await getQuizzesByCourse(courseId);
-        setQuizzes(Array.isArray(raw) ? raw.map(adaptQuiz) : []);
-      } catch (err) {
-        console.error(err);
-        setErrorQuizzes("Gagal memuat data kuis. Periksa koneksi atau coba lagi.");
-      } finally {
-        setLoadingQuizzes(false);
+        const rawQuizzes = await getQuizzesByCourse(courseId);
+        if (!isMounted) return;
+
+        setQuizzes(Array.isArray(rawQuizzes) ? rawQuizzes.map(adaptQuiz) : []);
+        setQuizError(null);
+      } catch (error) {
+        console.error(error);
+        if (!isMounted) return;
+
+        setQuizzes([]);
+        setQuizError('Gagal memuat data kuis.');
       }
     }
-    load();
+
+    loadQuizzes();
+
+    return () => {
+      isMounted = false;
+    };
   }, [courseId]);
 
-  function toggleModule(modId: string) {
-    setExpandedModules((prev) => ({ ...prev, [modId]: !prev[modId] }));
-  }
+  const quizzesByModule = useMemo(() => groupQuizzesByModule(quizzes), [quizzes]);
 
-  async function handleDeleteQuiz(quizId: string) {
-    if (!confirm("Yakin ingin menghapus kuis ini?")) return;
-    try {
-      await deleteQuiz(quizId);
-      setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menghapus kuis. Coba lagi.");
-    }
-  }
-
-  function MaterialTypeIcon({ kind, className }: { kind: LecturerMaterialKind, className?: string }) {
-    if (kind === 'document') return <FileText className={className} />;
-    if (kind === 'video') return <PlayCircle className={className} />;
-    return <LinkIcon className={className} />;
+  function toggleModule(moduleId: string) {
+    setExpandedModules((currentModules) => ({
+      ...currentModules,
+      [moduleId]: !currentModules[moduleId],
+    }));
   }
 
   return (
-    <div className="manage-view-wrapper dashboard-content">
+    <div className="mx-auto min-h-full w-full max-w-[1240px] px-4 py-7 sm:px-6 lg:px-8">
       <LecturerBreadcrumbs
         items={[
-          { label: 'Home', href: '/dosen' },
+          { label: 'Home', href: '/dashboard_dosen' },
           { label: 'Courses', href: '/dosen/courses' },
           { label: data.course.title },
         ]}
       />
 
-      <section className="manage-header">
-        <div className="manage-header-left">
-          <h1>{data.course.title}</h1>
-          <div className="course-meta">
-            <span>{data.course.code}</span>
-            <span className="dot">•</span>
-            <span>{data.termLabel}</span>
-            <span className="dot">•</span>
-            <span>{data.credits} Credits</span>
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr] mt-6">
-
-          {/* Left: Students Card */}
-          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg p-6 h-fit">
-            <div className="flex items-start justify-between gap-3 mb-6">
-              <div>
-                <p className="text-sm font-semibold text-blue-100">View Enrolled</p>
-                <p className="text-sm font-semibold text-blue-100">Students</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <Users className="w-5 h-5 text-white" />
-              </div>
+      <section className="rounded-[28px] border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Manage Course</p>
+            <h1 className="mt-2 text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">
+              {data.course.title}
+            </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500">
+              <span>{data.course.code}</span>
+              <span>-</span>
+              <span>{data.termLabel}</span>
+              <span>-</span>
+              <span>{data.credits} Credits</span>
             </div>
-            <p className="text-5xl font-bold">{data.enrolledStudents}</p>
-            <p className="mt-2 text-sm text-blue-100">+{data.weeklyGrowth} new students this week</p>
-            <button 
-              onClick={() => router.push(`/dosen/courses/${courseId}/enrollment`)}
-              className="mt-6 w-full rounded-lg bg-white/20 py-2.5 text-sm font-semibold text-white hover:bg-white/30 border border-white/30 transition"
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => router.push(`/dosen/courses/${courseId}/settings`)}
+              className="inline-flex h-11 items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
             >
-              Manage Enrollment →
+              <Settings className="h-4 w-4" />
+              Course Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/dosen/courses/${courseId}/modules/create`)}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+            >
+              <Plus className="h-4 w-4" />
+              New Module
             </button>
           </div>
-
-          {/* Right: Modules */}
-          <div className="space-y-4">
-            {data.modules.length === 0 ? (
-              <div className="rounded-2xl bg-white border-2 border-dashed border-gray-200 p-12 text-center">
-                <BookOpen className="mx-auto mb-3 h-8 w-8 text-gray-300" />
-                <p className="text-sm text-gray-500 mb-4">Belum ada modul untuk kelas ini.</p>
-                <button
-                  onClick={() => router.push(`/dosen/courses/${courseId}/modules/create`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold mx-auto transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Buat Modul Pertama
-                </button>
-              </div>
-            ) : (
-              data.modules.map((module, idx) => {
-                const moduleNum = idx + 1;
-                const statusKey = module.status;
-                const isExpanded = expandedModules[module.id] ?? false;
-                
-                // Get quizzes for this module
-                const moduleQuizzes = quizzes.filter(q => q.moduleId === module.id);
-                // Also get assignments from module.assessments
-                const moduleAssignments = module.assessments.filter(a => a.kind === 'assignment');
-
-                return (
-                  <div key={module.id} className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
-
-                    {/* Module Header */}
-                    <div
-                      onClick={() => toggleModule(module.id)}
-                      className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${
-                          statusKey === "Published" ? "bg-blue-50 text-blue-600" :
-                          statusKey === "Draft" ? "bg-amber-50 text-amber-600" :
-                          "bg-gray-100 text-gray-500"
-                        }`}>
-                          M{moduleNum}
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900">{module.title}</h3>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {module.weekLabel} • {module.materials.length} Materials • {moduleQuizzes.length} Quiz • {moduleAssignments.length} Assignment
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {statusKey === "Published" && (
-                          <span className="px-3 py-1 rounded-full bg-green-50 text-xs font-semibold text-green-700 border border-green-200">
-                            {statusKey}
-                          </span>
-                        )}
-                        {statusKey === "Draft" && (
-                          <span className="px-3 py-1 rounded-full bg-amber-50 text-xs font-semibold text-amber-700 border border-amber-200">
-                            Draft
-                          </span>
-                        )}
-                        {statusKey === "Hidden" && (
-                          <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-50 text-xs font-semibold text-gray-600 border border-gray-200">
-                            <Lock className="w-3 h-3" /> Hidden
-                          </span>
-                        )}
-                        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                      </div>
-                    </div>
-
-                    {/* Expanded Content */}
-                    {isExpanded && statusKey !== "Hidden" && (
-                      <>
-                        {/* Learning Materials */}
-                        <div className="px-6 py-4 border-t border-gray-100">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-600">
-                              <FileText className="w-3.5 h-3.5" />
-                              Learning Materials
-                            </div>
-                            <button 
-                              onClick={() => router.push(`/dosen/courses/${courseId}/modules/${module.id}/materials/create`)}
-                              className="text-blue-600 hover:text-blue-700 text-xs font-semibold"
-                            >
-                              Add Material
-                            </button>
-                          </div>
-                          <div className="space-y-2">
-                            {module.materials.map((mat) => (
-                              <div key={mat.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition">
-                                <MaterialTypeIcon kind={mat.kind} className="w-4 h-4 text-blue-400" />
-                                <p className="flex-1 text-sm font-medium text-gray-800">{mat.title}</p>
-                                <button 
-                                  onClick={() => router.push(`/dosen/courses/${courseId}/modules/${module.id}/materials/${mat.id}/edit`)}
-                                  className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                            {module.materials.length === 0 && (
-                              <p className="text-xs text-gray-500 italic">No materials yet.</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Assessments */}
-                        <div className="px-6 py-4 border-t border-gray-100">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-600">
-                              <HelpCircle className="w-3.5 h-3.5" />
-                              Assessments
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => router.push(`/dosen/quiz/create?courseId=${courseId}&moduleId=${module.id}`)}
-                                className="text-blue-600 hover:text-blue-700 text-xs font-semibold"
-                              >
-                                Create Quiz
-                              </button>
-                              <span className="text-gray-300 text-xs">•</span>
-                              <button 
-                                onClick={() => router.push(`/dosen/courses/${courseId}/modules/${module.id}/assignments/create`)}
-                                className="text-blue-600 hover:text-blue-700 text-xs font-semibold"
-                              >
-                                Create Assignment
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            {/* Quiz items */}
-                            {moduleQuizzes.map((quiz) => (
-                              <div
-                                key={quiz.id}
-                                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 transition group"
-                              >
-                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                                  <HelpCircle className="w-4 h-4 text-red-500" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900 truncate">{quiz.title}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">
-                                    {quiz.durationMinutes} menit • {quiz.totalQuestions ?? 0} Questions
-                                  </p>
-                                </div>
-                                <span className="text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded flex-shrink-0">
-                                  Auto-graded
-                                </span>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                                  <button
-                                    onClick={() => router.push(`/dosen/quiz/${quiz.id}/stats`)}
-                                    className="p-1.5 rounded-lg hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition"
-                                    title="Lihat Statistik"
-                                  >
-                                    <BarChart2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => router.push(`/dosen/quiz/${quiz.id}/edit`)}
-                                    className="p-1.5 rounded-lg hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition"
-                                    title="Edit Kuis"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteQuiz(quiz.id)}
-                                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition"
-                                    title="Hapus Kuis"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-
-                            {/* Assignment items */}
-                            {moduleAssignments.map((assignment) => (
-                              <div key={assignment.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="w-4 h-4 text-blue-500" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-700">{assignment.title}</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">{assignment.meta}</p>
-                                </div>
-                                {assignment.badgeLabel && (
-                                  <span className="text-xs font-semibold bg-blue-50 text-blue-700 px-2 py-1 rounded flex-shrink-0">
-                                    {assignment.badgeLabel}
-                                  </span>
-                                )}
-                                <button 
-                                  onClick={() => router.push(`/dosen/courses/${courseId}/modules/${module.id}/assignments/${assignment.id}/edit`)}
-                                  className="p-1.5 rounded-lg hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                            
-                            {moduleQuizzes.length === 0 && moduleAssignments.length === 0 && (
-                              <p className="text-xs text-gray-500 italic">No assessments yet.</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Footer module */}
-                        <div className="px-6 py-3 border-t border-gray-100 flex justify-end">
-                          <button 
-                            onClick={() => router.push(`/dosen/courses/${courseId}/modules/${module.id}/edit`)}
-                            className="text-sm font-medium text-gray-600 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-                          >
-                            Edit Module Settings
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
         </div>
+      </section>
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <EnrollmentSummaryCard
+          enrolledStudents={data.enrolledStudents}
+          weeklyGrowth={data.weeklyGrowth}
+          onManageEnrollment={() => router.push(`/dosen/courses/${courseId}/enrollment`)}
+        />
+
+        <section className="space-y-4">
+          {quizError ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+              {quizError}
+            </div>
+          ) : null}
+
+          {data.modules.length === 0 ? (
+            <EmptyModulesCard onCreateModule={() => router.push(`/dosen/courses/${courseId}/modules/create`)} />
+          ) : (
+            data.modules.map((courseModule, moduleIndex) => {
+              const moduleQuizzes = quizzesByModule.get(courseModule.id) ?? [];
+              const moduleAssignments = courseModule.assessments.filter(
+                (assessment) => assessment.kind === 'assignment'
+              );
+
+              return (
+                <ModuleCard
+                  key={courseModule.id}
+                  courseId={courseId}
+                  moduleIndex={moduleIndex}
+                  courseModule={courseModule}
+                  moduleQuizzes={moduleQuizzes}
+                  moduleAssignments={moduleAssignments}
+                  isExpanded={expandedModules[courseModule.id] ?? false}
+                  onToggle={() => toggleModule(courseModule.id)}
+                  onNavigate={(href) => router.push(href)}
+                />
+              );
+            })
+          )}
+        </section>
       </div>
     </div>
   );
 }
 
-function toggleExpandedModule(
-  moduleId: string,
-  setExpandedModuleIds: React.Dispatch<React.SetStateAction<string[]>>
-) {
-  setExpandedModuleIds((currentIds) => {
-    if (currentIds.includes(moduleId)) {
-      return currentIds.filter((currentId) => currentId !== moduleId);
-    }
-    return [...currentIds, moduleId];
-  });
-}
+function EnrollmentSummaryCard({
+  enrolledStudents,
+  weeklyGrowth,
+  onManageEnrollment,
+}: {
+  enrolledStudents: number;
+  weeklyGrowth: number;
+  onManageEnrollment: () => void;
+}) {
+  return (
+    <aside className="h-fit rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 p-6 text-white shadow-lg shadow-blue-950/10">
+      <div className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-100">View Enrolled</p>
+          <p className="text-sm font-semibold text-blue-100">Students</p>
+        </div>
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/18 ring-1 ring-white/20">
+          <Users className="h-5 w-5" />
+        </div>
+      </div>
 
-function getDefaultExpandedModuleIds(modules: LecturerCourseModule[]) {
-  const explicitExpandedModuleIds = modules
-    .filter((module) => module.defaultExpanded)
-    .map((module) => module.id);
+      <p className="text-6xl font-black leading-none tracking-tight">{enrolledStudents}</p>
+      <p className="mt-4 text-sm font-medium text-blue-100">+{weeklyGrowth} new students this week</p>
 
-  if (explicitExpandedModuleIds.length > 0) {
-    return explicitExpandedModuleIds;
-  }
-
-  return modules.length > 0 ? [modules[0].id] : [];
-}
-
-function formatModuleSummary(module: LecturerCourseModule) {
-  const parts = [];
-  if (module.materials.length > 0) {
-    parts.push(`${module.materials.length} Materials`);
-  }
-
-  if (module.assessments.length > 0) {
-    const qCount = module.assessments.filter((a) => a.kind === 'quiz').length;
-    const aCount = module.assessments.filter((a) => a.kind === 'assignment').length;
-
-    if (qCount > 0) parts.push(`${qCount} Quiz`);
-    if (aCount > 0) parts.push(`${aCount} Assignment`);
-  }
-
-  return parts.length > 0 ? parts.join(' • ') : '0 Materials • 0 Assessments';
-}
-
-function MaterialTypeIcon({ kind }: { kind: LecturerMaterialKind }) {
-  if (kind === 'document') return <FileText size={20} />;
-  if (kind === 'video') return <Video size={20} />;
-  return <LinkIcon size={20} />;
-}
-
-function AssessmentTypeIcon({ kind }: { kind: LecturerModuleAssessment['kind'] }) {
-  return kind === 'quiz' ? (
-    <HelpCircle size={20} />
-  ) : (
-    <ClipboardList size={20} />
+      <button
+        type="button"
+        onClick={onManageEnrollment}
+        className="mt-7 inline-flex w-full items-center justify-center rounded-xl border border-white/25 bg-white/18 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/25"
+      >
+        Manage Enrollment
+      </button>
+    </aside>
   );
 }
 
+function EmptyModulesCard({ onCreateModule }: { onCreateModule: () => void }) {
+  return (
+    <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+      <BookOpen className="mx-auto mb-3 h-9 w-9 text-slate-300" />
+      <p className="text-sm font-medium text-slate-500">Belum ada modul untuk kelas ini.</p>
+      <button
+        type="button"
+        onClick={onCreateModule}
+        className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
+      >
+        <Plus className="h-4 w-4" />
+        Buat Modul Pertama
+      </button>
+    </div>
+  );
+}
+
+function ModuleCard({
+  courseId,
+  moduleIndex,
+  courseModule,
+  moduleQuizzes,
+  moduleAssignments,
+  isExpanded,
+  onToggle,
+  onNavigate,
+}: {
+  courseId: string;
+  moduleIndex: number;
+  courseModule: LecturerCourseModule;
+  moduleQuizzes: Quiz[];
+  moduleAssignments: LecturerCourseModule['assessments'];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onNavigate: (href: string) => void;
+}) {
+  const isHiddenModule = courseModule.status === 'Hidden';
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition hover:bg-slate-50 sm:px-6"
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-black text-blue-700">
+            M{moduleIndex + 1}
+          </span>
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-bold text-slate-950">{courseModule.title}</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {courseModule.weekLabel} - {courseModule.materials.length} Materials - {moduleQuizzes.length} Quiz - {moduleAssignments.length} Assignment
+            </p>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-3">
+          <ModuleStatusBadge status={courseModule.status} />
+          <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      {isExpanded && !isHiddenModule ? (
+        <div className="divide-y divide-slate-100 border-t border-slate-100">
+          <LearningMaterialsSection courseId={courseId} courseModule={courseModule} onNavigate={onNavigate} />
+          <AssessmentsSection
+            courseId={courseId}
+            courseModule={courseModule}
+            quizzes={moduleQuizzes}
+            assignments={moduleAssignments}
+            onNavigate={onNavigate}
+          />
+          <div className="flex justify-end px-5 py-4 sm:px-6">
+            <button
+              type="button"
+              onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/edit`)}
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Edit Module Settings
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function LearningMaterialsSection({
+  courseId,
+  courseModule,
+  onNavigate,
+}: {
+  courseId: string;
+  courseModule: LecturerCourseModule;
+  onNavigate: (href: string) => void;
+}) {
+  return (
+    <section className="px-5 py-5 sm:px-6">
+      <SectionHeader
+        icon={<FileText className="h-4 w-4" />}
+        title="Learning Materials"
+        actionLabel="Add Material"
+        onAction={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/materials/create`)}
+      />
+
+      <div className="mt-4 space-y-3">
+        {courseModule.materials.length === 0 ? (
+          <EmptyText>No materials yet.</EmptyText>
+        ) : (
+          courseModule.materials.map((material) => (
+            <div
+              key={material.id}
+              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <MaterialKindIcon kind={material.kind} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-slate-900">{material.title}</p>
+                <p className="mt-0.5 truncate text-xs text-slate-500">{material.meta}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/materials/${material.id}/edit`)}
+                className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+                aria-label={`Edit ${material.title}`}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AssessmentsSection({
+  courseId,
+  courseModule,
+  quizzes,
+  assignments,
+  onNavigate,
+}: {
+  courseId: string;
+  courseModule: LecturerCourseModule;
+  quizzes: Quiz[];
+  assignments: LecturerCourseModule['assessments'];
+  onNavigate: (href: string) => void;
+}) {
+  const hasAssessments = quizzes.length > 0 || assignments.length > 0;
+
+  return (
+    <section className="px-5 py-5 sm:px-6">
+      <SectionHeader
+        icon={<HelpCircle className="h-4 w-4" />}
+        title="Assessments"
+        actions={[
+          {
+            label: 'Create Quiz',
+            onClick: () => onNavigate(`/dosen/quiz/create?courseId=${courseId}&moduleId=${courseModule.id}`),
+          },
+          {
+            label: 'Create Assignment',
+            onClick: () => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/create`),
+          },
+        ]}
+      />
+
+      <div className="mt-4 space-y-3">
+        {!hasAssessments ? <EmptyText>No assessments yet.</EmptyText> : null}
+
+        {quizzes.map((quiz) => (
+          <div
+            key={quiz.id}
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <HelpCircle className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-900">{quiz.title}</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {quiz.durationMinutes} menit - {quiz.totalQuestions} Questions
+              </p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+              {getQuizBadgeLabel(quiz)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate(`/dosen/quiz/${quiz.id}/stats`)}
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+              aria-label={`Lihat statistik ${quiz.title}`}
+            >
+              <BarChart2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate(`/dosen/quiz/${quiz.id}/edit`)}
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+              aria-label={`Edit ${quiz.title}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+
+        {assignments.map((assignment) => (
+          <div
+            key={assignment.id}
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-900">{assignment.title}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-500">{assignment.meta}</p>
+            </div>
+            {assignment.badgeLabel ? (
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                {assignment.badgeLabel}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/${assignment.id}/edit`)}
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+              aria-label={`Edit ${assignment.title}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SectionHeader({
+  icon,
+  title,
+  actionLabel,
+  onAction,
+  actions,
+}: {
+  icon: ReactNode;
+  title: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  actions?: Array<{ label: string; onClick: () => void }>;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700">
+        {icon}
+        {title}
+      </div>
+
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+              className="text-sm font-bold text-blue-700 transition hover:text-blue-800"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="text-sm font-bold text-blue-700 transition hover:text-blue-800"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function ModuleStatusBadge({ status }: { status: LecturerCourseModule['status'] }) {
+  const lockIcon = status === 'Hidden' ? <Lock className="h-3 w-3" /> : null;
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${MODULE_STATUS_STYLES[status]}`}>
+      {lockIcon}
+      {status}
+    </span>
+  );
+}
+
+function EmptyText({ children }: { children: ReactNode }) {
+  return <p className="text-sm italic text-slate-500">{children}</p>;
+}
+
+function MaterialKindIcon({ kind }: { kind: LecturerMaterialKind }) {
+  if (kind === 'video') {
+    return <PlayCircle className="h-4 w-4" />;
+  }
+
+  if (kind === 'link') {
+    return <LinkIcon className="h-4 w-4" />;
+  }
+
+  return <FileText className="h-4 w-4" />;
+}
+
+function adaptQuiz(rawQuiz: RawQuizResponse): Quiz {
+  return {
+    id: rawQuiz.id ?? '',
+    title: rawQuiz.title ?? 'Untitled Quiz',
+    courseId: rawQuiz.courseId ?? '',
+    moduleId: rawQuiz.moduleId ?? '',
+    moduleTitle: rawQuiz.moduleTitle ?? '-',
+    status: rawQuiz.status ?? 'DRAFT',
+    totalQuestions: rawQuiz._count?.questions ?? rawQuiz.totalQuestions ?? 0,
+    durationMinutes: rawQuiz.timeLimit ?? rawQuiz.durationMinutes ?? 0,
+    xpReward: rawQuiz.xpReward ?? 0,
+    minimumScore: rawQuiz.passingScore ?? rawQuiz.minimumScore ?? 0,
+    createdAt: rawQuiz.createdAt ?? '',
+    updatedAt: rawQuiz.updatedAt ?? '',
+  };
+}
+
+function groupQuizzesByModule(quizzes: Quiz[]) {
+  const quizzesByModule = new Map<string, Quiz[]>();
+
+  for (const quiz of quizzes) {
+    const currentQuizzes = quizzesByModule.get(quiz.moduleId) ?? [];
+    quizzesByModule.set(quiz.moduleId, [...currentQuizzes, quiz]);
+  }
+
+  return quizzesByModule;
+}
+
+function getInitialExpandedModules(modules: LecturerCourseModule[]) {
+  return Object.fromEntries(modules.map((courseModule) => [courseModule.id, courseModule.defaultExpanded ?? true]));
+}
+
+function getQuizBadgeLabel(quiz: Quiz) {
+  return quiz.status === 'DRAFT' || quiz.status === 'draft' ? 'Draft' : 'Auto-graded';
+}

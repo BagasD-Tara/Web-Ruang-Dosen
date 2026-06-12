@@ -14,6 +14,7 @@ export class AssignmentService {
   async create(data: {
     title: string;
     description: string;
+    status?: string;
     deadline: Date;
     moduleId: string;
   }): Promise<Assignment> {
@@ -31,6 +32,7 @@ export class AssignmentService {
       data: {
         title: data.title,
         description: data.description,
+        status: data.status ?? 'DRAFT',
         deadline: data.deadline,
         moduleId: data.moduleId,
       },
@@ -58,7 +60,7 @@ export class AssignmentService {
   async update(
     id: string,
     userId: string,
-    data: { title?: string; description?: string; deadline?: Date },
+    data: { title?: string; description?: string; deadline?: Date; status?: string },
   ) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart2 } from "lucide-react";
-import { getQuizzesByCourse } from "@/app/lib/mock/quizDosen";
-import type { Quiz } from "@/app/lib/mock/quizDosen";
+import { getQuizzes } from "@/app/lib/api/quiz";
+import type { Quiz } from "@/app/types/quiz";
 
 export default function DosenStatsPage() {
   const router = useRouter();
@@ -12,8 +12,7 @@ export default function DosenStatsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ambil semua quiz dari semua course (pakai course-1 sebagai contoh)
-    getQuizzesByCourse("advanced-ml")
+    getQuizzes()
       .then(setQuizzes)
       .finally(() => setLoading(false));
   }, []);
@@ -37,7 +36,7 @@ export default function DosenStatsPage() {
             <div
               key={quiz.id}
               className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm transition cursor-pointer"
-              onClick={() => router.push(`/quiz/${quiz.id}/stats`)}
+              onClick={() => router.push(`/dosen/quiz/${quiz.id}/stats`)}
             >
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                 <BarChart2 className="w-5 h-5 text-blue-600" />

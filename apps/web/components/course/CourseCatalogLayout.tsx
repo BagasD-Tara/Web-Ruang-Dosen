@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CourseCard } from '@/components/course/CourseCard';
 import { CourseFilters, type CategoryOption } from '@/components/course/CourseFilters';
 import { CoursePagination } from '@/components/course/CoursePagination';
+import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
 import type { Course, CourseLevel } from '@/lib/types/course';
 
 interface CourseCatalogLayoutProps {
@@ -106,7 +107,7 @@ function CatalogBreadcrumb({ currentLabel }: { currentLabel: string }) {
         <span style={{ color: 'var(--color-text-primary)' }}>Courses</span>
       ) : (
         <>
-          <Link href="/courses" className="transition-opacity hover:opacity-70">
+          <Link href={COURSE_CATALOG_HREF} className="transition-opacity hover:opacity-70">
             Courses
           </Link>
           <span>&rsaquo;</span>

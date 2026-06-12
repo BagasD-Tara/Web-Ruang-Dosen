@@ -19,8 +19,8 @@ export async function enrollStudentAction(courseId: string, formData: FormData) 
     await enrollStudentByEmailApi(courseId, email, token);
   }
 
-  revalidateTag('courses');
-  revalidateTag('enrollments');
+  revalidateTag('courses', 'max');
+  revalidateTag('enrollments', 'max');
   revalidatePath(`/dosen/courses/${courseId}`);
   revalidatePath(`/dosen/courses/${courseId}/enrollment`);
 }

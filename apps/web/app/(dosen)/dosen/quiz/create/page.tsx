@@ -1,22 +1,62 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Save } from "lucide-react";
 import { createQuiz } from "@/app/lib/api/quiz";
-
-// Tipe course untuk dropdown
-interface CourseOption {
-  id: string;
-  title: string;
-}
 
 interface ModuleOption {
   id: string;
   title: string;
 }
 
+type QuizPublishStatus = "DRAFT" | "PUBLISHED";
+
 export default function CreateQuizPage() {
+  return (
+    <Suspense fallback={<CreateQuizLoadingState />}>
+      <CreateQuizContent />
+    </Suspense>
+  );
+}
+
+function CreateQuizLoadingState() {
+  return (
+    <div className="bg-gray-50 min-h-full">
+      <div className="max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+          <p className="text-sm text-gray-500">Memuat form kuis...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusOption({
+  label,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+        selected
+          ? "border-blue-600 bg-blue-50 text-blue-700"
+          : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function CreateQuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -31,38 +71,12 @@ export default function CreateQuizPage() {
     xpReward: 100,
     minimumScore: 70,
     durationMinutes: 60,
+    status: "DRAFT" as QuizPublishStatus,
   });
-  const [courses, setCourses] = useState<CourseOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch daftar course dari API
-  useEffect(() => {
-    async function loadCourses() {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/my`,
-          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-        );
-        if (!res.ok) throw new Error("Gagal fetch courses");
-        const data = await res.json();
-        const options: CourseOption[] = Array.isArray(data)
-          ? data.map((c: any) => ({ id: c.id, title: c.title ?? c.name ?? c.id }))
-          : [];
-        setCourses(options);
-      } catch {
-        // Fallback ke list statis jika API courses belum siap
-        setCourses([
-          { id: "course-1", title: "Advanced Machine Learning" },
-        ]);
-      }
-    }
-    loadCourses();
-  }, []);
-
-  // Fetch modules when courseId changes
   useEffect(() => {
     async function loadModules() {
       if (!form.courseId) {
@@ -82,15 +96,19 @@ export default function CreateQuizPage() {
           : [];
         setModules(options);
         // Reset moduleId if it's no longer valid
-        if (options.length > 0 && !options.find(o => o.id === form.moduleId)) {
-           setForm(prev => ({ ...prev, moduleId: "" }));
+        if (!prefillModuleId && options.length > 0) {
+          setForm((prev) =>
+            options.some((option) => option.id === prev.moduleId)
+              ? prev
+              : { ...prev, moduleId: "" }
+          );
         }
       } catch {
         setModules([]);
       }
     }
     loadModules();
-  }, [form.courseId]);
+  }, [form.courseId, prefillModuleId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -109,10 +127,6 @@ export default function CreateQuizPage() {
       setError("Judul kuis tidak boleh kosong.");
       return;
     }
-    if (!form.courseId) {
-      setError("Pilih mata kuliah terlebih dahulu.");
-      return;
-    }
     if (!form.moduleId) {
       setError("Pilih modul terlebih dahulu.");
       return;
@@ -126,8 +140,8 @@ export default function CreateQuizPage() {
         xpReward: form.xpReward,
         minimumScore: form.minimumScore,
         durationMinutes: form.durationMinutes,
+        status: form.status,
       });
-      // Langsung ke editor soal setelah berhasil buat quiz
       router.push(`/dosen/quiz/${quiz.id}/edit`);
     } catch (err) {
       console.error(err);
@@ -169,30 +183,7 @@ export default function CreateQuizPage() {
               />
             </div>
 
-            {/* Mata kuliah & Modul */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mata Kuliah
-                </label>
-                <select
-                  name="courseId"
-                  value={form.courseId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition appearance-none disabled:opacity-70 disabled:cursor-not-allowed"
-                  disabled={!!prefillCourseId}
-                >
-                  <option value="">Pilih mata kuliah aktif...</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                  {prefillCourseId && courses.length === 0 && (
-                     <option value={prefillCourseId}>Memuat...</option>
-                  )}
-                </select>
-              </div>
-
-              {/* Modul */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Modul
@@ -212,6 +203,24 @@ export default function CreateQuizPage() {
                      <option value={prefillModuleId}>Memuat...</option>
                   )}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status Publikasi
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatusOption
+                    label="Draft"
+                    selected={form.status === "DRAFT"}
+                    onSelect={() => setForm((prev) => ({ ...prev, status: "DRAFT" }))}
+                  />
+                  <StatusOption
+                    label="Publish"
+                    selected={form.status === "PUBLISHED"}
+                    onSelect={() => setForm((prev) => ({ ...prev, status: "PUBLISHED" }))}
+                  />
+                </div>
               </div>
             </div>
 
@@ -283,7 +292,7 @@ export default function CreateQuizPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  Kuis akan disimpan sebagai <span className="text-blue-600 font-semibold">Draft</span>
+                  Kuis akan disimpan sebagai <span className="text-blue-600 font-semibold">{form.status === "DRAFT" ? "Draft" : "Published"}</span>
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Setelah disimpan, kamu bisa menambahkan soal di halaman editor.

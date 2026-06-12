@@ -16,6 +16,7 @@ export class QuizService {
     xpReward: number;
     passingScore: number;
     timeLimit?: number;
+    status?: string;
   }) {
     const module = await this.prisma.courseModule.findUnique({
       where: { id: data.moduleId },
@@ -34,18 +35,24 @@ export class QuizService {
         xpReward: data.xpReward,
         passingScore: data.passingScore,
         timeLimit: data.timeLimit ?? 30,
+        status: data.status ?? 'DRAFT',
       },
     });
 
     return quiz;
   }
 
-  async findAll(moduleId?: string) {
+  async findAll(filters: { courseId?: string; moduleId?: string } = {}) {
     return this.prisma.quiz.findMany({
-      where: moduleId ? { moduleId } : {},
+      where: {
+        ...(filters.moduleId ? { moduleId: filters.moduleId } : {}),
+        ...(filters.courseId ? { module: { courseId: filters.courseId } } : {}),
+      },
       select: {
         id: true,
         title: true,
+        status: true,
+        moduleId: true,
         xpReward: true,
         passingScore: true,
         timeLimit: true,
@@ -88,6 +95,7 @@ export class QuizService {
       timeLimit?: number;
       xpReward?: number;
       passingScore?: number;
+      status?: string;
     },
   ) {
     const quiz = await this.prisma.quiz.findUnique({

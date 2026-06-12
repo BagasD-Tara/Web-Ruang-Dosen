@@ -1,5 +1,7 @@
 export type CourseSource = 'courses' | 'my-courses';
 
+export const COURSE_CATALOG_HREF = '/courses?view=catalog';
+
 export interface CourseBreadcrumbParent {
   label: string;
   href: string;
@@ -12,7 +14,7 @@ export function getCourseSource(sourceParam: string | null): CourseSource {
 export function getCourseBreadcrumbParent(source: CourseSource): CourseBreadcrumbParent {
   return source === 'my-courses'
     ? { label: 'My Courses', href: '/courses/my' }
-    : { label: 'Courses', href: '/courses' };
+    : { label: 'Courses', href: COURSE_CATALOG_HREF };
 }
 
 export function buildCourseDetailHref(courseId: number | string, source: CourseSource) {

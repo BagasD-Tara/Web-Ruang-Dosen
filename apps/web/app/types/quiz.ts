@@ -2,7 +2,7 @@
 // QUIZ TYPES
 // ============================================================
 
-export type QuizStatus = "aktif" | "selesai" | "terkunci" | "draft";
+export type QuizStatus = "DRAFT" | "PUBLISHED" | "aktif" | "selesai" | "terkunci" | "draft";
 
 export interface Quiz {
   id: string;

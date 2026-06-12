@@ -25,25 +25,30 @@ export default async function LecturerCreateAssignmentPage({
 
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
+    const status = formData.get('status') as string;
     const deadline = formData.get('deadline') as string;
 
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    if (token) {
-      try {
-        await createAssignmentApi(
-          {
-            title,
-            description,
-            deadline: new Date(deadline).toISOString(),
-            moduleId,
-          },
-          token
-        );
-      } catch (error) {
-        console.error('Failed to create assignment via API:', error);
-      }
+    if (!token) {
+      throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
+    }
+
+    try {
+      await createAssignmentApi(
+        {
+          title,
+          description,
+          status: status === 'Active' ? 'ACTIVE' : 'DRAFT',
+          deadline: new Date(deadline).toISOString(),
+          moduleId,
+        },
+        token
+      );
+    } catch (error) {
+      console.error('Failed to create assignment via API:', error);
+      throw new Error('Gagal membuat assignment. Periksa koneksi API dan coba lagi.');
     }
 
     revalidatePath(`/dosen/courses/${courseId}`);

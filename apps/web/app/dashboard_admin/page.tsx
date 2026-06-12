@@ -14,7 +14,7 @@ export default function DashboardAdminPage() {
     totalCourses: 0,
     totalLecturers: 0,
     totalStudents: 0,
-    pendingSubmissions: 8, // Mocked for now
+    pendingSubmissions: 0,
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();

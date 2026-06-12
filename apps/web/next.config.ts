@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: '/courses', destination: '/labs', permanent: true },
       { source: '/schedule', destination: '/labs', permanent: true },
     ];
   },

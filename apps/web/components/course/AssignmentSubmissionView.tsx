@@ -7,6 +7,7 @@ import type { CourseContentItem, CourseDetail } from '@/lib/types/course';
 import {
   buildAssignmentHref,
   buildCourseDetailHref,
+  COURSE_CATALOG_HREF,
   getCourseBreadcrumbParent,
   getCourseSource,
 } from '@/lib/courseNavigation';
@@ -110,7 +111,7 @@ function AssignmentBreadcrumbs({
         Home
       </Link>
       <span>&rsaquo;</span>
-      <Link href="/courses" className="transition-opacity hover:opacity-70">
+      <Link href={COURSE_CATALOG_HREF} className="transition-opacity hover:opacity-70">
         Courses
       </Link>
       {showParent ? (

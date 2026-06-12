@@ -122,7 +122,7 @@ export function LecturerManageEnrollmentView({
         <SummaryCard
           label="Average Progress"
           value={`${Math.round(getAverageProgress(data.students))}%`}
-          helper="Based on current mock completion"
+          helper="Based on recorded student activity"
         />
         <SummaryCard
           label="On Track"
@@ -243,6 +243,107 @@ function SearchInput({
         style={{ borderColor: 'var(--color-border)', background: '#FFFFFF', color: 'var(--color-text-primary)' }}
       />
     </div>
+  );
+}
+
+function EnrollModal({
+  courseId,
+  onClose,
+}: {
+  courseId: string;
+  onClose: () => void;
+}) {
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isSubmitting, startTransition] = React.useTransition();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      try {
+        await enrollStudentAction(courseId, formData);
+        onClose();
+      } catch (error) {
+        console.error('Failed to enroll student:', error);
+        setErrorMessage('Failed to enroll student. Please check the email and try again.');
+      }
+    });
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Close enrollment modal"
+        className="fixed inset-0 z-50 bg-black/35"
+        onClick={onClose}
+      />
+
+      <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-32px)] max-w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border bg-white p-6 shadow-2xl">
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Enroll Student
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Add a student to this course using their university email.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Student Name
+            </span>
+            <input
+              name="name"
+              type="text"
+              placeholder="e.g. Alex Johnson"
+              className="h-12 w-full rounded-[14px] border px-4 text-base outline-none focus:border-[#7DA8FF]"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Email Address
+            </span>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="student@university.edu"
+              className="h-12 w-full rounded-[14px] border px-4 text-base outline-none focus:border-[#7DA8FF]"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)' }}
+            />
+          </label>
+
+          {errorMessage ? (
+            <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+          ) : null}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="h-11 rounded-[14px] border px-5 text-sm font-semibold transition-colors hover:bg-gray-50 disabled:opacity-60"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-11 rounded-[14px] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ background: 'var(--color-brand-primary)' }}
+            >
+              {isSubmitting ? 'Enrolling...' : 'Enroll Student'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
 

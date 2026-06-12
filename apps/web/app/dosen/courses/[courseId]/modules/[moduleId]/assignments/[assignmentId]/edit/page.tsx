@@ -34,25 +34,30 @@ export default async function LecturerEditAssignmentPage({
 
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
+    const status = formData.get('status') as string;
     const deadline = formData.get('deadline') as string;
 
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    if (token) {
-      try {
-        await updateAssignmentApi(
-          assignmentId,
-          {
-            title,
-            description,
-            deadline: new Date(deadline).toISOString(),
-          },
-          token
-        );
-      } catch (error) {
-        console.error('Failed to update assignment via API:', error);
-      }
+    if (!token) {
+      throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
+    }
+
+    try {
+      await updateAssignmentApi(
+        assignmentId,
+        {
+          title,
+          description,
+          status: status === 'Active' ? 'ACTIVE' : 'DRAFT',
+          deadline: new Date(deadline).toISOString(),
+        },
+        token
+      );
+    } catch (error) {
+      console.error('Failed to update assignment via API:', error);
+      throw new Error('Gagal menyimpan assignment. Periksa koneksi API dan coba lagi.');
     }
 
     revalidatePath(`/dosen/courses/${courseId}`);
@@ -66,12 +71,15 @@ export default async function LecturerEditAssignmentPage({
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    if (token) {
-      try {
-        await deleteAssignmentApi(assignmentId, token);
-      } catch (error) {
-        console.error('Failed to delete assignment via API:', error);
-      }
+    if (!token) {
+      throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
+    }
+
+    try {
+      await deleteAssignmentApi(assignmentId, token);
+    } catch (error) {
+      console.error('Failed to delete assignment via API:', error);
+      throw new Error('Gagal menghapus assignment. Periksa koneksi API dan coba lagi.');
     }
 
     revalidatePath(`/dosen/courses/${courseId}`);

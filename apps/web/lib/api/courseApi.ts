@@ -39,6 +39,7 @@ export interface ApiAssignment {
   id: string;
   title: string;
   description: string;
+  status?: string;
   deadline: string;
   moduleId: string;
   createdAt: string;
@@ -48,6 +49,7 @@ export interface ApiAssignment {
 export interface ApiQuiz {
   id: string;
   title: string;
+  status?: string;
   passingScore?: number;
   xpReward?: number;
   timeLimit?: number;
@@ -153,6 +155,7 @@ export function createAssignmentApi(
   data: {
     title: string;
     description: string;
+    status?: string;
     deadline: string;
     moduleId: string;
   },
@@ -172,6 +175,7 @@ export function updateAssignmentApi(
   data: {
     title?: string;
     description?: string;
+    status?: string;
     deadline?: string;
   },
   accessToken: string

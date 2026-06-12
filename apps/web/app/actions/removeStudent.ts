@@ -16,8 +16,8 @@ export async function removeStudentAction(courseId: string, studentId: string) {
     await removeEnrollmentApi(courseId, studentId, token);
   }
 
-  revalidateTag('courses');
-  revalidateTag('enrollments');
+  revalidateTag('courses', 'max');
+  revalidateTag('enrollments', 'max');
   revalidatePath(`/dosen/courses/${courseId}`);
   revalidatePath(`/dosen/courses/${courseId}/enrollment`);
 }

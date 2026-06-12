@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
 import { BrandLogo } from './BrandLogo';
 
 interface TopNavBarProps {
@@ -21,19 +22,8 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
   const currentQuery = searchParams.get('q') ?? '';
 
   const applySearch = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const trimmedValue = value.trim();
-
-    if (trimmedValue) {
-      params.set('q', trimmedValue);
-    } else {
-      params.delete('q');
-    }
-
-    const queryString = params.toString();
-    const basePath = searchBasePath ?? (pathname.startsWith('/courses/my') ? '/courses/my' : '/courses');
-    const nextPath = queryString ? `${basePath}?${queryString}` : basePath;
-    router.replace(nextPath);
+    const basePath = searchBasePath ?? (pathname.startsWith('/courses/my') ? '/courses/my' : COURSE_CATALOG_HREF);
+    router.replace(buildSearchPath(basePath, searchParams, value));
   };
 
   return (
@@ -120,6 +110,27 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
     </header>
   );
 };
+
+function buildSearchPath(basePath: string, currentSearchParams: URLSearchParams, value: string) {
+  const [pathname, baseQueryString = ''] = basePath.split('?');
+  const params = new URLSearchParams(baseQueryString);
+  const trimmedValue = value.trim();
+
+  currentSearchParams.forEach((paramValue, key) => {
+    if (!params.has(key)) {
+      params.set(key, paramValue);
+    }
+  });
+
+  if (trimmedValue) {
+    params.set('q', trimmedValue);
+  } else {
+    params.delete('q');
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
 
 /* Icon sub-components kept inline because they are only used by this top bar. */
 

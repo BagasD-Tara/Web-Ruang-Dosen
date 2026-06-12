@@ -143,13 +143,13 @@ export function LecturerMaterialEditorView({
                 <TextInput
                   value={formState.title}
                   onChange={(value) => updateFormField('title', value, setFormState)}
-                  placeholder="Lecture Slides: Perceptrons"
+                  placeholder="Enter material title"
                 />
               </FormField>
 
               <div className="mt-7">
                 <FieldLabel label="Material Type" />
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="flex flex-col gap-3 md:flex-row">
                   {MATERIAL_TYPE_OPTIONS.map((option) => (
                     <MaterialTypeButton
                       key={option.kind}
@@ -168,7 +168,7 @@ export function LecturerMaterialEditorView({
                   <TextAreaInput
                     value={formState.description}
                     onChange={(value) => updateFormField('description', value, setFormState)}
-                    placeholder="Core concepts of perceptrons and neural network foundations."
+                    placeholder="Write a short description for this material."
                   />
                 </FormField>
               </div>
@@ -235,7 +235,7 @@ export function LecturerMaterialEditorView({
             </Link>
             <button
               type="submit"
-              disabled={!canSubmitMaterial(formState, selectedFile, mode) || isSaving}
+              disabled={!canSubmitMaterial(formState) || isSaving}
               className="inline-flex h-12 items-center justify-center rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
               style={{ background: 'var(--color-brand-primary)' }}
             >
@@ -454,7 +454,7 @@ function LinkSourcePanel({
           <TextInput
             value={externalUrl}
             onChange={onChange}
-            placeholder="https://example.com/resource"
+            placeholder="https://your-resource-url"
           />
         </FormField>
         <p className="mt-2 text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>
@@ -569,7 +569,7 @@ function MaterialTypeButton({
     <button
       type="button"
       onClick={onSelect}
-      className="flex min-h-[86px] items-start gap-3 rounded-[16px] border px-4 py-4 text-left transition-colors hover:bg-[#F5F8FF]"
+      className="flex min-h-[86px] flex-1 items-start gap-3 rounded-[16px] border px-4 py-4 text-left transition-colors hover:bg-[#F5F8FF]"
       style={{
         borderColor: selected ? 'var(--color-brand-primary)' : 'var(--color-border)',
         background: selected ? '#EEF4FF' : '#FFFFFF',
@@ -792,8 +792,8 @@ function createInitialFormState(
   }
 
   return {
-    title: 'Lecture Slides: Perceptrons',
-    description: 'Core concepts of perceptrons and neural network foundations.',
+    title: '',
+    description: '',
     materialKind: 'document',
     visibilityStatus: 'Published',
     externalUrl: '',
@@ -808,7 +808,7 @@ function updateMaterialKind(
   setFormState((currentState) => ({
     ...currentState,
     materialKind,
-    externalUrl: materialKind === 'link' ? 'https://example.com/resource' : '',
+    externalUrl: '',
     videoSourceMode: 'upload',
   }));
 }
@@ -820,18 +820,11 @@ function updateVideoSourceMode(
   setFormState((currentState) => ({
     ...currentState,
     videoSourceMode,
-    externalUrl:
-      videoSourceMode === 'link'
-        ? currentState.externalUrl || 'https://youtube.com/watch?v=example'
-        : '',
+    externalUrl: videoSourceMode === 'link' ? currentState.externalUrl : '',
   }));
 }
 
-function canSubmitMaterial(
-  formState: MaterialEditorFormState,
-  selectedFile: File | null,
-  mode: MaterialEditorMode
-) {
+function canSubmitMaterial(formState: MaterialEditorFormState) {
   if (!formState.title.trim() || !formState.description.trim()) {
     return false;
   }
@@ -844,17 +837,10 @@ function canSubmitMaterial(
     if (formState.videoSourceMode === 'link') {
       return isValidExternalUrl(formState.externalUrl);
     }
-    // upload mode
-    if (mode === 'create' && !selectedFile) {
-      return false;
-    }
     return true;
   }
 
   if (formState.materialKind === 'document') {
-    if (mode === 'create' && !selectedFile) {
-      return false;
-    }
     return true;
   }
 
@@ -925,4 +911,3 @@ function TrashIcon() {
     </svg>
   );
 }
-

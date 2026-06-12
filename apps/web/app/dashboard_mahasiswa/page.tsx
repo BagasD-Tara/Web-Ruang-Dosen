@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildApiUrl } from "@/lib/api/apiConfig";
+import { COURSE_CATALOG_HREF } from "@/lib/courseNavigation";
 import "./dashboard.css";
 
 interface DashboardUser {
@@ -36,41 +37,8 @@ interface DisplayCourse {
   actionType: "primary" | "secondary";
 }
 
-const DASHBOARD_STATS = {
-  overallProgress: 68,
-  completedModules: 24,
-  pendingAssignments: 3,
-};
-
 const RING_RADIUS = 30;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
-const FALLBACK_COURSES: DisplayCourse[] = [
-  {
-    id: "1",
-    title: "Data Structures & Algorithms",
-    instructor: "Prof. Alan Turing",
-    tag: "COMPUTER SCIENCE",
-    tagColor: "blue",
-    progress: 82,
-    progressColor: "blue",
-    action: "Continue Module",
-    actionType: "primary",
-  },
-  {
-    id: "2",
-    title: "Machine Learning Fundamentals",
-    instructor: "Dr. Grace Hopper",
-    tag: "DATA SCIENCE",
-    tagColor: "purple",
-    progress: 45,
-    progressColor: "purple",
-    action: "Resume Video",
-    actionType: "secondary",
-  },
-];
-
-const COURSE_PROGRESS_FALLBACKS = [82, 45, 64, 58];
 
 export default function DashboardMahasiswaPage() {
   const [user, setUser] = useState<DashboardUser | null>(null);
@@ -107,6 +75,7 @@ export default function DashboardMahasiswaPage() {
     () => buildDisplayCourses(enrolledCourses),
     [enrolledCourses]
   );
+  const dashboardStats = useMemo(() => buildDashboardStats(displayCourses), [displayCourses]);
 
   if (loading) {
     return (
@@ -116,7 +85,7 @@ export default function DashboardMahasiswaPage() {
     );
   }
 
-  const ringOffset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * DASHBOARD_STATS.overallProgress) / 100;
+  const ringOffset = RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * dashboardStats.overallProgress) / 100;
 
   return (
     <div className="student-dashboard dashboard-content">
@@ -141,7 +110,7 @@ export default function DashboardMahasiswaPage() {
             <DownloadIcon />
             Ekspor Laporan
           </button>
-          <button className="btn-outline-white" type="button" onClick={() => router.push("/courses")}>
+          <button className="btn-outline-white" type="button" onClick={() => router.push(COURSE_CATALOG_HREF)}>
             <BookIcon />
             Lihat Kursus
           </button>
@@ -155,7 +124,7 @@ export default function DashboardMahasiswaPage() {
           <div className="progress-ring-wrap">
             <div className="progress-ring-info">
               <p className="stat-value">
-                {DASHBOARD_STATS.overallProgress}<span className="stat-unit">%</span>
+                {dashboardStats.overallProgress}<span className="stat-unit">%</span>
               </p>
               <p className="stat-change neutral">Semester ini</p>
             </div>
@@ -182,7 +151,7 @@ export default function DashboardMahasiswaPage() {
                   style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
                 />
               </svg>
-              <div className="ring-label">{DASHBOARD_STATS.overallProgress}%</div>
+              <div className="ring-label">{dashboardStats.overallProgress}%</div>
             </div>
           </div>
         </div>
@@ -191,7 +160,7 @@ export default function DashboardMahasiswaPage() {
           accentClass="accent-green"
           iconClass="green"
           label="COMPLETED"
-          value={`${DASHBOARD_STATS.completedModules}`}
+          value={`${dashboardStats.completedModules}`}
           unit="Modules"
           change="+4 minggu ini"
         />
@@ -199,7 +168,7 @@ export default function DashboardMahasiswaPage() {
           accentClass="accent-orange"
           iconClass="orange"
           label="PENDING"
-          value={`${DASHBOARD_STATS.pendingAssignments}`}
+          value={`${dashboardStats.pendingAssignments}`}
           unit="Assignments"
           change="Tenggat dalam 2 hari"
           warning
@@ -217,16 +186,23 @@ export default function DashboardMahasiswaPage() {
           </div>
 
           <div className="course-grid">
-            {displayCourses.map((course) => (
-              <CourseCard key={course.id} course={course} onOpen={() => router.push(`/courses/${course.id}`)} />
-            ))}
+            {displayCourses.length > 0 ? (
+              displayCourses.map((course) => (
+                <CourseCard key={course.id} course={course} onOpen={() => router.push(`/courses/${course.id}`)} />
+              ))
+            ) : (
+              <EmptyDashboardCard
+                title="Belum ada course aktif"
+                description="Course yang sudah Anda enroll akan tampil di sini setelah tersedia dari API."
+              />
+            )}
           </div>
         </section>
 
         <aside className="right-panel">
           <div className="performance-stats">
-            <MiniStat label="GPA" value="3.82" />
-            <MiniStat label="RANK" value="#12" />
+            <MiniStat label="GPA" value="-" />
+            <MiniStat label="RANK" value="-" />
           </div>
 
           <div className="deadlines-card">
@@ -238,9 +214,12 @@ export default function DashboardMahasiswaPage() {
             </div>
 
             <ul className="deadlines-list">
-              <DeadlineItem day="12" title="Algorithm Analysis Project" course="Data Structures & Algorithms" urgent />
-              <DeadlineItem day="15" title="Neural Network Quiz" course="Machine Learning" />
-              <DeadlineItem day="18" title="Set Theory Problem Set" course="Discrete Mathematics" />
+              <li className="deadline-item">
+                <div>
+                  <p className="deadline-title">Belum ada deadline</p>
+                  <p className="deadline-course">Deadline akan tampil setelah data assignment tersedia dari API.</p>
+                </div>
+              </li>
             </ul>
 
             <Link href="/calendar" className="view-calendar-link">
@@ -252,13 +231,13 @@ export default function DashboardMahasiswaPage() {
             <div className="cta-icon">
               <BookIcon />
             </div>
-            <h3 className="cta-title">Registration Open</h3>
+            <h3 className="cta-title">Registrasi Course</h3>
             <p className="cta-desc">
-              Spring semester registration is available. Secure your electives early.
+              Pilih course dari katalog utama untuk melihat detail dan melakukan enroll.
             </p>
             <div className="cta-buttons">
-              <button className="btn-cta-primary" type="button">Register Now</button>
-              <button className="btn-cta-secondary" type="button">Learn More</button>
+              <button className="btn-cta-primary" type="button" onClick={() => router.push(COURSE_CATALOG_HREF)}>Lihat Course</button>
+              <button className="btn-cta-secondary" type="button" onClick={() => router.push("/courses/my")}>My Courses</button>
             </div>
           </div>
         </aside>
@@ -311,10 +290,6 @@ function getStoredUser(): DashboardUser | null {
 }
 
 function buildDisplayCourses(courses: EnrolledCourse[]): DisplayCourse[] {
-  if (courses.length === 0) {
-    return FALLBACK_COURSES;
-  }
-
   return courses.map((course, index) => {
     const isEvenCourse = index % 2 === 0;
 
@@ -324,12 +299,30 @@ function buildDisplayCourses(courses: EnrolledCourse[]): DisplayCourse[] {
       instructor: course.instructor?.name || "Dosen",
       tag: course.category || "MATA KULIAH",
       tagColor: isEvenCourse ? "blue" : "purple",
-      progress: COURSE_PROGRESS_FALLBACKS[index % COURSE_PROGRESS_FALLBACKS.length],
+      progress: 0,
       progressColor: isEvenCourse ? "blue" : "purple",
-      action: isEvenCourse ? "Lanjutkan Modul" : "Resume Video",
-      actionType: isEvenCourse ? "primary" : "secondary",
+      action: "Buka Course",
+      actionType: "primary",
     };
   });
+}
+
+function buildDashboardStats(courses: DisplayCourse[]) {
+  if (courses.length === 0) {
+    return {
+      overallProgress: 0,
+      completedModules: 0,
+      pendingAssignments: 0,
+    };
+  }
+
+  const totalProgress = courses.reduce((sum, course) => sum + course.progress, 0);
+
+  return {
+    overallProgress: Math.round(totalProgress / courses.length),
+    completedModules: 0,
+    pendingAssignments: 0,
+  };
 }
 
 function SummaryCard({
@@ -396,19 +389,18 @@ function CourseCard({ course, onOpen }: { course: DisplayCourse; onOpen: () => v
   );
 }
 
-function DeadlineItem({ day, title, course, urgent = false }: { day: string; title: string; course: string; urgent?: boolean }) {
+function EmptyDashboardCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
-    <li className="deadline-item">
-      <div className={`deadline-date-block ${urgent ? "urgent" : ""}`}>
-        <span className="deadline-month">OCT</span>
-        <span className="deadline-day">{day}</span>
-      </div>
-      <div className="deadline-info">
-        <p className="deadline-title">{title}</p>
-        <p className="deadline-course">{course}</p>
-        {urgent ? <span className="deadline-badge urgent">Due in 2 days</span> : null}
-      </div>
-    </li>
+    <div className="course-card" style={{ gridColumn: "1 / -1" }}>
+      <h4 className="course-name">{title}</h4>
+      <p className="course-instructor">{description}</p>
+    </div>
   );
 }
 

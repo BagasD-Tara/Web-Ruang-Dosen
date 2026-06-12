@@ -9,6 +9,7 @@ import type { CourseSource } from '@/lib/courseNavigation';
 import {
   buildCourseDetailHref,
   buildMaterialHref,
+  COURSE_CATALOG_HREF,
   getCourseBreadcrumbParent,
   getCourseSource,
 } from '@/lib/courseNavigation';
@@ -44,7 +45,7 @@ export function MaterialReaderView({
             Home
           </Link>
           <span>›</span>
-          <Link href="/courses" className="transition-opacity hover:opacity-70">
+          <Link href={COURSE_CATALOG_HREF} className="transition-opacity hover:opacity-70">
             Courses
           </Link>
           {source === 'my-courses' ? (

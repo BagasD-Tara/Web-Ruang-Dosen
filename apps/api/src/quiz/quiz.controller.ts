@@ -29,6 +29,7 @@ export class QuizController {
         xpReward: { type: 'number' },
         passingScore: { type: 'number' },
         timeLimit: { type: 'number' },
+        status: { type: 'string', enum: ['DRAFT', 'PUBLISHED'] },
       },
     },
   })
@@ -40,14 +41,15 @@ export class QuizController {
       xpReward: number;
       passingScore: number;
       timeLimit?: number;
+      status?: string;
     },
   ) {
     return this.quizService.create(data);
   }
 
   @Get()
-  findAll(@Query('courseId') courseId?: string) {
-    return this.quizService.findAll(courseId);
+  findAll(@Query('courseId') courseId?: string, @Query('moduleId') moduleId?: string) {
+    return this.quizService.findAll({ courseId, moduleId });
   }
 
   @Get(':id')
@@ -64,6 +66,7 @@ export class QuizController {
         timeLimit: { type: 'number' },
         xpReward: { type: 'number' },
         passingScore: { type: 'number' },
+        status: { type: 'string', enum: ['DRAFT', 'PUBLISHED'] },
       },
     },
   })
@@ -75,6 +78,7 @@ export class QuizController {
       timeLimit?: number;
       xpReward?: number;
       passingScore?: number;
+      status?: string;
     },
     @Request() req: { user: { id: string } },
   ) {

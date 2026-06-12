@@ -238,7 +238,7 @@ function mapApiAssignmentsToLecturerAssessments(
     kind: 'assignment',
     meta: `Due ${formatDate(assignment.deadline)}`,
     description: assignment.description,
-    status: 'Active',
+    status: mapAssignmentStatus(assignment.status),
     deadline: assignment.deadline,
     submissionRequirement: 'File Upload',
     submittedCount: 0,
@@ -246,6 +246,18 @@ function mapApiAssignmentsToLecturerAssessments(
     badgeLabel: '0 Submissions',
     badgeTone: 'brand',
   }));
+}
+
+function mapAssignmentStatus(status?: string) {
+  if (status === 'DRAFT') {
+    return 'Draft';
+  }
+
+  if (status === 'ACTIVE' || status === 'PUBLISHED') {
+    return 'Active';
+  }
+
+  return 'Active';
 }
 
 function createLecturerModules(

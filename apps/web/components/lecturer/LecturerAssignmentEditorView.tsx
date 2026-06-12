@@ -78,23 +78,19 @@ export function LecturerAssignmentEditorView({
   const assignmentsHref = `/dosen/courses/${course.id}/assignments`;
   const cancelHref = returnHref ?? (mode === 'edit' ? assignmentsHref : courseHref);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitAssignment(statusOverride?: LecturerAssignmentStatus) {
     setIsPending(true);
     try {
-      const formData = new FormData();
-      formData.set('title', formState.title);
-      formData.set('description', formState.description);
-      formData.set('assignedDate', formState.assignedDate);
-      formData.set('deadline', formState.deadline);
-      formData.set('submissionRequirement', formState.submissionRequirement);
-      formData.set('status', formState.status);
-      formData.set('templateName', formState.templateName);
-      formData.set('templateMeta', formState.templateMeta);
+      const formData = createAssignmentFormData(formState, statusOverride);
       await onSave(formData);
     } finally {
       setIsPending(false);
     }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitAssignment();
   }
 
   async function handleDelete() {
@@ -132,7 +128,7 @@ export function LecturerAssignmentEditorView({
           </p>
         </section>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <form
             className={`${LECTURER_CARD_CLASSNAME} overflow-hidden`}
             style={{ borderColor: 'var(--color-border)' }}
@@ -144,7 +140,7 @@ export function LecturerAssignmentEditorView({
                   <TextInput
                     value={formState.title}
                     onChange={(value) => updateFormField('title', value, setFormState)}
-                    placeholder="e.g., Week 3: Data Structures Implementation"
+                    placeholder="Enter assignment title"
                   />
                 </FormField>
 
@@ -260,6 +256,8 @@ export function LecturerAssignmentEditorView({
               {mode === 'create' ? (
                 <button
                   type="button"
+                  disabled={!canSubmitAssignment(formState) || isPending}
+                  onClick={() => submitAssignment('Draft')}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-[14px] border px-5 text-base font-semibold transition-colors hover:bg-[#F5F8FF]"
                   style={{
                     borderColor: 'var(--color-brand-primary)',
@@ -271,7 +269,8 @@ export function LecturerAssignmentEditorView({
                 </button>
               ) : null}
               <button
-                type="submit"
+                type={mode === 'create' ? 'button' : 'submit'}
+                onClick={mode === 'create' ? () => submitAssignment('Active') : undefined}
                 disabled={!canSubmitAssignment(formState) || isPending}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[14px] px-5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
                 style={{ background: 'var(--color-brand-primary)' }}
@@ -645,16 +644,31 @@ function createInitialFormState(
   }
 
   return {
-    title: 'Week 3: Data Structures Implementation',
-    description:
-      'Provide detailed instructions, evaluation criteria, and expected learning outcomes for this assignment.',
-    assignedDate: '2026-10-12T09:00',
-    deadline: '2026-10-20T23:59',
+    title: '',
+    description: '',
+    assignedDate: '',
+    deadline: '',
     submissionRequirement: SUBMISSION_REQUIREMENT_OPTIONS[0],
-    status: 'Active',
-    templateName: 'lab_report_template.docx',
-    templateMeta: '45 KB',
+    status: 'Draft',
+    templateName: '',
+    templateMeta: '',
   };
+}
+
+function createAssignmentFormData(
+  formState: AssignmentEditorFormState,
+  statusOverride?: LecturerAssignmentStatus
+) {
+  const formData = new FormData();
+  formData.set('title', formState.title);
+  formData.set('description', formState.description);
+  formData.set('assignedDate', formState.assignedDate);
+  formData.set('deadline', formState.deadline);
+  formData.set('submissionRequirement', formState.submissionRequirement);
+  formData.set('status', statusOverride ?? formState.status);
+  formData.set('templateName', formState.templateName);
+  formData.set('templateMeta', formState.templateMeta);
+  return formData;
 }
 
 function canSubmitAssignment(formState: AssignmentEditorFormState) {

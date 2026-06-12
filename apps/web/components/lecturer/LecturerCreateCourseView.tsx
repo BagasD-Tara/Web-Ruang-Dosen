@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { LecturerCourse } from '@/lib/types/course';
-import { createMockCourseAction } from '@/app/actions/createCourse';
+import { createCourseAction } from '@/app/actions/createCourse';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import './LecturerCreateCourseView.css';
 
@@ -45,15 +45,14 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 const INITIAL_FORM_STATE: CourseDraftFormState = {
-  title: 'Advanced Machine Learning',
+  title: '',
   department: 'Computer Science',
   semester: 'Fall Semester 2026',
   credits: '3',
   teachingFormat: 'Theory and Practice',
   durationWeeks: '12',
   enrollmentCap: '60',
-  description:
-    'A comprehensive advanced module focused on deep learning fundamentals, scalable model architecture, and applied experimentation for senior students.',
+  description: '',
   includeStarterModule: true,
 };
 
@@ -248,7 +247,7 @@ export function LecturerCreateCourseView() {
                 status: 'Draft',
                 imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
               };
-              await createMockCourseAction(newCourse);
+              await createCourseAction(newCourse);
               setIsSubmitted(true);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
