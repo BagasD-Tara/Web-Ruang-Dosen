@@ -122,7 +122,30 @@ Dokumen ini berisi rangkuman seluruh perubahan yang telah dilakukan pada direkto
 
 ---
 
-*Catatan: Seluruh perubahan di atas belum di-commit (uncommitted changes) dan masih berada pada branch lokal `fe-dashboard`.*
+*Catatan: Pembaruan versi awal dashboard telah di-commit ke repositori. Berikut adalah catatan pembaruan lanjutan yang telah diintegrasikan.*
+
+---
+
+## 🚀 Pembaruan Lanjutan (Pasca Pembuatan Dashboard)
+
+1. **Integrasi Backend API Secara Penuh**
+   - Menghapus seluruh data *mock* lokal yang sebelumnya digunakan di folder `apps/web/lib/mock/`.
+   - Mengubah alur pengambilan data (Fetch) menggunakan endpoint API sungguhan melalui modul terpusat (`courseApi.ts` dan `courseRepository.ts`).
+   - Melakukan pembaruan pada tipe data (`apps/web/lib/types/course.ts`) agar 100% sinkron dengan skema database (Prisma Schema).
+
+2. **Pengembangan Fitur Kuis & Lab**
+   - Menyelesaikan UI/UX untuk sistem Kuis beserta integrasinya.
+   - Menggabungkan *branch Labs*, menambahkan komponen khusus seperti *Lab Detail*, *Lab List*, *Quiz Workspace*, serta sistem pengumpulan tugas praktikum (*Task Detail and Submit*).
+
+3. **Penyempurnaan Tampilan & Komponen Global (UI Polish)**
+   - Menstandarkan layout untuk Dosen dengan menghapus *layout* lama (`DosenDashboardLayout`) dan menggunakan antarmuka seragam berbasis `AppShell`.
+   - Memoles elemen navigasi utama (`SideNavBar`, `TopNavBar`, dan `Footer`) serta menstabilkan layout untuk Dashboard Mahasiswa.
+   - Melakukan *refactoring* CSS pada masing-masing *dashboard* (Admin, Dosen, Mahasiswa) untuk memastikan gaya visual responsif dan konsisten.
+
+4. **Perbaikan Bug, Penyesuaian Route & Stabilitas Codebase**
+   - Memperbaiki sejumlah bug kecil, penyesuaian rute endpoint, dan menyelesaikan *silent failures* pada komponen manajemen kursus dosen.
+   - Mengatasi error kompilasi yang disebabkan oleh ketidaksesuaian tipe Prisma.
+   - Menambahkan skrip bantu `fix-tests.js` dan melakukan optimasi *dependency lock* (`package-lock.json`).
 
 
 admin@test.com	password123

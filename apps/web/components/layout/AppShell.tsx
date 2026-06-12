@@ -150,7 +150,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
                 style={{
                   flex: 1,
                   minWidth: 0,
-                  overflow: 'hidden',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  padding: 'var(--page-surface-gap)',
                   border: '1px solid rgba(195,198,214,0.72)',
                   borderRadius: 'var(--page-surface-radius)',
                   background: 'var(--color-bg-page)',
