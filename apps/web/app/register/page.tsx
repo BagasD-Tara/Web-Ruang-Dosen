@@ -4,39 +4,40 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildApiUrl } from "@/lib/api/apiConfig";
-import "./login.css";
+import "../login/login.css";
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState("STUDENT");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      const response = await fetch(buildApiUrl("/auth/login"), {
+      const response = await fetch(buildApiUrl("/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password, role }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Gagal login. Periksa email dan password Anda.");
+        throw new Error(data.message || "Gagal mendaftar. Silakan coba lagi.");
       }
 
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
-
-      router.replace(getDashboardPathByRole(data.user?.role));
+      setSuccess(`Akun berhasil dibuat untuk ${data.name}! Mengarahkan ke halaman login...`);
+      setTimeout(() => router.push("/login"), 2000);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -46,6 +47,12 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const roleLabels: Record<string, string> = {
+    STUDENT: "Mahasiswa",
+    LECTURER: "Dosen",
+    ADMIN: "Administrator",
   };
 
   return (
@@ -68,25 +75,27 @@ export default function LoginPage() {
             className="campus-image"
           />
           <div className="image-overlay">
-            <h2>Selamat Datang di Ruang Dosen</h2>
-            <p>Platform pembelajaran akademik terpadu</p>
+            <h2>Bergabunglah Bersama Kami</h2>
+            <p>Mulai perjalanan akademikmu bersama Ruang Dosen</p>
           </div>
         </div>
 
-        {/* Bagian Kanan - Form Login */}
+        {/* Bagian Kanan - Form Register */}
         <div className="form-section">
           <div className="form-wrapper">
             {/* Icon Logo */}
             <div className="form-logo">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/>
+                <line x1="22" y1="11" x2="16" y2="11"/>
               </svg>
             </div>
 
-            <h1>Masuk ke Ruang Dosen</h1>
+            <h1>Daftar Akun Baru</h1>
             <p className="subtitle">
-              Silakan masukkan akun akademis Anda untuk melanjutkan.
+              Silakan lengkapi data diri Anda untuk bergabung ke Ruang Dosen.
             </p>
 
             {error && (
@@ -96,13 +105,32 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleLogin}>
+            {success && (
+              <div className="success-box">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleRegister}>
+              <div className="input-group">
+                <label htmlFor="name">Nama Lengkap</label>
+                <input
+                  type="text"
+                  id="name"
+                  placeholder="Masukkan nama lengkap Anda"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
               <div className="input-group">
                 <label htmlFor="email">Email / NIM</label>
                 <input
-                  type="text"
+                  type="email"
                   id="email"
-                  placeholder="contoh: dosen@kampus.ac.id"
+                  placeholder="contoh: mahasiswa@kampus.ac.id"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -110,14 +138,15 @@ export default function LoginPage() {
               </div>
 
               <div className="input-group">
-                <label htmlFor="password">Password / PIC</label>
+                <label htmlFor="password">Password</label>
                 <div className="password-wrapper">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
-                    placeholder="••••••••"
+                    placeholder="Min. 8 karakter"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    minLength={6}
                     required
                   />
                   <svg
@@ -144,34 +173,37 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="form-options">
-                <label className="remember-me">
-                  <input type="checkbox" /> Ingat Saya
-                </label>
-                <Link href="#" className="forgot-password">
-                  Lupa Password?
-                </Link>
+              <div className="input-group">
+                <label htmlFor="role">Daftar Sebagai</label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  required
+                >
+                  <option value="STUDENT">Mahasiswa</option>
+                  <option value="LECTURER">Dosen</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
               </div>
 
-              <button type="submit" className="btn-login" disabled={loading}>
-                {loading ? "Memproses..." : "Masuk"}
+              <button
+                type="submit"
+                className="btn-login"
+                style={{ marginTop: "8px" }}
+                disabled={loading || !!success}
+              >
+                {loading ? "Memproses..." : `Daftar sebagai ${roleLabels[role]}`}
               </button>
             </form>
 
             <p className="register-link">
-              Belum punya akun?{" "}
-              <Link href="/register">Daftar di sini</Link>
+              Sudah punya akun?{" "}
+              <Link href="/login">Masuk di sini</Link>
             </p>
           </div>
         </div>
       </main>
     </div>
   );
-}
-
-function getDashboardPathByRole(role?: string) {
-  const normalizedRole = role?.toUpperCase();
-  if (normalizedRole === "ADMIN") return "/dashboard_admin";
-  if (normalizedRole === "LECTURER" || normalizedRole === "DOSEN") return "/dashboard_dosen";
-  return "/dashboard_mahasiswa";
 }

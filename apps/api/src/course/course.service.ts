@@ -133,7 +133,19 @@ export class CourseService {
     });
   }
 
-  async getMyCourses(userId: string) {
+  async getMyCourses(userId: string, userRole: string) {
+    // Dosen: kembalikan kursus yang mereka ajar
+    if (userRole === 'LECTURER' || userRole === 'ADMIN') {
+      return this.prisma.course.findMany({
+        where: { instructorId: userId },
+        include: {
+          instructor: { select: { id: true, name: true, email: true } },
+          _count: { select: { enrollments: true } },
+        },
+      });
+    }
+
+    // Mahasiswa: kembalikan kursus yang mereka ikuti
     const enrollments = await this.prisma.enrollment.findMany({
       where: { userId },
       include: {

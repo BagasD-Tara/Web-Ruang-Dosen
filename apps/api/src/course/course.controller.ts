@@ -82,7 +82,7 @@ export class CourseController {
   @UseGuards(JwtAuthGuard)
   @Get('my')
   async getMyCourses(@Request() req: any) {
-    return this.courseService.getMyCourses(req.user.id);
+    return this.courseService.getMyCourses(req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard)
