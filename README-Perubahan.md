@@ -147,6 +147,12 @@ Dokumen ini berisi rangkuman seluruh perubahan yang telah dilakukan pada direkto
    - Mengatasi error kompilasi yang disebabkan oleh ketidaksesuaian tipe Prisma.
    - Menambahkan skrip bantu `fix-tests.js` dan melakukan optimasi *dependency lock* (`package-lock.json`).
 
+5. **Redesign Halaman Autentikasi & Pembuatan Fitur Registrasi**
+   - Mengubah desain antarmuka halaman Login menjadi lebih modern (*premium UI*) dengan skema warna *blue gradient*, efek *glassmorphism* pada navbar, dan komponen input yang interaktif (`login.css`).
+   - Membuat halaman Registrasi baru (`app/register`) yang terhubung penuh dengan endpoint API backend `POST /auth/register`. Form pendaftaran mencakup validasi Role (Mahasiswa/Dosen/Admin).
+   - Memperbaiki logika API backend pada `GET /courses/my` (di `course.service.ts`) agar Dosen dapat melihat daftar mata kuliah yang diajarkannya secara akurat.
+   - Mengembangkan skrip verifikasi *End-to-End* (`verify_register_flow.js`) yang secara otomatis menguji suksesnya alur registrasi, pembuatan token, hingga *enrollment* mahasiswa oleh dosen.
+
 
 admin@test.com	password123
 dosen@test.com	password123
