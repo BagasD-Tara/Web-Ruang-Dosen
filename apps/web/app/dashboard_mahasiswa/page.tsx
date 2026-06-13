@@ -11,11 +11,15 @@ interface DashboardUser {
   id?: string;
   name?: string;
   role?: string;
+  maxCredits?: number;
+  usedCredits?: number;
+  remainingCredits?: number;
 }
 
 interface EnrolledCourse {
   id: string;
   title: string;
+  credits?: number;
   category?: string;
   instructor?: {
     name?: string;
@@ -60,7 +64,7 @@ export default function DashboardMahasiswaPage() {
         setUser(currentUser);
 
         const courses = await fetchStudentCourses(token, currentUser?.id);
-        setEnrolledCourses(courses.slice(0, 4));
+        setEnrolledCourses(courses);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -72,10 +76,13 @@ export default function DashboardMahasiswaPage() {
   }, [router]);
 
   const displayCourses = useMemo(
-    () => buildDisplayCourses(enrolledCourses),
+    () => buildDisplayCourses(enrolledCourses.slice(0, 4)),
     [enrolledCourses]
   );
-  const dashboardStats = useMemo(() => buildDashboardStats(displayCourses), [displayCourses]);
+  const dashboardStats = useMemo(
+    () => buildDashboardStats(displayCourses, enrolledCourses, user),
+    [displayCourses, enrolledCourses, user]
+  );
 
   if (loading) {
     return (
@@ -162,16 +169,13 @@ export default function DashboardMahasiswaPage() {
           label="COMPLETED"
           value={`${dashboardStats.completedModules}`}
           unit="Modules"
-          change="+4 minggu ini"
         />
         <SummaryCard
           accentClass="accent-orange"
           iconClass="orange"
-          label="PENDING"
-          value={`${dashboardStats.pendingAssignments}`}
-          unit="Assignments"
-          change="Tenggat dalam 2 hari"
-          warning
+          label="SKS"
+          value={`${dashboardStats.availableCredits}`}
+          unit="SKS"
         />
       </section>
 
@@ -307,12 +311,24 @@ function buildDisplayCourses(courses: EnrolledCourse[]): DisplayCourse[] {
   });
 }
 
-function buildDashboardStats(courses: DisplayCourse[]) {
+function buildDashboardStats(
+  courses: DisplayCourse[],
+  enrolledCourses: EnrolledCourse[],
+  user: DashboardUser | null
+) {
+  const DEFAULT_AVAILABLE_CREDITS = 24;
+  const courseCreditTotal = enrolledCourses.reduce(
+    (totalCredits, course) => totalCredits + (course.credits ?? 3),
+    0
+  );
+  const maxCredits = user?.maxCredits ?? DEFAULT_AVAILABLE_CREDITS;
+  const availableCredits = user?.remainingCredits ?? Math.max(maxCredits - courseCreditTotal, 0);
+
   if (courses.length === 0) {
     return {
       overallProgress: 0,
       completedModules: 0,
-      pendingAssignments: 0,
+      availableCredits,
     };
   }
 
@@ -321,7 +337,7 @@ function buildDashboardStats(courses: DisplayCourse[]) {
   return {
     overallProgress: Math.round(totalProgress / courses.length),
     completedModules: 0,
-    pendingAssignments: 0,
+    availableCredits,
   };
 }
 
@@ -339,7 +355,7 @@ function SummaryCard({
   label: string;
   value: string;
   unit: string;
-  change: string;
+  change?: string;
   warning?: boolean;
 }) {
   return (
@@ -353,7 +369,9 @@ function SummaryCard({
         <p className="stat-value">
           {value} <span className="stat-unit">{unit}</span>
         </p>
-        <p className={`stat-change ${warning ? "warning" : "up"}`}>{change}</p>
+        {change ? (
+          <p className={`stat-change ${warning ? "warning" : "up"}`}>{change}</p>
+        ) : null}
       </div>
     </div>
   );

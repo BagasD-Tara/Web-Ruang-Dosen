@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Course } from '@prisma/client';
@@ -15,6 +16,11 @@ export class CourseService {
     title: string;
     description?: string;
     instructorId: string;
+    credits?: number;
+    department?: string;
+    semester?: string;
+    enrollmentCap?: number;
+    status?: string;
   }): Promise<Course> {
     // 1. check if instructor exists
     const instructor = await this.prisma.user.findUnique({
@@ -35,6 +41,11 @@ export class CourseService {
       data: {
         title: data.title,
         description: data.description,
+        credits: this.normalizeCourseCredits(data.credits),
+        department: this.normalizeCourseText(data.department, 'Computer Science'),
+        semester: this.normalizeCourseText(data.semester, 'Fall Semester 2026'),
+        enrollmentCap: this.normalizeEnrollmentCap(data.enrollmentCap),
+        status: this.normalizeCourseStatus(data.status),
         instructorId: data.instructorId,
       },
     });
@@ -71,6 +82,8 @@ export class CourseService {
       throw new ConflictException('You are already enrolled in this course');
     }
 
+    await this.ensureStudentHasAvailableCredits(userId, course.credits);
+
     // 3. Create enrollment
     return this.prisma.enrollment.create({
       data: {
@@ -93,6 +106,8 @@ export class CourseService {
       where: { userId_courseId: { userId: student.id, courseId } },
     });
     if (existingEnrollment) throw new ConflictException('Student is already enrolled');
+
+    await this.ensureStudentHasAvailableCredits(student.id, course.credits);
 
     return this.prisma.enrollment.create({
       data: {
@@ -205,7 +220,15 @@ export class CourseService {
 
   async update(
     id: string,
-    data: { title?: string; description?: string },
+    data: {
+      title?: string;
+      description?: string;
+      credits?: number;
+      department?: string;
+      semester?: string;
+      enrollmentCap?: number;
+      status?: string;
+    },
     userId: string,
   ) {
     const course = await this.prisma.course.findUnique({
@@ -226,6 +249,21 @@ export class CourseService {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.description !== undefined && {
           description: data.description,
+        }),
+        ...(data.credits !== undefined && {
+          credits: this.normalizeCourseCredits(data.credits),
+        }),
+        ...(data.department !== undefined && {
+          department: this.normalizeCourseText(data.department, course.department),
+        }),
+        ...(data.semester !== undefined && {
+          semester: this.normalizeCourseText(data.semester, course.semester),
+        }),
+        ...(data.enrollmentCap !== undefined && {
+          enrollmentCap: this.normalizeEnrollmentCap(data.enrollmentCap),
+        }),
+        ...(data.status !== undefined && {
+          status: this.normalizeCourseStatus(data.status),
         }),
       },
     });
@@ -252,5 +290,87 @@ export class CourseService {
     return this.prisma.course.delete({
       where: { id },
     });
+  }
+
+  private normalizeCourseCredits(credits?: number) {
+    const normalizedCredits = credits ?? 3;
+
+    if (!Number.isInteger(normalizedCredits) || normalizedCredits <= 0) {
+      throw new BadRequestException('Course credits must be a positive integer');
+    }
+
+    return normalizedCredits;
+  }
+
+  private normalizeEnrollmentCap(enrollmentCap?: number) {
+    const normalizedEnrollmentCap = enrollmentCap ?? 60;
+
+    if (!Number.isInteger(normalizedEnrollmentCap) || normalizedEnrollmentCap <= 0) {
+      throw new BadRequestException('Enrollment capacity must be a positive integer');
+    }
+
+    return normalizedEnrollmentCap;
+  }
+
+  private normalizeCourseText(value: string | undefined, fallbackValue: string) {
+    const normalizedValue = value?.trim();
+
+    if (!normalizedValue) {
+      return fallbackValue;
+    }
+
+    return normalizedValue;
+  }
+
+  private normalizeCourseStatus(status?: string) {
+    const normalizedStatus = status?.trim();
+
+    if (!normalizedStatus) {
+      return 'Active';
+    }
+
+    if (!['Active', 'Draft', 'Archived'].includes(normalizedStatus)) {
+      throw new BadRequestException('Course status must be Active, Draft, or Archived');
+    }
+
+    return normalizedStatus;
+  }
+
+  private async ensureStudentHasAvailableCredits(studentId: string, courseCredits: number) {
+    const student = await this.prisma.user.findUnique({
+      where: { id: studentId },
+      select: { maxCredits: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    const usedCredits = await this.getStudentUsedCredits(studentId);
+    const nextUsedCredits = usedCredits + courseCredits;
+
+    if (nextUsedCredits > student.maxCredits) {
+      throw new BadRequestException(
+        `Enroll failed: credit limit exceeded. Used ${usedCredits}/${student.maxCredits} SKS, course requires ${courseCredits} SKS.`,
+      );
+    }
+  }
+
+  private async getStudentUsedCredits(studentId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { userId: studentId },
+      select: {
+        course: {
+          select: {
+            credits: true,
+          },
+        },
+      },
+    });
+
+    return enrollments.reduce(
+      (totalCredits, enrollment) => totalCredits + enrollment.course.credits,
+      0,
+    );
   }
 }

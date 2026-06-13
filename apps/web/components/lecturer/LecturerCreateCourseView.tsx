@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { LecturerCourse } from '@/lib/types/course';
 import { createCourseAction } from '@/app/actions/createCourse';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import './LecturerCreateCourseView.css';
@@ -236,18 +235,14 @@ export function LecturerCreateCourseView() {
           <button
             type="button"
             onClick={async () => {
-              const newCourse: LecturerCourse = {
-                id: `course-${Date.now()}`,
-                code: draft.department.substring(0, 2).toUpperCase() + '-' + Math.floor(Math.random() * 900 + 100),
+              await createCourseAction({
                 title: draft.title,
+                description: draft.description,
+                credits: Number(draft.credits),
                 department: draft.department,
-                studentCount: 0,
-                moduleCount: 0,
-                assignmentCount: 0,
-                status: 'Draft',
-                imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-              };
-              await createCourseAction(newCourse);
+                semester: draft.semester,
+                enrollmentCap: Number(draft.enrollmentCap),
+              });
               setIsSubmitted(true);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}

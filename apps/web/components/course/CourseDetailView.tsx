@@ -188,7 +188,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
         style={{ borderColor: 'var(--color-border)' }}
       >
         {/* Banner Section */}
-        <div className={`relative h-[160px] w-full lg:h-[200px] ${course.bannerColorClass}`}>
+        <div className={`relative h-[172px] w-full lg:h-[210px] ${course.bannerColorClass}`}>
           <div
             className="absolute left-1/2 top-[40px] h-3 w-16 -translate-x-1/2 rounded-full opacity-30"
             style={{ background: 'rgba(255,255,255,0.42)' }}
@@ -196,7 +196,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
         </div>
 
       {/* ── Card info course ── */}
-      <div className="mx-4 -mt-16 mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-md lg:mx-8">
+      <div className="relative z-10 mx-4 -mt-10 mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-md md:-mt-12 lg:mx-8 lg:-mt-14">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 
           {/* Kiri: info */}
@@ -204,6 +204,9 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700">
                 {course.heroAccentLabel || 'Intermediate'}
+              </span>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                {course.creditHours} Credits
               </span>
               <span className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
                 <Clock className="h-3 w-3" />
@@ -246,7 +249,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
           </div>
 
           {/* Kanan: tombol aksi */}
-          <div className="flex w-full flex-col gap-3 lg:w-[200px] lg:flex-shrink-0">
+          <div className="flex w-full flex-col gap-3 self-start lg:w-[200px] lg:flex-shrink-0">
             {firstMaterial ? (
               <Link 
                 href={buildMaterialHref(course.id, firstMaterial.id, source)}

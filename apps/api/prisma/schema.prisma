@@ -32,6 +32,7 @@ model User {
   password  String
   role      Role     @default(STUDENT)
   xp        Int      @default(0)
+  maxCredits Int     @default(24)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -46,6 +47,11 @@ model Course {
   id           String   @id @default(uuid())
   title        String
   description  String?
+  credits      Int      @default(3)
+  department   String   @default("Computer Science")
+  semester     String   @default("Fall Semester 2026")
+  enrollmentCap Int     @default(60)
+  status       String   @default("Active")
   instructorId String
   instructor   User     @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())

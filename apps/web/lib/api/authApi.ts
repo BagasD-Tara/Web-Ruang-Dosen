@@ -5,6 +5,9 @@ export interface ApiAuthUser {
   name: string;
   email: string;
   role: string;
+  maxCredits?: number;
+  usedCredits?: number;
+  remainingCredits?: number;
 }
 
 export interface ApiLoginResponse {

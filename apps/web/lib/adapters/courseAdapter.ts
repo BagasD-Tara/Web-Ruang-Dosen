@@ -24,6 +24,7 @@ const DEFAULT_COURSE_LEVEL = 'Intermediate';
 const DEFAULT_CREDIT_HOURS = 3;
 const DEFAULT_DURATION_WEEKS = 12;
 const DEFAULT_SEMESTER = '2026';
+const DEFAULT_TERM_LABEL = 'Fall Semester 2026';
 const DEFAULT_BANNER_CLASS = 'bg-gradient-to-br from-[#0A3A9C] via-[#0A4AB8] to-[#0A2E7A]';
 const DEFAULT_IMAGE_URL =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80';
@@ -45,9 +46,9 @@ export function mapApiCourseToStudentCourse(
   return {
     id: course.id,
     code: createCourseCode(course.title),
-    semester: DEFAULT_SEMESTER,
+    semester: course.semester ?? DEFAULT_SEMESTER,
     level: DEFAULT_COURSE_LEVEL,
-    category: DEFAULT_COURSE_CATEGORY,
+    category: course.department ?? DEFAULT_COURSE_CATEGORY,
     title: course.title,
     bannerColorClass: DEFAULT_BANNER_CLASS,
     bannerEmoji: createCourseInitials(course.title),
@@ -55,7 +56,7 @@ export function mapApiCourseToStudentCourse(
     instructorName,
     instructorInitials: createPersonInitials(instructorName),
     instructorRole: 'Course Instructor',
-    creditHours: DEFAULT_CREDIT_HOURS,
+    creditHours: course.credits ?? DEFAULT_CREDIT_HOURS,
     progressPercentage: 0,
     status: isEnrolled ? 'ongoing' : 'notstart',
     totalMaterials: 0,
@@ -74,17 +75,17 @@ export function mapLecturerCourseToStudentCourse(
   return {
     id: course.id,
     code: course.code,
-    semester: DEFAULT_SEMESTER,
+    semester: course.semester ?? DEFAULT_SEMESTER,
     level: DEFAULT_COURSE_LEVEL,
     category: course.department,
     title: course.title,
     bannerColorClass: DEFAULT_BANNER_CLASS,
     bannerEmoji: createCourseInitials(course.title),
-    description: 'Course description is being prepared by the lecturer.',
+    description: course.description ?? 'Course description is being prepared by the lecturer.',
     instructorName: 'Lecturer',
     instructorInitials: 'L',
     instructorRole: 'Lecturer',
-    creditHours: DEFAULT_CREDIT_HOURS,
+    creditHours: course.credits ?? DEFAULT_CREDIT_HOURS,
     progressPercentage: 0,
     status: isEnrolled ? 'ongoing' : 'notstart',
     totalMaterials: course.moduleCount,
@@ -152,11 +153,15 @@ export function mapApiCoursesToLecturerCourses(courses: ApiCourseListItem[]): Le
     id: course.id,
     code: createCourseCode(course.title),
     title: course.title,
-    department: DEFAULT_COURSE_CATEGORY,
+    description: course.description ?? undefined,
+    department: course.department ?? DEFAULT_COURSE_CATEGORY,
+    semester: course.semester ?? DEFAULT_TERM_LABEL,
+    credits: course.credits ?? DEFAULT_CREDIT_HOURS,
+    enrollmentCap: course.enrollmentCap ?? undefined,
     studentCount: course._count?.enrollments ?? 0,
     moduleCount: 1,
     assignmentCount: 0,
-    status: 'Active',
+    status: mapLecturerCourseStatus(course.status),
     imageUrl: DEFAULT_IMAGE_URL,
   }));
 }
@@ -191,8 +196,8 @@ export function mapApiCourseDetailToLecturerManageCourse(course: ApiCourseDetail
       moduleCount: modules.length,
       assignmentCount: totalAssignments,
     },
-    termLabel: 'Current Semester',
-    credits: DEFAULT_CREDIT_HOURS,
+    termLabel: course.semester ?? DEFAULT_TERM_LABEL,
+    credits: course.credits ?? DEFAULT_CREDIT_HOURS,
     enrolledStudents: course._count?.enrollments ?? 0,
     weeklyGrowth: 0,
     modules,
@@ -353,6 +358,18 @@ function createCourseCode(title: string) {
     .join('');
 
   return `${prefix || 'RD'}-API`;
+}
+
+function mapLecturerCourseStatus(status?: string | null): LecturerCourse['status'] {
+  if (status === 'Draft') {
+    return 'Draft';
+  }
+
+  if (status === 'Archived') {
+    return 'Archived';
+  }
+
+  return 'Active';
 }
 
 function createCourseInitials(title: string) {

@@ -63,6 +63,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onClick, onEnrol
             </span>
           </div>
 
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+              style={{ background: 'var(--color-brand-subtle)', color: 'var(--color-brand-primary)' }}
+            >
+              {course.creditHours} Credits
+            </span>
+          </div>
+
           <p className="mb-6 text-sm leading-[1.5]" style={{ color: 'var(--color-text-secondary)' }}>
             {course.description}
           </p>

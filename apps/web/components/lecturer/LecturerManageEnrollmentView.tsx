@@ -371,7 +371,7 @@ function EnrollmentRow({
           {student.email}
         </p>
         <p className="text-base" style={{ color: 'var(--color-text-secondary)' }}>
-          {student.dateJoined}
+          {formatDisplayDate(student.dateJoined)}
         </p>
         <div className="flex justify-end gap-2">
           <RowActionLink href={progressHref}>View Progress</RowActionLink>
@@ -400,7 +400,7 @@ function EnrollmentRow({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          <span>Joined {student.dateJoined}</span>
+          <span>Joined {formatDisplayDate(student.dateJoined)}</span>
         </div>
 
         <div className="flex gap-2">
@@ -546,6 +546,23 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+}
+
+function formatDisplayDate(dateValue: string) {
+  if (!dateValue || dateValue === '-') {
+    return '-';
+  }
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return dateValue;
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsedDate);
 }
 
 function getAvatarPalette(initials: string) {
