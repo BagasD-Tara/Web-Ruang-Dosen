@@ -15,6 +15,11 @@ export interface ApiCourseListItem {
   id: string;
   title: string;
   description?: string | null;
+  credits?: number;
+  department?: string | null;
+  semester?: string | null;
+  enrollmentCap?: number | null;
+  status?: string | null;
   instructorId: string;
   instructor?: ApiUserSummary;
   createdAt: string;
@@ -119,11 +124,42 @@ export function enrollInCourse(courseId: string, accessToken: string) {
 }
 
 export function createCourseApi(
-  data: { title: string; description?: string; instructorId: string },
+  data: {
+    title: string;
+    description?: string;
+    instructorId: string;
+    credits?: number;
+    department?: string;
+    semester?: string;
+    enrollmentCap?: number;
+    status?: string;
+  },
   accessToken: string
 ) {
   return apiRequest<ApiCourseListItem>('/courses', {
     method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCourseApi(
+  courseId: string,
+  data: {
+    title?: string;
+    description?: string;
+    credits?: number;
+    department?: string;
+    semester?: string;
+    enrollmentCap?: number;
+    status?: string;
+  },
+  accessToken: string
+) {
+  return apiRequest<ApiCourseListItem>(`/courses/${courseId}`, {
+    method: 'PATCH',
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -240,7 +276,14 @@ export function deleteModuleApi(courseId: string, moduleId: string, accessToken:
 
 // Enrollment Management Endpoints
 export function fetchCourseEnrollmentsApi(courseId: string, accessToken: string) {
-  return apiRequest<{ id: string; user: { id: string; name: string; email: string } }[]>(
+  return apiRequest<
+    {
+      id: string;
+      createdAt?: string;
+      updatedAt?: string;
+      user: { id: string; name: string; email: string };
+    }[]
+  >(
     `/courses/${courseId}/enrollments`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },

@@ -170,7 +170,7 @@ export async function getLecturerEnrollment(courseId: string) {
         id: e.user.id,
         name: e.user.name,
         email: e.user.email,
-        dateJoined: new Date().toISOString(),
+        dateJoined: formatEnrollmentDate(e.createdAt),
         progressPercentage: 0,
       })),
     };
@@ -230,6 +230,23 @@ export async function getLecturerStudentProgress(courseId: string, studentId: st
     materials: [],
     assignments: [],
   };
+}
+
+function formatEnrollmentDate(dateValue?: string) {
+  if (!dateValue) {
+    return '-';
+  }
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsedDate);
 }
 
 let _enrolledCourseIdsPromise: Promise<string[]> | null = null;

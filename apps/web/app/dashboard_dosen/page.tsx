@@ -267,52 +267,26 @@ export default function DashboardPage() {
             </div>
 
             <div className="panel-body">
-              {/* Submission 1 */}
-              <div className="submission-item">
-                <div className="submission-top">
-                  <div className="submission-student">
-                    <div className="student-avatar avatar-blue">BS</div>
-                    <span className="student-name">Budi Santoso</span>
-                  </div>
-                  <span className="submission-time">2j lalu</span>
+              <div className="empty-course-state">
+                <div className="empty-course-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M7 4.75h7l4.25 4.25v9.25A1.75 1.75 0 0 1 16.5 20H7A1.75 1.75 0 0 1 5.25 18.25V6.5A1.75 1.75 0 0 1 7 4.75Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M14 4.75V9h4.25M8.5 12.25h6.5M8.5 15.25h4.5"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
-                <p className="submission-title">Binary Tree Implementation</p>
-                <div className="submission-footer">
-                  <span className="tag tag-blue">Data Structures</span>
-                  <span className="status-badge status-review">Perlu Ditinjau</span>
-                </div>
-              </div>
-
-              {/* Submission 2 */}
-              <div className="submission-item">
-                <div className="submission-top">
-                  <div className="submission-student">
-                    <div className="student-avatar avatar-green">SA</div>
-                    <span className="student-name">Siti Aminah</span>
-                  </div>
-                  <span className="submission-time">4j lalu</span>
-                </div>
-                <p className="submission-title">Graph Traversal Essay</p>
-                <div className="submission-footer">
-                  <span className="tag tag-purple">Algorithm Analysis</span>
-                  <span className="status-badge status-review">Perlu Ditinjau</span>
-                </div>
-              </div>
-
-              {/* Submission 3 */}
-              <div className="submission-item">
-                <div className="submission-top">
-                  <div className="submission-student">
-                    <div className="student-avatar avatar-orange">RF</div>
-                    <span className="student-name">Reza Fahlevi</span>
-                  </div>
-                  <span className="submission-time">Kemarin</span>
-                </div>
-                <p className="submission-title">Neural Network Basics</p>
-                <div className="submission-footer">
-                  <span className="tag tag-pink">Machine Learning</span>
-                  <span className="status-badge status-graded">Sudah Dinilai</span>
-                </div>
+                <p>Belum ada data tugas terbaru</p>
               </div>
             </div>
 

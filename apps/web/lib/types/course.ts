@@ -63,7 +63,11 @@ export interface LecturerCourse {
   id: string;
   code: string;
   title: string;
+  description?: string;
   department: string;
+  semester?: string;
+  credits?: number;
+  enrollmentCap?: number;
   studentCount: number;
   moduleCount: number;
   assignmentCount: number;

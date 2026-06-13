@@ -115,11 +115,28 @@ function SummaryGrid({ data }: { data: LecturerStudentProgressData }) {
       />
       <SummaryCard
         label="Date Joined"
-        value={data.student.dateJoined}
+        value={formatDisplayDate(data.student.dateJoined)}
         helper="Student enrollment date"
       />
     </section>
   );
+}
+
+function formatDisplayDate(dateValue: string) {
+  if (!dateValue || dateValue === '-') {
+    return '-';
+  }
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return dateValue;
+  }
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsedDate);
 }
 
 function SummaryCard({
