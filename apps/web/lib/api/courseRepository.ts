@@ -11,8 +11,16 @@ import type { Course, CourseDetail, LecturerCourse, LecturerManageCourseData, As
 
 export async function getStudentCourses(): Promise<Course[]> {
   try {
+    let token: string | undefined;
+
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
+
     const apiCourses = await fetchCourses();
-    const enrolledCourseIds = await getStudentEnrolledCourseIds();
+    const enrolledCourseIds = await getStudentEnrolledCourseIds(token);
+
     return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
   } catch (error) {
     console.error('getStudentCourses error:', error);

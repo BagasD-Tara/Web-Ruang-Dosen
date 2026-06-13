@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { enrollInCourse } from '@/lib/api/courseApi';
-import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
 import { ApiRequestError } from '@/lib/api/httpClient';
 
 export async function POST(
@@ -9,7 +9,15 @@ export async function POST(
 ) {
   try {
     const { courseId } = await context.params;
-    const accessToken = await getDemoStudentAccessToken();
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('token')?.value;
+
+    if (!accessToken) {
+      return NextResponse.json(
+        { success: false, message: 'Sesi login tidak ditemukan. Silakan login ulang.' },
+        { status: 401 }
+      );
+    }
 
     await enrollInCourse(courseId, accessToken);
 

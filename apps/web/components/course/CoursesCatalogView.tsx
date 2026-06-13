@@ -22,7 +22,16 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
   const [enrollError, setEnrollError] = React.useState<string | null>(null);
   const enrolledCourseIds = useEnrollmentStore((state) => state.enrolledCourseIds);
   const enrollCourseById = useEnrollmentStore((state) => state.enrollCourse);
+  const syncEnrollments = useEnrollmentStore((state) => state.syncEnrollments);
   const courseFilters = useCourses(courses, searchQuery);
+
+  React.useEffect(() => {
+    const serverEnrolledCourseIds = courses
+      .filter((course) => course.status !== 'notstart')
+      .map((course) => course.id);
+
+    syncEnrollments(serverEnrolledCourseIds);
+  }, [courses, syncEnrollments]);
 
   const visibleCourses = React.useMemo(() => {
     return courseFilters.paginatedCourses.map((course) =>
