@@ -12,10 +12,18 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("STUDENT");
+  const [angkatan, setAngkatan] = useState<string>("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Generate tahun angkatan dari 2000 s/d tahun sekarang
+  const currentYear = new Date().getFullYear();
+  const angkatanOptions = Array.from(
+    { length: currentYear - 1999 },
+    (_, i) => currentYear - i
+  );
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +35,13 @@ export default function RegisterPage() {
       const response = await fetch(buildApiUrl("/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+          ...(role === "STUDENT" && angkatan ? { angkatan: parseInt(angkatan) } : {}),
+        }),
       });
 
       const data = await response.json();
@@ -178,7 +192,11 @@ export default function RegisterPage() {
                 <select
                   id="role"
                   value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  onChange={(e) => {
+                    setRole(e.target.value);
+                    // Reset angkatan saat ganti role
+                    if (e.target.value !== "STUDENT") setAngkatan("");
+                  }}
                   required
                 >
                   <option value="STUDENT">Mahasiswa</option>
@@ -186,6 +204,26 @@ export default function RegisterPage() {
                   <option value="ADMIN">Administrator</option>
                 </select>
               </div>
+
+              {/* Field Angkatan — hanya muncul jika role STUDENT */}
+              {role === "STUDENT" && (
+                <div className="input-group">
+                  <label htmlFor="angkatan">Angkatan (Tahun Masuk)</label>
+                  <select
+                    id="angkatan"
+                    value={angkatan}
+                    onChange={(e) => setAngkatan(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>Pilih tahun angkatan</option>
+                    {angkatanOptions.map((year) => (
+                      <option key={year} value={year}>
+                        Angkatan {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 type="submit"

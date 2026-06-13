@@ -94,6 +94,7 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
       },
       { label: 'Calendar', href: mode === 'lecturer' ? '/dosen/calendar' : '/calendar', icon: <CalendarIcon />, matchMode: 'section' },
       { label: 'Practical Lab', href: '/labs', icon: <LabsIcon />, matchMode: 'section' },
+      ...(mode === 'student' ? [{ label: 'Profil Saya', href: '/dashboard_mahasiswa/profile', icon: <ProfileIcon />, matchMode: 'section' as const }] : []),
     ],
     [coursesHref, mode]
   );
@@ -304,6 +305,13 @@ const ChevronDownIcon: React.FC<{ expanded: boolean }> = ({ expanded }) => (
     style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s ease' }}
   >
     <path d="M1 1 5 5 9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ProfileIcon: React.FC = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
   </svg>
 );
 
