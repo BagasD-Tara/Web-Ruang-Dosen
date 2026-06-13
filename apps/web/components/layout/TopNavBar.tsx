@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
 import { BrandLogo } from './BrandLogo';
@@ -9,6 +9,11 @@ interface TopNavBarProps {
   onToggleSidebar: () => void;
   brandHref?: string;
   searchBasePath?: string;
+}
+
+interface StoredUser {
+  name?: string;
+  role?: string;
 }
 
 export const TopNavBar: React.FC<TopNavBarProps> = ({
@@ -20,6 +25,27 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get('q') ?? '';
+  const [topNavUser, setTopNavUser] = useState<StoredUser | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) setTopNavUser(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
+
+  const getAvatarInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map((w) => w[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  const handleAvatarClick = () => {
+    const role = topNavUser?.role?.toUpperCase();
+    if (role === 'STUDENT') {
+      router.push('/dashboard_mahasiswa/profile');
+    }
+    // Dosen/Admin tidak punya halaman profil khusus yet
+  };
 
   const applySearch = (value: string) => {
     const basePath = searchBasePath ?? (pathname.startsWith('/courses/my') ? '/courses/my' : COURSE_CATALOG_HREF);
@@ -98,11 +124,20 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           </button>
 
           <button
-            className="flex items-center justify-center w-10 h-10 rounded-full border overflow-hidden"
-            style={{ borderColor: 'var(--color-border)', background: 'var(--color-brand-subtle)' }}
+            className="flex items-center justify-center w-10 h-10 rounded-full border overflow-hidden transition-all hover:scale-105 hover:shadow-md"
+            style={{
+              borderColor: 'var(--color-border)',
+              background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+              color: 'white',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: topNavUser?.role?.toUpperCase() === 'STUDENT' ? 'pointer' : 'default',
+            }}
             aria-label="User profile"
+            onClick={handleAvatarClick}
+            title={topNavUser?.role?.toUpperCase() === 'STUDENT' ? 'Lihat Profil' : topNavUser?.name ?? 'User'}
           >
-            <UserAvatarIcon />
+            {topNavUser?.name ? getAvatarInitials(topNavUser.name) : <UserAvatarIcon />}
           </button>
         </div>
 

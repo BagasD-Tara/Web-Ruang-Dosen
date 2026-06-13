@@ -2,10 +2,18 @@
 
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import type { LecturerCourse } from '@/lib/types/course';
 import { createCourseApi } from '@/lib/api/courseApi';
 
-export async function createCourseAction(course: LecturerCourse) {
+interface CreateCoursePayload {
+  title: string;
+  description?: string;
+  credits?: number;
+  department?: string;
+  semester?: string;
+  enrollmentCap?: number;
+}
+
+export async function createCourseAction(course: CreateCoursePayload) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -20,7 +28,11 @@ export async function createCourseAction(course: LecturerCourse) {
         await createCourseApi(
           {
             title: course.title,
-            description: course.department,
+            description: course.description,
+            credits: course.credits,
+            department: course.department,
+            semester: course.semester,
+            enrollmentCap: course.enrollmentCap,
             instructorId,
           },
           token

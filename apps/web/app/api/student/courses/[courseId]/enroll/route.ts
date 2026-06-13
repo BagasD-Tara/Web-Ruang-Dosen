@@ -15,8 +15,15 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 409) {
-      return NextResponse.json({ success: true, alreadyEnrolled: true });
+    if (error instanceof ApiRequestError) {
+      if (error.status === 409) {
+        return NextResponse.json({ success: true, alreadyEnrolled: true });
+      }
+
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: error.status || 500 }
+      );
     }
 
     return NextResponse.json(

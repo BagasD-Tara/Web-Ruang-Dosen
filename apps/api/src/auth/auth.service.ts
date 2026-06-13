@@ -21,6 +21,7 @@ export class AuthService {
     email: string,
     password: string,
     role: 'STUDENT' | 'LECTURER' | 'ADMIN',
+    angkatan?: number,
   ) {
     // Cek apakah email sudah terdaftar
     const existingUser = await this.prisma.user.findUnique({
@@ -41,6 +42,8 @@ export class AuthService {
         email,
         password: hashedPassword,
         role,
+        // Hanya simpan angkatan jika role adalah STUDENT
+        angkatan: role === 'STUDENT' ? (angkatan ?? null) : null,
       },
     });
 
@@ -78,6 +81,8 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        maxCredits: user.maxCredits,
+        angkatan: user.angkatan,
       },
     };
   }
@@ -92,7 +97,18 @@ export class AuthService {
         email: true,
         role: true,
         xp: true,
+        maxCredits: true,
+        angkatan: true,
         createdAt: true,
+        enrollments: {
+          select: {
+            course: {
+              select: {
+                credits: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -100,7 +116,23 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const usedCredits = user.enrollments.reduce(
+      (totalCredits, enrollment) => totalCredits + enrollment.course.credits,
+      0,
+    );
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      xp: user.xp,
+      maxCredits: user.maxCredits,
+      angkatan: user.angkatan,
+      usedCredits,
+      remainingCredits: Math.max(user.maxCredits - usedCredits, 0),
+      createdAt: user.createdAt,
+    };
   }
 
   // === PROFILE: Update User Profile ===

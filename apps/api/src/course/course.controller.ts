@@ -27,11 +27,26 @@ export class CourseController {
         title: { type: 'string' },
         description: { type: 'string' },
         instructorId: { type: 'string' },
+        credits: { type: 'number', example: 3 },
+        department: { type: 'string', example: 'Computer Science' },
+        semester: { type: 'string', example: 'Fall Semester 2026' },
+        enrollmentCap: { type: 'number', example: 60 },
+        status: { type: 'string', example: 'Active' },
       },
     },
   })
   async create(
-    @Body() data: { title: string; description?: string; instructorId: string },
+    @Body()
+    data: {
+      title: string;
+      description?: string;
+      instructorId: string;
+      credits?: number;
+      department?: string;
+      semester?: string;
+      enrollmentCap?: number;
+      status?: string;
+    },
   ): Promise<Course> {
     return this.courseService.create(data);
   }
@@ -99,12 +114,26 @@ export class CourseController {
       properties: {
         title: { type: 'string' },
         description: { type: 'string' },
+        credits: { type: 'number', example: 3 },
+        department: { type: 'string', example: 'Computer Science' },
+        semester: { type: 'string', example: 'Fall Semester 2026' },
+        enrollmentCap: { type: 'number', example: 60 },
+        status: { type: 'string', example: 'Active' },
       },
     },
   })
   async update(
     @Param('id') id: string,
-    @Body() updateCourseDto: { title?: string; description?: string },
+    @Body()
+    updateCourseDto: {
+      title?: string;
+      description?: string;
+      credits?: number;
+      department?: string;
+      semester?: string;
+      enrollmentCap?: number;
+      status?: string;
+    },
     @Request() req: any,
   ) {
     const userId = req.user.id;

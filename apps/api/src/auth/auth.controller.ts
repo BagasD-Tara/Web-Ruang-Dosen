@@ -25,6 +25,7 @@ export class AuthController {
         email: { type: 'string' },
         password: { type: 'string' },
         role: { type: 'string', enum: ['STUDENT', 'LECTURER', 'ADMIN'] },
+        angkatan: { type: 'integer', description: 'Tahun angkatan mahasiswa (hanya untuk role STUDENT)' },
       },
     },
   })
@@ -35,6 +36,7 @@ export class AuthController {
       email: string;
       password: string;
       role: 'STUDENT' | 'LECTURER' | 'ADMIN';
+      angkatan?: number;
     },
   ) {
     return this.authService.register(
@@ -42,6 +44,7 @@ export class AuthController {
       body.email,
       body.password,
       body.role,
+      body.angkatan,
     );
   }
 
