@@ -5,19 +5,27 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class QuizService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
-  async create(data: {
-    title: string;
-    moduleId: string;
-    xpReward: number;
-    passingScore: number;
-    timeLimit?: number;
-    status?: string;
-  }) {
+  async create(
+    userId: string,
+    userRole: string,
+    data: {
+      title: string;
+      moduleId: string;
+      xpReward: number;
+      passingScore: number;
+      timeLimit?: number;
+      status?: string;
+    },
+  ) {
     const module = await this.prisma.courseModule.findUnique({
       where: { id: data.moduleId },
       include: { course: true },
@@ -25,6 +33,12 @@ export class QuizService {
 
     if (!module) {
       throw new NotFoundException('Module not found');
+    }
+
+    if (module.course.instructorId !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Forbidden: Only the instructor or Admin can create a quiz in this course',
+      );
     }
 
     // 2. create quiz
@@ -38,6 +52,13 @@ export class QuizService {
         status: data.status ?? 'DRAFT',
       },
     });
+
+    // Kirim notifikasi cohort ke mahasiswa & dosen di kelas tersebut
+    await this.notificationService.createCohortNotification(
+      module.courseId,
+      'Kuis Baru Dirilis',
+      `Kuis baru '${data.title}' telah ditambahkan pada modul ${module.title} di kelas ${module.course.title}.`,
+    );
 
     return quiz;
   }
@@ -90,6 +111,7 @@ export class QuizService {
   async update(
     id: string,
     userId: string,
+    userRole: string,
     data: {
       title?: string;
       timeLimit?: number;
@@ -107,8 +129,8 @@ export class QuizService {
       throw new NotFoundException('Quiz not found');
     }
 
-    // Validation: Only course instructor can update
-    if (quiz.module.course.instructorId !== userId) {
+    // Validation: Only course instructor or admin can update
+    if (quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to update this quiz',
       );
@@ -120,7 +142,7 @@ export class QuizService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole: string) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id },
       include: { module: { include: { course: true } } },
@@ -130,8 +152,8 @@ export class QuizService {
       throw new NotFoundException('Quiz not found');
     }
 
-    // Validation: Only course instructor can remove
-    if (quiz.module.course.instructorId !== userId) {
+    // Validation: Only course instructor or admin can remove
+    if (quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to delete this quiz',
       );
@@ -233,6 +255,7 @@ export class QuizService {
 
   async createQuestion(
     userId: string,
+    userRole: string,
     data: {
       question: string;
       optionA: string;
@@ -252,7 +275,7 @@ export class QuizService {
       throw new NotFoundException('Quiz not found');
     }
 
-    if (quiz.module.course.instructorId !== userId) {
+    if (quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to add questions to this quiz',
       );
@@ -302,6 +325,7 @@ export class QuizService {
   async updateQuestion(
     id: string,
     userId: string,
+    userRole: string,
     data: {
       question?: string;
       optionA?: string;
@@ -326,7 +350,7 @@ export class QuizService {
       throw new NotFoundException('Quiz question not found');
     }
 
-    if (question.quiz.module.course.instructorId !== userId) {
+    if (question.quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to update this question',
       );
@@ -350,7 +374,7 @@ export class QuizService {
     });
   }
 
-  async deleteQuestion(id: string, userId: string) {
+  async deleteQuestion(id: string, userId: string, userRole: string) {
     const question = await this.prisma.quizQuestion.findUnique({
       where: { id },
       include: {
@@ -366,7 +390,7 @@ export class QuizService {
       throw new NotFoundException('Quiz question not found');
     }
 
-    if (question.quiz.module.course.instructorId !== userId) {
+    if (question.quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to delete this question',
       );
@@ -392,5 +416,54 @@ export class QuizService {
     }
 
     return submission;
+  }
+
+  async getSubmissionsList(quizId: string, userId: string, userRole: string) {
+    const quiz = await this.prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        module: {
+          include: {
+            course: {
+              include: {
+                enrollments: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        submissions: {
+          include: {
+            student: true,
+          },
+        },
+      },
+    });
+
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+
+    if (quiz.module.course.instructorId !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException(
+        'You are not authorized to view submissions for this quiz',
+      );
+    }
+
+    return {
+      quiz: {
+        id: quiz.id,
+        title: quiz.title,
+        status: quiz.status,
+        xpReward: quiz.xpReward,
+        passingScore: quiz.passingScore,
+        timeLimit: quiz.timeLimit,
+      },
+      submissions: quiz.submissions,
+      courseEnrollments: quiz.module.course.enrollments,
+    };
   }
 }

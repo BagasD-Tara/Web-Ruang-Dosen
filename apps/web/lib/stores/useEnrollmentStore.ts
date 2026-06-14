@@ -8,6 +8,7 @@ interface EnrollmentStore {
   enrollCourse: (courseId: number | string) => void;
   unenrollCourse: (courseId: number | string) => void;
   resetEnrollments: () => void;
+  setEnrollments: (courseIds: Array<number | string>) => void;
 }
 
 export const useEnrollmentStore = create<EnrollmentStore>()(
@@ -25,6 +26,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()(
           enrolledCourseIds: state.enrolledCourseIds.filter((id) => id !== courseId),
         })),
       resetEnrollments: () => set({ enrolledCourseIds: [] }),
+      setEnrollments: (courseIds) => set({ enrolledCourseIds: courseIds }),
     }),
     {
       name: 'ruang-dosen-enrollments',

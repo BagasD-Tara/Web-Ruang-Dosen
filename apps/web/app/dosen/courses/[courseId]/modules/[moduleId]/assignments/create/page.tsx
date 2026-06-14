@@ -27,6 +27,9 @@ export default async function LecturerCreateAssignmentPage({
     const description = formData.get('description') as string;
     const status = formData.get('status') as string;
     const deadline = formData.get('deadline') as string;
+    const submissionRequirement = formData.get('submissionRequirement') as string;
+    const templateName = formData.get('templateName') as string;
+    const templateUrl = formData.get('templateUrl') as string;
 
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -43,6 +46,9 @@ export default async function LecturerCreateAssignmentPage({
           status: status === 'Active' ? 'ACTIVE' : 'DRAFT',
           deadline: new Date(deadline).toISOString(),
           moduleId,
+          submissionRequirement,
+          templateName: templateName || undefined,
+          templateUrl: templateUrl || undefined,
         },
         token
       );

@@ -5,13 +5,18 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { MaterialType } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class MaterialService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async create(
     userId: string,
+    userRole: string,
     data: {
       title: string;
       type: MaterialType;
@@ -29,13 +34,13 @@ export class MaterialService {
       throw new NotFoundException('Module not found');
     }
 
-    if (module.course.instructorId !== userId) {
+    if (module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to add material to this module',
       );
     }
 
-    return this.prisma.material.create({
+    const material = await this.prisma.material.create({
       data: {
         title: data.title,
         type: data.type,
@@ -44,6 +49,15 @@ export class MaterialService {
         moduleId: data.moduleId,
       },
     });
+
+    // Kirim notifikasi cohort ke mahasiswa & dosen di kelas tersebut
+    await this.notificationService.createCohortNotification(
+      module.courseId,
+      'Materi Baru Dirilis',
+      `Materi baru '${data.title}' telah ditambahkan pada modul ${module.title} di kelas ${module.course.title}.`,
+    );
+
+    return material;
   }
 
   async findOne(id: string) {
@@ -61,6 +75,7 @@ export class MaterialService {
   async update(
     id: string,
     userId: string,
+    userRole: string,
     data: {
       title?: string;
       type?: MaterialType;
@@ -77,7 +92,7 @@ export class MaterialService {
       throw new NotFoundException('Material not found');
     }
 
-    if (material.module.course.instructorId !== userId) {
+    if (material.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to update this material',
       );
@@ -89,7 +104,7 @@ export class MaterialService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole: string) {
     const material = await this.prisma.material.findUnique({
       where: { id },
       include: { module: { include: { course: true } } },
@@ -99,7 +114,7 @@ export class MaterialService {
       throw new NotFoundException('Material not found');
     }
 
-    if (material.module.course.instructorId !== userId) {
+    if (material.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
         'You are not authorized to delete this material',
       );

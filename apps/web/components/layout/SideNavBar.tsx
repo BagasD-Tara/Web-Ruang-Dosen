@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
+import { useEnrollmentStore } from '@/lib/stores/useEnrollmentStore';
 
 interface NavItem {
   label: string;
@@ -77,7 +78,16 @@ export const SideNavBar: React.FC<SideNavBarProps> = ({
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    sessionStorage.clear();
+    if (typeof window !== 'undefined') {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('lab-reg-')) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+    useEnrollmentStore.getState().resetEnrollments();
     router.push('/login');
   };
 
@@ -217,7 +227,7 @@ function getStoredUser(): StoredUser | null {
   }
 
   try {
-    return JSON.parse(localStorage.getItem('user') || 'null');
+    return JSON.parse(sessionStorage.getItem('user') || 'null');
   } catch {
     return null;
   }

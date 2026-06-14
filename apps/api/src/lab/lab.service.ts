@@ -4,14 +4,25 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class LabService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async create(
     userId: string,
-    data: { title: string; instructions: string; moduleId: string },
+    userRole: string,
+    data: {
+      title: string;
+      instructions: string;
+      moduleId: string;
+      fileUrl?: string;
+      fileName?: string;
+    },
   ) {
     const module = await this.prisma.courseModule.findUnique({
       where: { id: data.moduleId },
@@ -22,28 +33,50 @@ export class LabService {
       throw new NotFoundException('Module not found');
     }
 
-    if (module.course.instructorId !== userId) {
+    if (module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Forbidden: Only the instructor can create a lab for this course',
+        'Forbidden: Only the instructor or Admin can create a lab for this course',
       );
     }
 
-    return this.prisma.practicalLab.create({
+    const lab = await this.prisma.practicalLab.create({
       data: {
         title: data.title,
         instructions: data.instructions,
         moduleId: data.moduleId,
+        fileUrl: data.fileUrl,
+        fileName: data.fileName,
       },
     });
+
+    // Kirim notifikasi cohort ke mahasiswa & dosen di kelas tersebut
+    await this.notificationService.createCohortNotification(
+      module.courseId,
+      'Praktikum Baru Dirilis',
+      `Praktikum baru '${data.title}' telah ditambahkan pada modul ${module.title} di kelas ${module.course.title}.`,
+    );
+
+    return lab;
   }
 
   async findAll(moduleId?: string) {
     return this.prisma.practicalLab.findMany({
       where: moduleId ? { moduleId } : {},
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
+      include: {
+        module: {
+          include: {
+            course: {
+              include: {
+                instructor: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -51,6 +84,22 @@ export class LabService {
   async findOne(id: string) {
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id },
+      include: {
+        module: {
+          include: {
+            course: {
+              include: {
+                instructor: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!lab) {
@@ -63,7 +112,13 @@ export class LabService {
   async update(
     id: string,
     userId: string,
-    data: { title?: string; instructions?: string },
+    userRole: string,
+    data: {
+      title?: string;
+      instructions?: string;
+      fileUrl?: string;
+      fileName?: string;
+    },
   ) {
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id },
@@ -74,9 +129,9 @@ export class LabService {
       throw new NotFoundException('Lab not found');
     }
 
-    if (lab.module.course.instructorId !== userId) {
+    if (lab.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Forbidden: Only the instructor can update this lab',
+        'Forbidden: Only the instructor or Admin can update this lab',
       );
     }
 
@@ -86,7 +141,7 @@ export class LabService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole: string) {
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id },
       include: { module: { include: { course: true } } },
@@ -96,9 +151,9 @@ export class LabService {
       throw new NotFoundException('Lab not found');
     }
 
-    if (lab.module.course.instructorId !== userId) {
+    if (lab.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Forbidden: Only the instructor can delete this lab',
+        'Forbidden: Only the instructor or Admin can delete this lab',
       );
     }
 
@@ -107,3 +162,4 @@ export class LabService {
     });
   }
 }
+

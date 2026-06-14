@@ -4,7 +4,16 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { buildApiUrl } from "@/lib/api/apiConfig";
+import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import "./dashboard.css";
+
+const parseSender = (msg: string) => {
+  const match = msg.match(/^\[([\s\S]*?)\]\n\n([\s\S]*)/);
+  if (match) {
+    return { sender: match[1], body: match[2] };
+  }
+  return { sender: null, body: msg };
+};
 
 export default function DashboardAdminPage() {
   const [coursesOpen, setCoursesOpen] = useState(false);
@@ -17,19 +26,25 @@ export default function DashboardAdminPage() {
     pendingSubmissions: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [showNotifForm, setShowNotifForm] = useState(false);
+  const [notifForm, setNotifForm] = useState({ title: '', message: '' });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [selectedNotif, setSelectedNotif] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           router.push("/login");
           return;
         }
 
-        // Ambil data user dari localStorage
-        let currentUser = JSON.parse(localStorage.getItem("user") || "null");
+        // Ambil data user dari sessionStorage
+        let currentUser = JSON.parse(sessionStorage.getItem("user") || "null");
         if (currentUser) setUser(currentUser);
 
         // Fetch profil terbaru dari /auth/profile
@@ -85,18 +100,58 @@ export default function DashboardAdminPage() {
     };
 
     fetchDashboardData();
+    fetchNotifications();
   }, [router]);
 
-  // Fungsi utilitas untuk mendapatkan inisial nama
   const getInitials = (name: string) => {
     if (!name) return "A";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
+    return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
   };
+
+  const fetchNotifications = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await fetch(buildApiUrl('/notifications'), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setNotifications(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const handleCreateNotif = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = sessionStorage.getItem('token');
+      await fetch(buildApiUrl('/notifications/global'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(notifForm)
+      });
+      setShowNotifForm(false);
+      setNotifForm({ title: '', message: '' });
+      setNotifOpen(false);
+      fetchNotifications();
+    } catch (error) { console.error(error); }
+  };
+
+  const handleNotifClick = async (n: any) => {
+    setSelectedNotif(n);
+    if (!n.isRead) {
+      try {
+        const token = sessionStorage.getItem("token");
+        await fetch(buildApiUrl(`/notifications/${n.id}/read`), {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        fetchNotifications();
+      } catch (err) { console.error(err); }
+    }
+  };
+
+  const filteredCourses = courses.filter(c => 
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (c.instructor?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -118,117 +173,7 @@ export default function DashboardAdminPage() {
       {/* ============================================================
           SIDEBAR
       ============================================================ */}
-      <aside className="sidebar">
-        {/* Logo */}
-        <div className="sidebar-header">
-          <div className="logo-icon">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span className="logo-text">
-            Ruang<span>Dosen</span>
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="sidebar-nav">
-          <div className="nav-item">
-            <Link href="/dashboard_admin" className="nav-link active">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-              Dashboard
-            </Link>
-          </div>
-
-          <div className={`nav-item ${coursesOpen ? "open" : ""}`}>
-            <div className="nav-link" onClick={() => setCoursesOpen(!coursesOpen)} style={{ cursor: "pointer" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-              </svg>
-              Courses
-              <svg className="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                {coursesOpen ? <line x1="5" y1="12" x2="19" y2="12" /> : <polyline points="6 9 12 15 18 9" />}
-              </svg>
-            </div>
-            <div className="sub-nav">
-              {courses.map((c) => (
-                <Link key={c.id} href="#" className="sub-nav-link">{c.title}</Link>
-              ))}
-              <Link href="#" className="sub-nav-link">+ Add Course</Link>
-            </div>
-          </div>
-
-          <div className="nav-item">
-            <Link href="#" className="nav-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              Calendar
-            </Link>
-          </div>
-
-          <div className="nav-item">
-            <Link href="#" className="nav-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-              Resources
-            </Link>
-          </div>
-        </nav>
-
-        {/* User card at bottom */}
-        <div className="sidebar-footer">
-          <div
-            className="user-card"
-            onClick={() => {
-              localStorage.clear();
-              router.push("/login");
-            }}
-          >
-            <div className="user-avatar">{getInitials(user?.name)}</div>
-            <div className="user-info">
-              <p className="user-name">{user?.name || "Admin"}</p>
-              <p className="user-role">
-                {user?.role === "ADMIN" ? "Administrator" : user?.role || "Admin"}
-              </p>
-            </div>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <title>Logout</title>
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </div>
-        </div>
-      </aside>
+      <AdminSidebar activeTab="dashboard" />
 
       {/* ============================================================
           MAIN CONTENT
@@ -248,7 +193,7 @@ export default function DashboardAdminPage() {
               })}
             </p>
           </div>
-          <div className="top-bar-right">
+          <div className="top-bar-right" style={{ position: 'relative' }}>
             <div className="search-bar">
               <svg
                 width="15"
@@ -263,27 +208,73 @@ export default function DashboardAdminPage() {
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input type="search" placeholder="Cari kursus, pengguna..." />
+              <input 
+                type="search" 
+                placeholder="Cari kursus, pengguna..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
 
-            <button className="icon-btn" id="notif-btn" title="Notifikasi">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+            <button className="icon-btn" id="notif-btn" title="Notifikasi" onClick={() => setNotifOpen(!notifOpen)} style={{ position: 'relative' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 01-3.46 0" />
               </svg>
-              <span className="notif-dot"></span>
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="notif-dot" style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, background: '#EF4444', borderRadius: '50%' }}></span>
+              )}
             </button>
 
-            <button className="icon-btn" id="settings-btn" title="Pengaturan">
+            {/* Notification Dropdown */}
+            {notifOpen && (
+              <div style={{ position: 'absolute', top: '50px', right: '40px', width: '320px', background: 'white', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Notifikasi Sistem</span>
+                  <button onClick={() => setShowNotifForm(!showNotifForm)} style={{ background: 'var(--primary)', color: 'white', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', border: 'none', cursor: 'pointer' }}>
+                    {showNotifForm ? 'Batal' : '+ Buat'}
+                  </button>
+                </div>
+                {showNotifForm ? (
+                  <form onSubmit={handleCreateNotif} style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <input required type="text" placeholder="Judul Pengumuman" value={notifForm.title} onChange={e => setNotifForm({...notifForm, title: e.target.value})} style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '6px' }} />
+                    <textarea required placeholder="Isi Pengumuman..." value={notifForm.message} onChange={e => setNotifForm({...notifForm, message: e.target.value})} style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: '6px', resize: 'none', height: '60px' }}></textarea>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setShowNotifForm(false)} style={{ padding: '6px 12px', background: '#eee', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Batal</button>
+                      <button type="submit" style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Kirim</button>
+                    </div>
+                  </form>
+                ) : (
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {notifications.length > 0 ? (
+                      notifications.map((n: any) => {
+                        const { sender, body } = parseSender(n.message);
+                        return (
+                          <div key={n.id} onClick={() => handleNotifClick(n)} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: '13px', background: n.isRead ? 'transparent' : '#f0f7ff', cursor: 'pointer' }}>
+                            <span style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '10px' }}>{new Date(n.createdAt).toLocaleDateString('id-ID')}</span>
+                            <strong style={{ display: 'block', marginBottom: '2px' }}>{n.title}</strong>
+                            {sender && (
+                              <span style={{
+                                display: 'inline-block', fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px', marginBottom: '6px',
+                                background: sender.startsWith('Admin') ? '#EDE9FE' : '#DBEAFE',
+                                color: sender.startsWith('Admin') ? '#7C3AED' : '#2563EB',
+                              }}>
+                                {sender}
+                              </span>
+                            )}
+                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{body}</div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '13px' }}>Belum ada notifikasi</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button className="icon-btn" id="settings-btn" title="Pengaturan" onClick={() => alert("Pengaturan akun sedang dikembangkan!")}>
               <svg
                 width="18"
                 height="18"
@@ -299,7 +290,7 @@ export default function DashboardAdminPage() {
               </svg>
             </button>
 
-            <button className="avatar-btn" id="profile-btn" title="Profil">
+            <button className="avatar-btn" id="profile-btn" title="Profil" onClick={() => alert("Profil pengguna sedang dikembangkan!")}>
               {getInitials(user?.name)}
             </button>
           </div>
@@ -328,7 +319,7 @@ export default function DashboardAdminPage() {
               </p>
             </div>
             <div className="banner-actions">
-              <button className="btn-primary-white" id="review-submissions-btn">
+              <button className="btn-primary-white" id="review-submissions-btn" onClick={() => router.push('/dashboard_admin/courses')}>
                 <svg
                   width="16"
                   height="16"
@@ -344,7 +335,7 @@ export default function DashboardAdminPage() {
                 </svg>
                 Tinjau Tugas
               </button>
-              <button className="btn-outline-white" id="manage-users-btn">
+              <button className="btn-outline-white" id="manage-users-btn" onClick={() => router.push('/dashboard_admin/users')}>
                 <svg
                   width="16"
                   height="16"
@@ -469,18 +460,8 @@ export default function DashboardAdminPage() {
             <section className="course-management">
               <div className="section-header">
                 <h3 className="section-title">Manajemen Mata Kuliah</h3>
-                <Link href="#" className="view-all-link">
-                  Lihat Semua
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                <Link href="/dashboard_admin/courses" className="view-all-link">
+                  Lihat Semua Mata Kuliah →
                 </Link>
               </div>
 
@@ -556,23 +537,18 @@ export default function DashboardAdminPage() {
                           <span className="course-meta-dot"></span>
                           <span>{course._count?.enrollments || 0} Mahasiswa</span>
                         </div>
-                        <div className="progress-section">
-                          <div className="progress-label">
-                            <span className="progress-text">
-                              Penyelesaian Silabus
-                            </span>
-                            <span className="progress-pct">{progress}</span>
+                        <div className="progress-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <span>Total Modul</span>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{course._count?.modules || 0} Modul</span>
                           </div>
-                          <div className="progress-track">
-                            <div
-                              className={`progress-fill ${fillColor}`}
-                              style={{ width: progress }}
-                            ></div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            <span>Kapasitas & SKS</span>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{course.enrollmentCap} Siswa · {course.credits} SKS</span>
                           </div>
                         </div>
                         <div className="course-actions">
-                          <button className="btn-outline">Kelola Modul</button>
-                          <button className="btn-filled">Detail</button>
+                          <button className="btn-filled" style={{ width: '100%' }} onClick={() => router.push(`/dashboard_admin/courses/${course.id}`)}>Kelola Mata Kuliah</button>
                         </div>
                       </div>
                     );
@@ -594,7 +570,7 @@ export default function DashboardAdminPage() {
                     >
                       Belum ada mata kuliah yang tersedia.
                     </p>
-                    <button className="btn-filled">Buat Mata Kuliah Baru</button>
+                    <button className="btn-filled" onClick={() => router.push('/dashboard_admin/courses/create')}>Buat Mata Kuliah Baru</button>
                   </div>
                 )}
               </div>
@@ -605,16 +581,9 @@ export default function DashboardAdminPage() {
               <div className="panel-header">
                 <div className="section-header">
                   <h3 className="section-title">Tugas Terbaru</h3>
-                  <Link href="#" className="view-all-link">
+                  <Link href="/dashboard_admin/courses" className="view-all-link">
                     Lihat Semua
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </Link>
@@ -679,7 +648,7 @@ export default function DashboardAdminPage() {
 
               <div className="panel-footer">
                 <Link
-                  href="#"
+                  href="/dashboard_admin/courses"
                   className="view-all-btn"
                   id="view-all-submissions-btn"
                 >
@@ -698,14 +667,56 @@ export default function DashboardAdminPage() {
             rights reserved.
           </p>
           <div className="footer-links">
-            <Link href="#">Kebijakan Privasi</Link>
-            <Link href="#">Syarat Layanan</Link>
-            <Link href="#">Pusat Bantuan</Link>
-            <Link href="#">Hubungi Support</Link>
+            <button onClick={() => alert("Kebijakan Privasi:\n\nSemua data Anda terlindungi dengan enkripsi SSL. Kami tidak membagikan data pribadi atau riwayat nilai Anda kepada pihak ketiga mana pun tanpa persetujuan Anda.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Kebijakan Privasi</button>
+            <button onClick={() => alert("Syarat Layanan:\n\nDengan menggunakan Ruang Dosen, Anda setuju untuk menjaga kerahasiaan kredensial login Anda, tidak melakukan kecurangan akademik, dan mematuhi tata tertib kampus.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Syarat Layanan</button>
+            <button onClick={() => alert("Pusat Bantuan:\n\nJika menemui kendala teknis atau kesalahan data, silakan buat laporan ke support@ruangdosen.ac.id atau hubungi helpdesk IT kampus.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Pusat Bantuan</button>
+            <button onClick={() => alert("Hubungi Support:\n\nEmail: support@ruangdosen.ac.id\nJam Operasional: Senin - Jumat, 08.00 - 17.00 WIB")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Hubungi Support</button>
           </div>
         </footer>
 
       </main>
+
+      {/* Notification Modal Overlay */}
+      {selectedNotif && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', padding: '20px' }} onClick={() => setSelectedNotif(null)}>
+          <div style={{ background: 'white', borderRadius: '16px', maxWidth: '500px', width: '100%', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>Detail Notifikasi</h3>
+              <button onClick={() => setSelectedNotif(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px' }}>✕</button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 700, color: '#111' }}>{selectedNotif.title}</h4>
+              <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: '#666' }}>{new Date(selectedNotif.createdAt).toLocaleString('id-ID')}</p>
+              <div style={{ fontSize: '14px', lineHeight: 1.6, color: '#333', background: '#f9f9f9', padding: '16px', borderRadius: '12px', border: '1px solid #eee' }}>
+                {(() => {
+                  const { sender, body } = parseSender(selectedNotif.message);
+                  return (
+                    <>
+                      {sender && (
+                        <div style={{ marginBottom: '12px' }}>
+                          <span style={{
+                            display: 'inline-block', fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '12px',
+                            background: sender.startsWith('Admin') ? '#EDE9FE' : '#DBEAFE',
+                            color: sender.startsWith('Admin') ? '#7C3AED' : '#2563EB',
+                          }}>
+                            {sender}
+                          </span>
+                        </div>
+                      )}
+                      <div style={{ whiteSpace: 'pre-line' }}>{body}</div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setSelectedNotif(null)} style={{ padding: '8px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

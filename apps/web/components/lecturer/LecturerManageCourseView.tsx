@@ -24,6 +24,7 @@ import type {
   LecturerMaterialKind,
 } from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
+import { slugify } from '@/utils/slugify';
 
 interface LecturerManageCourseViewProps {
   data: LecturerManageCourseData;
@@ -156,6 +157,9 @@ export function LecturerManageCourseView({ data }: LecturerManageCourseViewProps
               const moduleAssignments = courseModule.assessments.filter(
                 (assessment) => assessment.kind === 'assignment'
               );
+              const moduleLabs = courseModule.assessments.filter(
+                (assessment) => assessment.kind === 'lab'
+              );
 
               return (
                 <ModuleCard
@@ -165,6 +169,7 @@ export function LecturerManageCourseView({ data }: LecturerManageCourseViewProps
                   courseModule={courseModule}
                   moduleQuizzes={moduleQuizzes}
                   moduleAssignments={moduleAssignments}
+                  moduleLabs={moduleLabs}
                   isExpanded={expandedModules[courseModule.id] ?? false}
                   onToggle={() => toggleModule(courseModule.id)}
                   onNavigate={(href) => router.push(href)}
@@ -236,6 +241,7 @@ function ModuleCard({
   courseModule,
   moduleQuizzes,
   moduleAssignments,
+  moduleLabs,
   isExpanded,
   onToggle,
   onNavigate,
@@ -245,6 +251,7 @@ function ModuleCard({
   courseModule: LecturerCourseModule;
   moduleQuizzes: Quiz[];
   moduleAssignments: LecturerCourseModule['assessments'];
+  moduleLabs: LecturerCourseModule['assessments'];
   isExpanded: boolean;
   onToggle: () => void;
   onNavigate: (href: string) => void;
@@ -265,7 +272,7 @@ function ModuleCard({
           <div className="min-w-0">
             <h2 className="truncate text-base font-bold text-slate-950">{courseModule.title}</h2>
             <p className="mt-1 text-sm text-slate-500">
-              {courseModule.weekLabel} - {courseModule.materials.length} Materials - {moduleQuizzes.length} Quiz - {moduleAssignments.length} Assignment
+              {courseModule.weekLabel} - {courseModule.materials.length} Materials - {moduleQuizzes.length} Quiz - {moduleAssignments.length + moduleLabs.length} Assessment
             </p>
           </div>
         </div>
@@ -284,6 +291,7 @@ function ModuleCard({
             courseModule={courseModule}
             quizzes={moduleQuizzes}
             assignments={moduleAssignments}
+            labs={moduleLabs}
             onNavigate={onNavigate}
           />
           <div className="flex justify-end px-5 py-4 sm:px-6">
@@ -315,8 +323,16 @@ function LearningMaterialsSection({
       <SectionHeader
         icon={<FileText className="h-4 w-4" />}
         title="Learning Materials"
-        actionLabel="Add Material"
-        onAction={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/materials/create`)}
+        actionNode={
+          <button
+            type="button"
+            onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/materials/create`)}
+            className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/50 px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-600 hover:text-white"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Material
+          </button>
+        }
       />
 
       <div className="mt-4 space-y-3">
@@ -356,31 +372,91 @@ function AssessmentsSection({
   courseModule,
   quizzes,
   assignments,
+  labs,
   onNavigate,
 }: {
   courseId: string;
   courseModule: LecturerCourseModule;
   quizzes: Quiz[];
   assignments: LecturerCourseModule['assessments'];
+  labs: LecturerCourseModule['assessments'];
   onNavigate: (href: string) => void;
 }) {
-  const hasAssessments = quizzes.length > 0 || assignments.length > 0;
+  const hasAssessments = quizzes.length > 0 || assignments.length > 0 || labs.length > 0;
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClose = () => setIsDropdownOpen(false);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, [isDropdownOpen]);
 
   return (
     <section className="px-5 py-5 sm:px-6">
       <SectionHeader
         icon={<HelpCircle className="h-4 w-4" />}
         title="Assessments"
-        actions={[
-          {
-            label: 'Create Quiz',
-            onClick: () => onNavigate(`/dosen/quiz/create?courseId=${courseId}&moduleId=${courseModule.id}`),
-          },
-          {
-            label: 'Create Assignment',
-            onClick: () => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/create`),
-          },
-        ]}
+        actionNode={
+          <div className="relative inline-block text-left">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDropdownOpen(!isDropdownOpen);
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/50 px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-600 hover:text-white"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Assessment
+              <ChevronDown className={`ml-0.5 h-3.5 w-3.5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div 
+                className="absolute right-0 mt-2 w-48 origin-top-right rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    onNavigate(`/dosen/quiz/create?courseId=${courseId}&moduleId=${courseModule.id}`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <HelpCircle className="h-4 w-4 text-red-500" />
+                  Create Quiz
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/create`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  Create Assignment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/labs/create`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <svg className="h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                  Create Lab
+                </button>
+              </div>
+            )}
+          </div>
+        }
       />
 
       <div className="mt-4 space-y-3">
@@ -441,9 +517,46 @@ function AssessmentsSection({
             ) : null}
             <button
               type="button"
+              onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/${assignment.id}/submissions`)}
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+              aria-label={`Lihat pengumpulan ${assignment.title}`}
+            >
+              <Users className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => onNavigate(`/dosen/courses/${courseId}/modules/${courseModule.id}/assignments/${assignment.id}/edit`)}
               className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
               aria-label={`Edit ${assignment.title}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+
+        {labs.map((lab) => (
+          <div
+            key={lab.id}
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-900">{lab.title}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-500">Practical Lab</p>
+            </div>
+            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+              Practical Lab
+            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate(`/labs/${slugify(lab.title)}?mode=lecturer`)}
+              className="rounded-xl p-2 text-slate-400 transition hover:bg-blue-100 hover:text-blue-700"
+              aria-label={`Manage ${lab.title}`}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -457,47 +570,19 @@ function AssessmentsSection({
 function SectionHeader({
   icon,
   title,
-  actionLabel,
-  onAction,
-  actions,
+  actionNode,
 }: {
   icon: ReactNode;
   title: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  actions?: Array<{ label: string; onClick: () => void }>;
+  actionNode?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-700">
         {icon}
         {title}
       </div>
-
-      {actions ? (
-        <div className="flex flex-wrap items-center gap-3">
-          {actions.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              onClick={action.onClick}
-              className="text-sm font-bold text-blue-700 transition hover:text-blue-800"
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {actionLabel && onAction ? (
-        <button
-          type="button"
-          onClick={onAction}
-          className="text-sm font-bold text-blue-700 transition hover:text-blue-800"
-        >
-          {actionLabel}
-        </button>
-      ) : null}
+      {actionNode ? <div>{actionNode}</div> : null}
     </div>
   );
 }

@@ -34,6 +34,7 @@ model User {
   xp         Int      @default(0)
   maxCredits Int      @default(24)
   angkatan   Int?
+  semester   Int?     @default(1)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -42,6 +43,7 @@ model User {
   assignmentSubmissions AssignmentSubmission[]
   labSubmissions        LabSubmission[]
   quizSubmissions       QuizSubmission[]
+  notifications         Notification[]
 }
 
 model Course {
@@ -51,6 +53,9 @@ model Course {
   credits      Int      @default(3)
   department   String   @default("Computer Science")
   semester     String   @default("Fall Semester 2026")
+  teachingFormat String @default("Teori dan Praktikum")
+  targetSemester Int    @default(1)
+  targetAngkatan Int?
   enrollmentCap Int     @default(60)
   status       String   @default("Active")
   instructorId String
@@ -115,16 +120,19 @@ model QuizQuestion {
 }
 
 model Assignment {
-  id          String                 @id @default(uuid())
-  title       String
-  description String
-  status      String                 @default("DRAFT")
-  deadline    DateTime
-  moduleId    String
-  module      CourseModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  submissions AssignmentSubmission[]
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  id                    String                 @id @default(uuid())
+  title                 String
+  description           String
+  status                String                 @default("DRAFT")
+  deadline              DateTime
+  templateUrl           String?
+  templateName          String?
+  submissionRequirement String?
+  moduleId              String
+  module                CourseModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submissions           AssignmentSubmission[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model AssignmentSubmission {
@@ -148,6 +156,8 @@ model PracticalLab {
   id           String          @id @default(uuid())
   title        String
   instructions String
+  fileUrl      String?
+  fileName     String?
   moduleId     String
   module       CourseModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   submissions  LabSubmission[]
@@ -195,4 +205,13 @@ model QuizSubmission {
   createdAt DateTime @default(now())
 
   @@unique([quizId, studentId])
+}
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

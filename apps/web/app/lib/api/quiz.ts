@@ -15,7 +15,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -159,6 +159,67 @@ export async function submitQuiz(
   return result;
 }
 
+export async function getQuizSubmission(quizId: string): Promise<any | null> {
+  try {
+    const { data } = await api.get(`/quizzes/${quizId}/submission`);
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function getQuizSubmissionResult(quizId: string): Promise<QuizResult | null> {
+  try {
+    const { data: submission } = await api.get(`/quizzes/${quizId}/submission`);
+    if (!submission) return null;
+
+    const quiz = await getQuizById(quizId);
+    const baseQuestions = await getQuizQuestions(quizId);
+
+    const correctCount = submission.details?.filter((d: any) => d.isCorrect).length ?? 0;
+    const wrong = submission.details?.filter((d: any) => !d.isCorrect && d.studentAnswer).length ?? 0;
+
+    const answers: Record<string, string> = {};
+    submission.details?.forEach((d: any) => {
+      if (d.studentAnswer) {
+        answers[d.questionId] = `${d.questionId}-${d.studentAnswer}`;
+      }
+    });
+
+    const questions: QuizQuestion[] = baseQuestions.map((q) => {
+      const detail = submission.details?.find((d: any) => d.questionId === q.id);
+      if (!detail) return q;
+      return {
+        ...q,
+        options: q.options.map((opt) => ({
+          ...opt,
+          isCorrect: opt.label === detail.correctAnswer,
+        })),
+      };
+    });
+
+    return {
+      attempt: {
+        id: submission.id,
+        quizId: quiz.id,
+        studentId: submission.studentId,
+        answers,
+        score: submission.score,
+        totalCorrect: correctCount,
+        totalWrong: wrong,
+        durationSeconds: 0,
+        submittedAt: submission.createdAt,
+        status: submission.passed ? "lulus" : "tidak_lulus",
+      },
+      quiz,
+      questions,
+    };
+  } catch (error) {
+    console.error("Failed to load quiz submission from database", error);
+    return null;
+  }
+}
+
 export async function getMyAttempt(quizId: string): Promise<QuizAttempt | null> {
   try {
     const { data } = await api.get(`/quizzes/${quizId}/my-attempt`);
@@ -171,9 +232,50 @@ export async function getMyAttempt(quizId: string): Promise<QuizAttempt | null> 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const { data } = await api.get("/leaderboard");
   const currentUserId = typeof window !== "undefined"
-    ? localStorage.getItem("userId") ?? undefined
+    ? sessionStorage.getItem("userId") ?? undefined
     : undefined;
   return Array.isArray(data) ? data.map((d) => mapLeaderboard(d, currentUserId)) : [];
+}
+
+export async function getQuizStats(quizId: string): Promise<any> {
+  const { data } = await api.get(`/quizzes/${quizId}/submissions`);
+  const enrollments = data.courseEnrollments || [];
+  const submissions = data.submissions || [];
+
+  const studentResults = enrollments.map((en: any) => {
+    const student = en.user;
+    const sub = submissions.find((s: any) => s.studentId === student.id);
+    const email = student.email || "";
+    const nim = email.includes("@") ? email.split("@")[0] : email;
+    const initials = student.name ? student.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "M";
+    const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#6366f1", "#8b5cf6", "#ec4899"];
+    const avatarColor = colors[student.name.charCodeAt(0) % colors.length] || "#3b82f6";
+
+    return {
+      studentId: student.id,
+      studentName: student.name,
+      nim,
+      initials,
+      avatarColor,
+      durationSeconds: null,
+      status: sub ? "selesai" : "belum",
+      score: sub ? sub.score : null,
+    };
+  });
+
+  const scores = submissions.map((s: any) => s.score);
+  const averageScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
+  const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
+  const lowestScore = scores.length > 0 ? Math.min(...scores) : 0;
+
+  return {
+    totalParticipants: submissions.length,
+    totalEnrolled: enrollments.length,
+    averageScore,
+    highestScore,
+    lowestScore,
+    studentResults,
+  };
 }
 
 // ─── Dosen ────────────────────────────────────────────────────────────────────

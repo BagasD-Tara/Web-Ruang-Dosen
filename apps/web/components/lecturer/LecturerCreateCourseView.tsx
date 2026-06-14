@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { createCourseAction } from '@/app/actions/createCourse';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
+import { buildApiUrl } from '@/lib/api/apiConfig';
 import './LecturerCreateCourseView.css';
 
 type PublishingMode = 'draft' | 'published';
-type TeachingFormat = 'Theory and Practice' | 'Project-Based' | 'Research Seminar';
+type TeachingFormat = 'Teori dan Praktikum' | 'Teori' | 'Lainnya';
 
 interface CourseDraftFormState {
   title: string;
@@ -19,40 +19,29 @@ interface CourseDraftFormState {
   enrollmentCap: string;
   description: string;
   includeStarterModule: boolean;
+  targetSemester: string;
+  targetAngkatan: string;
 }
 
-const SEMESTER_OPTIONS = [
-  'Fall Semester 2026',
-  'Spring Semester 2027',
-  'Short Semester 2027',
-];
 const CREDIT_OPTIONS = ['2', '3', '4'];
 const TEACHING_FORMAT_OPTIONS: TeachingFormat[] = [
-  'Theory and Practice',
-  'Project-Based',
-  'Research Seminar',
-];
-const DEPARTMENT_OPTIONS = [
-  'Computer Science',
-  'Data Science',
-  'Information Technology',
-  'Software Engineering',
-  'Cybersecurity',
-  'Information Systems',
-  'Artificial Intelligence',
-  'Business Analytics',
+  'Teori dan Praktikum',
+  'Teori',
+  'Lainnya',
 ];
 
 const INITIAL_FORM_STATE: CourseDraftFormState = {
   title: '',
   department: 'Computer Science',
-  semester: 'Fall Semester 2026',
+  semester: '',
   credits: '3',
-  teachingFormat: 'Theory and Practice',
+  teachingFormat: 'Teori dan Praktikum',
   durationWeeks: '12',
   enrollmentCap: '60',
   description: '',
   includeStarterModule: true,
+  targetSemester: '1',
+  targetAngkatan: '',
 };
 
 export function LecturerCreateCourseView() {
@@ -147,18 +136,11 @@ export function LecturerCreateCourseView() {
                   placeholder="Enter course title"
                 />
               </FormField>
-              <FormField label="Department">
-                <SelectInput
-                  value={draft.department}
-                  onChange={(value) => updateDraftField('department', value, setDraft)}
-                  options={DEPARTMENT_OPTIONS}
-                />
-              </FormField>
-              <FormField label="Semester">
-                <SelectInput
+              <FormField label="Semester Label (Descriptive)">
+                <TextInput
                   value={draft.semester}
                   onChange={(value) => updateDraftField('semester', value, setDraft)}
-                  options={SEMESTER_OPTIONS}
+                  placeholder="Contoh: Ganjil 2026/2027"
                 />
               </FormField>
               <FormField label="Credits">
@@ -166,6 +148,20 @@ export function LecturerCreateCourseView() {
                   value={draft.credits}
                   onChange={(value) => updateDraftField('credits', value, setDraft)}
                   options={CREDIT_OPTIONS}
+                />
+              </FormField>
+              <FormField label="Target Semester Mahasiswa (1-8)">
+                <SelectInput
+                  value={draft.targetSemester}
+                  onChange={(value) => updateDraftField('targetSemester', value, setDraft)}
+                  options={['1', '2', '3', '4', '5', '6', '7', '8']}
+                />
+              </FormField>
+              <FormField label="Target Angkatan Mahasiswa (Opsional)">
+                <TextInput
+                  value={draft.targetAngkatan}
+                  onChange={(value) => updateDraftField('targetAngkatan', value, setDraft)}
+                  placeholder="Contoh: 2024 (kosongkan jika untuk semua angkatan)"
                 />
               </FormField>
             </div>
@@ -235,16 +231,42 @@ export function LecturerCreateCourseView() {
           <button
             type="button"
             onClick={async () => {
-              await createCourseAction({
-                title: draft.title,
-                description: draft.description,
-                credits: Number(draft.credits),
-                department: draft.department,
-                semester: draft.semester,
-                enrollmentCap: Number(draft.enrollmentCap),
-              });
-              setIsSubmitted(true);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              try {
+                const token = sessionStorage.getItem('token');
+                const userRaw = sessionStorage.getItem('user');
+                if (!token || !userRaw) throw new Error("Sesi Anda tidak valid. Silakan login ulang.");
+                const user = JSON.parse(userRaw);
+                
+                const response = await fetch(buildApiUrl('/courses'), {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    title: draft.title,
+                    description: draft.description,
+                    credits: Number(draft.credits),
+                    department: draft.department,
+                    semester: draft.semester,
+                    teachingFormat: draft.teachingFormat,
+                    enrollmentCap: Number(draft.enrollmentCap),
+                    targetSemester: Number(draft.targetSemester),
+                    targetAngkatan: draft.targetAngkatan ? Number(draft.targetAngkatan) : null,
+                    instructorId: user.id
+                  })
+                });
+                
+                if (!response.ok) {
+                  throw new Error("Gagal membuat mata kuliah.");
+                }
+                
+                setIsSubmitted(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } catch (err: any) {
+                setFeedbackMessage(err.message || "Terjadi kesalahan saat menyimpan kelas.");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
             }}
             disabled={!canCreateCourse(draft)}
             className="btn-submit"

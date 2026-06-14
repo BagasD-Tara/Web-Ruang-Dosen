@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("STUDENT");
   const [angkatan, setAngkatan] = useState<string>("");
+  const [semester, setSemester] = useState<string>("1");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,6 +42,7 @@ export default function RegisterPage() {
           password,
           role,
           ...(role === "STUDENT" && angkatan ? { angkatan: parseInt(angkatan) } : {}),
+          ...(role === "STUDENT" && semester ? { semester: parseInt(semester) } : {}),
         }),
       });
 
@@ -74,9 +76,9 @@ export default function RegisterPage() {
       <header className="navbar">
         <div className="brand">Ruang Dosen</div>
         <nav className="nav-links">
-          <Link href="#">Help</Link>
-          <Link href="#">About</Link>
-          <button className="btn-support">Contact Support</button>
+          <button onClick={() => alert("Pusat Bantuan:\n\n1. Hubungi admin@ruangdosen.ac.id untuk kendala pendaftaran.\n2. Baca panduan penggunaan setelah akun Anda aktif.\n3. Laporkan bug ke Tim IT Support.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Help</button>
+          <button onClick={() => alert("Tentang Ruang Dosen:\n\nRuang Dosen adalah Platform Learning Management System (LMS) Terpadu untuk mahasiswa dan dosen dalam mengelola kelas, praktikum (Practical Lab), tugas, kuis, dan materi kuliah secara interaktif.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>About</button>
+          <button className="btn-support" onClick={() => alert("Hubungi Support:\n\nEmail: support@ruangdosen.ac.id\nWhatsApp: +62 812-3456-7890\nJam Operasional: Senin - Jumat, 08.00 - 17.00 WIB")}>Contact Support</button>
         </nav>
       </header>
 
@@ -219,6 +221,25 @@ export default function RegisterPage() {
                     {angkatanOptions.map((year) => (
                       <option key={year} value={year}>
                         Angkatan {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Field Semester — hanya muncul jika role STUDENT */}
+              {role === "STUDENT" && (
+                <div className="input-group">
+                  <label htmlFor="semester">Semester Aktif</label>
+                  <select
+                    id="semester"
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value)}
+                    required
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                      <option key={sem} value={sem}>
+                        Semester {sem}
                       </option>
                     ))}
                   </select>

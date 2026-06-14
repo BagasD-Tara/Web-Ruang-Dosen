@@ -43,7 +43,7 @@ export default function MahasiswaProfilePage() {
 
   /* ── fetch profile ── */
   const fetchProfile = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -89,7 +89,7 @@ export default function MahasiswaProfilePage() {
     setSaveError("");
     setSaving(true);
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) { router.push("/login"); return; }
 
     try {
@@ -126,12 +126,12 @@ export default function MahasiswaProfilePage() {
         throw new Error(data.message || "Gagal menyimpan perubahan.");
       }
 
-      // Update localStorage user name if name changed
+      // Update sessionStorage user name if name changed
       if (body.name) {
         try {
-          const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+          const storedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
           storedUser.name = body.name;
-          localStorage.setItem("user", JSON.stringify(storedUser));
+          sessionStorage.setItem("user", JSON.stringify(storedUser));
         } catch { /* ignore */ }
       }
 

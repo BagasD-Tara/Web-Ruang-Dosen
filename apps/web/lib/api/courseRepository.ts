@@ -1,4 +1,4 @@
-import { fetchCourseDetail, fetchCourses, fetchMyCourses, fetchCourseEnrollmentsApi } from '@/lib/api/courseApi';
+import { fetchCourseDetail, fetchCourses, fetchMyCourses, fetchCourseEnrollmentsApi, fetchAssignmentSubmissionsApi } from '@/lib/api/courseApi';
 import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
 import { cookies } from 'next/headers';
 import {
@@ -11,8 +11,13 @@ import type { Course, CourseDetail, LecturerCourse, LecturerManageCourseData, As
 
 export async function getStudentCourses(): Promise<Course[]> {
   try {
-    const apiCourses = await fetchCourses();
-    const enrolledCourseIds = await getStudentEnrolledCourseIds();
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
+    const apiCourses = await fetchCourses(token);
+    const enrolledCourseIds = await getStudentEnrolledCourseIds(token);
     return mapApiCoursesToStudentCourses(apiCourses, enrolledCourseIds);
   } catch (error) {
     console.error('getStudentCourses error:', error);
@@ -55,7 +60,12 @@ export async function getStudentMyCourses(): Promise<Course[]> {
 
 export async function getLecturerCourses(): Promise<LecturerCourse[]> {
   try {
-    const apiCourses = await fetchCourses();
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
+    const apiCourses = await fetchCourses(token);
     return mapApiCoursesToLecturerCourses(apiCourses);
   } catch (error) {
     console.error('getLecturerCourses error:', error);
@@ -184,23 +194,81 @@ export async function getLecturerAssignmentSubmissions(courseId: string, moduleI
   const assignmentData = await getLecturerAssignment(courseId, moduleId, assignmentId);
   if (!assignmentData) return null;
   
-  // Minimal stub for now, will replace with real API call later if needed
-  return {
-    assignment: assignmentData.assignment,
-    course: assignmentData.course,
-    moduleInfo: {
-      id: assignmentData.module.id,
-      title: assignmentData.module.title,
-      orderLabel: assignmentData.module.orderLabel,
-    },
-    stats: {
-      totalStudents: 0,
-      submitted: 0,
-      graded: 0,
-      averageScore: 0,
-    },
-    submissions: [],
-  };
+  try {
+    let token;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get('token')?.value;
+    } catch {}
+
+    const enrollments = token ? await fetchCourseEnrollmentsApi(courseId, token) : [];
+    const rawSubmissions = token ? await fetchAssignmentSubmissionsApi(assignmentId, token) : [];
+
+    const submissions: any[] = rawSubmissions.map((sub: any) => {
+      const student = sub.student || {};
+      const initials = student.name ? student.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "M";
+
+      return {
+        id: sub.id,
+        student: {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          avatarInitials: initials,
+        },
+        submittedAt: sub.createdAt,
+        status: sub.status === 'GRADED' ? 'Graded' : 'Pending',
+        score: sub.score ?? undefined,
+        fileUrl: sub.fileUrl ?? undefined,
+        note: sub.note ?? undefined,
+        feedback: sub.feedback ?? undefined,
+      };
+    });
+
+    const totalStudents = enrollments.length;
+    const submittedCount = rawSubmissions.length;
+    const gradedCount = rawSubmissions.filter((s: any) => s.status === 'GRADED').length;
+    
+    const gradedWithScores = rawSubmissions.filter((s: any) => s.score !== null && s.score !== undefined);
+    const averageScore = gradedWithScores.length > 0 
+      ? Math.round(gradedWithScores.reduce((acc: number, s: any) => acc + s.score, 0) / gradedWithScores.length)
+      : 0;
+
+    return {
+      assignment: assignmentData.assignment,
+      course: assignmentData.course,
+      moduleInfo: {
+        id: assignmentData.module.id,
+        title: assignmentData.module.title,
+        orderLabel: assignmentData.module.orderLabel,
+      },
+      stats: {
+        totalStudents,
+        submitted: submittedCount,
+        graded: gradedCount,
+        averageScore,
+      },
+      submissions,
+    };
+  } catch (error) {
+    console.error(`getLecturerAssignmentSubmissions error:`, error);
+    return {
+      assignment: assignmentData.assignment,
+      course: assignmentData.course,
+      moduleInfo: {
+        id: assignmentData.module.id,
+        title: assignmentData.module.title,
+        orderLabel: assignmentData.module.orderLabel,
+      },
+      stats: {
+        totalStudents: 0,
+        submitted: 0,
+        graded: 0,
+        averageScore: 0,
+      },
+      submissions: [],
+    };
+  }
 }
 
 export async function getLecturerStudentProgress(courseId: string, studentId: string): Promise<LecturerStudentProgressData | null> {

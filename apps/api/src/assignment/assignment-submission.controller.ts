@@ -25,8 +25,8 @@ export class AssignmentSubmissionController {
   async grade(
     @Param('id') id: string,
     @Body() data: { score: number; feedback?: string },
-    @Request() req: any,
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.assignmentService.gradeSubmission(id, req.user.id, data);
+    return this.assignmentService.gradeSubmission(id, req.user.id, data, req.user.role);
   }
 }

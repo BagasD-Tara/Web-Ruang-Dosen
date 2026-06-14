@@ -3,20 +3,20 @@
 import Link from 'next/link';
 import React from 'react';
 import type {
+  AssignmentEditorMode,
   LecturerAssignmentStatus,
+  LecturerCourse,
   LecturerCourseModule,
   LecturerModuleAssessment,
 } from '@/lib/types/course';
-import type { LecturerCourse } from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
 import { DeleteConfirmationDialog } from './shared/DeleteConfirmationDialog';
+import { updateFormField } from './shared/updateFormField';
+import { uploadFileApi } from '@/lib/api/courseApi';
 import {
   LECTURER_CARD_CLASSNAME,
   LECTURER_COMPACT_CONTROL_CLASSNAME,
 } from './shared/lecturerUiStyles';
-import { updateFormField } from './shared/updateFormField';
-
-type AssignmentEditorMode = 'create' | 'edit';
 
 interface ExistingAssignmentItem {
   assignment: LecturerModuleAssessment;
@@ -32,6 +32,7 @@ interface AssignmentEditorFormState {
   status: LecturerAssignmentStatus;
   templateName: string;
   templateMeta: string;
+  templateUrl: string;
 }
 
 interface LecturerAssignmentEditorViewProps {
@@ -71,8 +72,35 @@ export function LecturerAssignmentEditorView({
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isPending, setIsPending] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
 
   const pageTitle = mode === 'create' ? 'Create New Assignment' : 'Edit Assignment';
+
+  const handleTemplateUpload = async (file: File) => {
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    if (!token) {
+      setUploadError('Sesi login berakhir. Silakan login ulang.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const result = await uploadFileApi(file, token);
+      setFormState(prev => ({
+        ...prev,
+        templateUrl: result.url,
+        templateName: file.name,
+        templateMeta: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+      }));
+    } catch (err: any) {
+      console.error('Template upload failed:', err);
+      setUploadError(err.message || 'Gagal mengunggah file template.');
+    } finally {
+      setUploading(false);
+    }
+  };
   const submitButtonLabel = mode === 'create' ? 'Create Assignment' : 'Save Changes';
   const courseHref = `/dosen/courses/${course.id}`;
   const assignmentsHref = `/dosen/courses/${course.id}/assignments`;
@@ -184,28 +212,36 @@ export function LecturerAssignmentEditorView({
                 </FormField>
               </FormSection>
 
-              <FormSection>
-                <h2
-                  className="text-[18px] font-bold"
-                  style={{ color: 'var(--color-text-primary)' }}
-                >
-                  Assignment Template
-                </h2>
-                <p className="mt-2 text-base" style={{ color: 'var(--color-text-secondary)' }}>
-                  Upload a template or reference file for students to use.
-                </p>
-                <TemplateUploadBox />
-                {formState.templateName ? (
-                  <AttachedTemplate
-                    fileName={formState.templateName}
-                    fileMeta={formState.templateMeta}
-                    onRemove={() => {
-                      updateFormField('templateName', '', setFormState);
-                      updateFormField('templateMeta', '', setFormState);
-                    }}
-                  />
-                ) : null}
-              </FormSection>
+              {formState.submissionRequirement === 'File Upload (PDF, DOCX, ZIP)' && (
+                <FormSection>
+                  <h2
+                    className="text-[18px] font-bold"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
+                    Assignment Template
+                  </h2>
+                  <p className="mt-2 text-base" style={{ color: 'var(--color-text-secondary)' }}>
+                    Upload a template or reference file for students to use.
+                  </p>
+                  <TemplateUploadBox onUpload={handleTemplateUpload} uploading={uploading} />
+                  {uploadError && (
+                    <div className="mt-2 text-sm font-semibold text-red-600">
+                      {uploadError}
+                    </div>
+                  )}
+                  {formState.templateName ? (
+                    <AttachedTemplate
+                      fileName={formState.templateName}
+                      fileMeta={formState.templateMeta}
+                      onRemove={() => {
+                        updateFormField('templateName', '', setFormState);
+                        updateFormField('templateMeta', '', setFormState);
+                        updateFormField('templateUrl', '', setFormState);
+                      }}
+                    />
+                  ) : null}
+                </FormSection>
+              )}
 
               <FormSection>
                 <h2
@@ -521,19 +557,40 @@ function SelectInput({
   );
 }
 
-function TemplateUploadBox() {
+function TemplateUploadBox({ onUpload, uploading }: { onUpload: (file: File) => void; uploading: boolean }) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      onUpload(e.target.files[0]);
+    }
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div
       className="mt-4 flex min-h-[136px] flex-col items-center justify-center rounded-[16px] border-2 border-dashed px-5 py-6 text-center"
       style={{ borderColor: '#C5CADB', background: '#FBFCFE' }}
     >
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
       <button
         type="button"
-        className="inline-flex h-11 items-center gap-2 rounded-[12px] px-5 text-base font-semibold text-white"
+        onClick={triggerFileSelect}
+        disabled={uploading}
+        className="inline-flex h-11 items-center gap-2 rounded-[12px] px-5 text-base font-semibold text-white disabled:opacity-50"
         style={{ background: 'var(--color-brand-primary)' }}
       >
         <UploadIcon />
-        Upload Template
+        {uploading ? 'Uploading...' : 'Upload Template'}
       </button>
       <p className="mt-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         or drag and drop here
@@ -640,6 +697,7 @@ function createInitialFormState(
       status: assignment.status ?? 'Draft',
       templateName: assignment.templateName ?? '',
       templateMeta: assignment.templateMeta ?? '',
+      templateUrl: assignment.templateUrl ?? '',
     };
   }
 
@@ -652,6 +710,7 @@ function createInitialFormState(
     status: 'Draft',
     templateName: '',
     templateMeta: '',
+    templateUrl: '',
   };
 }
 
@@ -668,6 +727,7 @@ function createAssignmentFormData(
   formData.set('status', statusOverride ?? formState.status);
   formData.set('templateName', formState.templateName);
   formData.set('templateMeta', formState.templateMeta);
+  formData.set('templateUrl', formState.templateUrl);
   return formData;
 }
 

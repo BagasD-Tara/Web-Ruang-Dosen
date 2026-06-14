@@ -1,6 +1,7 @@
 export type CourseContentType = 'video' | 'document' | 'article' | 'quiz' | 'assignment' | 'lab';
 export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced' | string;
 export type CourseContentTab = 'materials' | 'quizzes' | 'assignments' | 'labs';
+export type AssignmentEditorMode = 'create' | 'edit';
 
 export interface CourseContentItem {
   id: string;
@@ -16,6 +17,11 @@ export interface CourseContentItem {
     previewText?: string;
   };
   isCompleted?: boolean;
+  templateName?: string;
+  templateUrl?: string;
+  submissionRequirement?: string;
+  submissionStatus?: 'pending' | 'submitted' | 'graded' | null;
+  submissionScore?: number | null;
 }
 
 export interface CourseModule {
@@ -67,6 +73,7 @@ export interface LecturerCourse {
   department: string;
   semester?: string;
   credits?: number;
+  teachingFormat?: string;
   enrollmentCap?: number;
   studentCount: number;
   moduleCount: number;
@@ -95,7 +102,7 @@ export type LecturerAssignmentStatus = 'Active' | 'Draft' | 'Scheduled' | 'Close
 export interface LecturerModuleAssessment {
   id: string;
   title: string;
-  kind: 'quiz' | 'assignment';
+  kind: 'quiz' | 'assignment' | 'lab';
   meta: string;
   description: string;
   status: LecturerAssignmentStatus;
@@ -104,6 +111,7 @@ export interface LecturerModuleAssessment {
   submissionRequirement?: string;
   templateName?: string;
   templateMeta?: string;
+  templateUrl?: string;
   submittedCount?: number;
   studentCount?: number;
   badgeLabel?: string;

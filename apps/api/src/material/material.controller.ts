@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBody, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MaterialType } from '@prisma/client';
 
+@ApiTags('Materials')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('materials')
@@ -42,10 +43,11 @@ export class MaterialController {
       url?: string;
       moduleId: string;
     },
-    @Request() req: any,
+    @Request() req: { user: { id: string; role: string } },
   ) {
     const userId = req.user.id;
-    return this.materialService.create(userId, data);
+    const userRole = req.user.role;
+    return this.materialService.create(userId, userRole, data);
   }
 
   @Get(':id')
@@ -67,7 +69,7 @@ export class MaterialController {
   })
   update(
     @Param('id') id: string,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
     @Body()
     data: {
       title?: string;
@@ -76,11 +78,11 @@ export class MaterialController {
       url?: string;
     },
   ) {
-    return this.materialService.update(id, req.user.id, data);
+    return this.materialService.update(id, req.user.id, req.user.role, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.materialService.remove(id, req.user.id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string; role: string } }) {
+    return this.materialService.remove(id, req.user.id, req.user.role);
   }
 }

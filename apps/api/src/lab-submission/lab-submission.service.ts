@@ -79,7 +79,7 @@ export class LabSubmissionService {
    * Dosen melihat daftar mahasiswa yang sudah mengumpulkan hasil praktikum.
    * Menampilkan nama mahasiswa, file, waktu pengumpulan, status, dan skor.
    */
-  async getSubmissions(labId: string, userId: string) {
+  async getSubmissions(labId: string, userId: string, userRole?: string) {
     // Cek lab ada di database beserta data course-nya
     const lab = await this.prisma.practicalLab.findUnique({
       where: { id: labId },
@@ -90,10 +90,10 @@ export class LabSubmissionService {
       throw new NotFoundException(`Lab dengan ID "${labId}" tidak ditemukan`);
     }
 
-    // Cek bahwa userId adalah dosen pemilik course
-    if (lab.module.course.instructorId !== userId) {
+    // Cek bahwa userId adalah dosen pemilik course atau admin
+    if (lab.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Hanya dosen pemilik mata kuliah yang bisa melihat daftar submission.',
+        'Hanya dosen pemilik mata kuliah atau Admin yang bisa melihat daftar submission.',
       );
     }
 
@@ -123,6 +123,7 @@ export class LabSubmissionService {
     submissionId: string,
     userId: string,
     data: { score: number; feedback?: string },
+    userRole?: string,
   ) {
     // Validasi score harus antara 0 dan 100
     if (data.score < 0 || data.score > 100) {
@@ -145,10 +146,10 @@ export class LabSubmissionService {
       );
     }
 
-    // Cek bahwa userId adalah dosen pemilik course dari lab tersebut
-    if (submission.lab.module.course.instructorId !== userId) {
+    // Cek bahwa userId adalah dosen pemilik course dari lab tersebut atau admin
+    if (submission.lab.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Hanya dosen pemilik mata kuliah yang bisa memberikan nilai.',
+        'Hanya dosen pemilik mata kuliah atau Admin yang bisa memberikan nilai.',
       );
     }
 
@@ -163,5 +164,16 @@ export class LabSubmissionService {
     });
 
     return updatedSubmission;
+  }
+
+  async getMySubmission(labId: string, studentId: string) {
+    return this.prisma.labSubmission.findUnique({
+      where: {
+        labId_studentId: {
+          labId,
+          studentId,
+        },
+      },
+    });
   }
 }

@@ -6,18 +6,29 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Assignment } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class AssignmentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
-  async create(data: {
-    title: string;
-    description: string;
-    status?: string;
-    deadline: Date;
-    moduleId: string;
-  }): Promise<Assignment> {
+  async create(
+    userId: string,
+    userRole: string,
+    data: {
+      title: string;
+      description: string;
+      status?: string;
+      deadline: Date;
+      templateUrl?: string;
+      templateName?: string;
+      submissionRequirement?: string;
+      moduleId: string;
+    },
+  ): Promise<Assignment> {
     const module = await this.prisma.courseModule.findUnique({
       where: { id: data.moduleId },
       include: { course: true },
@@ -27,6 +38,12 @@ export class AssignmentService {
       throw new NotFoundException('Module not found');
     }
 
+    if (module.course.instructorId !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Forbidden: Only the instructor or Admin can create an assignment for this course',
+      );
+    }
+
     // 2. create assignment
     const assignment = await this.prisma.assignment.create({
       data: {
@@ -34,9 +51,19 @@ export class AssignmentService {
         description: data.description,
         status: data.status ?? 'DRAFT',
         deadline: data.deadline,
+        templateUrl: data.templateUrl,
+        templateName: data.templateName,
+        submissionRequirement: data.submissionRequirement,
         moduleId: data.moduleId,
       },
     });
+
+    // Kirim notifikasi cohort ke mahasiswa & dosen di kelas tersebut
+    await this.notificationService.createCohortNotification(
+      module.courseId,
+      'Tugas Baru Dirilis',
+      `Tugas baru '${data.title}' telah ditambahkan pada modul ${module.title} di kelas ${module.course.title}.`,
+    );
 
     return assignment;
   }
@@ -60,7 +87,16 @@ export class AssignmentService {
   async update(
     id: string,
     userId: string,
-    data: { title?: string; description?: string; deadline?: Date; status?: string },
+    userRole: string,
+    data: { 
+      title?: string; 
+      description?: string; 
+      deadline?: Date; 
+      status?: string;
+      templateUrl?: string;
+      templateName?: string;
+      submissionRequirement?: string;
+    },
   ) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
@@ -71,10 +107,10 @@ export class AssignmentService {
       throw new NotFoundException('Assignment not found');
     }
 
-    // Validasi kepemilikan Dosen
-    if (assignment.module.course.instructorId !== userId) {
+    // Validasi kepemilikan Dosen atau ADMIN
+    if (assignment.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Forbidden: Only the instructor can update this assignment',
+        'Forbidden: Only the instructor or Admin can update this assignment',
       );
     }
 
@@ -84,7 +120,7 @@ export class AssignmentService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole: string) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: { module: { include: { course: true } } },
@@ -94,10 +130,10 @@ export class AssignmentService {
       throw new NotFoundException('Assignment not found');
     }
 
-    // Validasi kepemilikan Dosen
-    if (assignment.module.course.instructorId !== userId) {
+    // Validasi kepemilikan Dosen atau ADMIN
+    if (assignment.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Forbidden: Only the instructor can delete this assignment',
+        'Forbidden: Only the instructor or Admin can delete this assignment',
       );
     }
 
@@ -165,7 +201,7 @@ export class AssignmentService {
     });
   }
 
-  async getSubmissions(assignmentId: string, userId: string) {
+  async getSubmissions(assignmentId: string, userId: string, userRole?: string) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id: assignmentId },
       include: { module: { include: { course: true } } },
@@ -175,9 +211,9 @@ export class AssignmentService {
       throw new NotFoundException('Assignment not found');
     }
 
-    // Validation: Only course instructor can see submissions
-    if (assignment.module.course.instructorId !== userId) {
-      throw new ForbiddenException('Only the instructor can view submissions');
+    // Validation: Only course instructor or admin can see submissions
+    if (assignment.module.course.instructorId !== userId && userRole !== 'ADMIN') {
+      throw new ForbiddenException('Only the instructor or admin can view submissions');
     }
 
     return this.prisma.assignmentSubmission.findMany({
@@ -199,6 +235,7 @@ export class AssignmentService {
     submissionId: string,
     userId: string,
     data: { score: number; feedback?: string },
+    userRole?: string,
   ) {
     if (data.score < 0 || data.score > 100) {
       throw new BadRequestException('Score harus antara 0 dan 100.');
@@ -217,10 +254,10 @@ export class AssignmentService {
       throw new NotFoundException('Submission not found');
     }
 
-    // Validation: Only course instructor can grade
-    if (submission.assignment.module.course.instructorId !== userId) {
+    // Validation: Only course instructor or admin can grade
+    if (submission.assignment.module.course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException(
-        'Only the instructor can grade this submission',
+        'Only the instructor or admin can grade this submission',
       );
     }
 
@@ -230,6 +267,17 @@ export class AssignmentService {
         score: data.score,
         feedback: data.feedback,
         status: 'GRADED',
+      },
+    });
+  }
+
+  async getMySubmission(assignmentId: string, studentId: string) {
+    return this.prisma.assignmentSubmission.findUnique({
+      where: {
+        assignmentId_studentId: {
+          assignmentId,
+          studentId,
+        },
       },
     });
   }

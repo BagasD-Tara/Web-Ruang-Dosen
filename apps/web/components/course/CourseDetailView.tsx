@@ -8,9 +8,10 @@ import {
   CheckCircle2, ChevronDown, ChevronUp, Calendar, Clock,
 } from 'lucide-react';
 import { cn } from '@/app/lib/utils';
-import { getQuizzesByCourse } from '@/app/lib/api/quiz';
+import { getQuizzesByCourse, getQuizSubmission } from '@/app/lib/api/quiz';
 import { QuizInfoModal } from '@/app/components/quiz/QuizInfoModal';
 import type { Quiz } from '@/app/types/quiz';
+import { slugify } from '@/utils/slugify';
 
 import type { CourseContentItem, CourseContentTab, CourseDetail, CourseModule } from '@/lib/types/course';
 import type { CourseSource } from '@/lib/courseNavigation';
@@ -69,14 +70,14 @@ function EmptyState({ text }: { text: string }) {
 
 interface QuizRowProps {
   quiz: Quiz;
+  completedAttemptId: string | null;
   onStart: (quiz: Quiz) => void;
   onReview: (attemptId: string, quizId: string) => void;
 }
 
-function QuizRow({ quiz, onStart, onReview }: QuizRowProps) {
+function QuizRow({ quiz, completedAttemptId, onStart, onReview }: QuizRowProps) {
   if (!quiz) return null;
 
-  const completedAttemptId = getCompletedAttemptId(quiz.id);
   const isCompleted = Boolean(completedAttemptId);
 
   return (
@@ -131,18 +132,76 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
   );
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [courseQuizzes, setCourseQuizzes] = useState<Quiz[]>([]);
+  const [completedQuizAttempts, setCompletedQuizAttempts] = useState<Record<string, string>>({});
+  const [assignmentSubmissions, setAssignmentSubmissions] = useState<Record<string, { status: string; score?: number | null }>>({});
 
   useEffect(() => {
     async function fetchQuizzes() {
       try {
         const quizzes = await getQuizzesByCourse(course.id.toString());
         setCourseQuizzes(quizzes);
+
+        const attempts: Record<string, string> = {};
+        await Promise.all(
+          quizzes.map(async (quiz) => {
+            try {
+              const submission = await getQuizSubmission(quiz.id);
+              if (submission) {
+                attempts[quiz.id] = submission.id;
+              }
+            } catch (err) {
+              // Ignore
+            }
+          })
+        );
+        setCompletedQuizAttempts(attempts);
       } catch (err) {
         console.error('Failed to load course quizzes', err);
       }
     }
     fetchQuizzes();
   }, [course.id]);
+
+  // Fetch student's assignment submissions for score display
+  useEffect(() => {
+    async function fetchMyAssignmentSubmissions() {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      if (!token) return;
+
+      const allAssignmentIds: string[] = [];
+      course.tabs.assignments?.forEach((mod) => {
+        mod.items.forEach((item) => {
+          if (item.type === 'assignment') allAssignmentIds.push(item.id);
+        });
+      });
+
+      if (allAssignmentIds.length === 0) return;
+
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+      const results: Record<string, { status: string; score?: number | null }> = {};
+
+      await Promise.all(
+        allAssignmentIds.map(async (assignmentId) => {
+          try {
+            const res = await fetch(`${baseUrl}/assignments/${assignmentId}/my-submission`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data) {
+                results[assignmentId] = { status: data.status, score: data.score };
+              }
+            }
+          } catch {
+            // Ignore individual failures
+          }
+        })
+      );
+
+      setAssignmentSubmissions(results);
+    }
+    fetchMyAssignmentSubmissions();
+  }, [course.id, course.tabs.assignments]);
 
   useEffect(() => {
     // Update openModules when switching tabs
@@ -326,6 +385,8 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
                           const Icon = iconConfig.Icon;
                           const href = activeTab === 'materials' 
                             ? buildMaterialHref(course.id, item.id, source)
+                            : activeTab === 'labs'
+                            ? `/labs/${slugify(item.title)}`
                             : buildAssignmentHref(course.id, item.id, source);
 
                           return (
@@ -344,6 +405,34 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
                                 <p className="font-medium text-gray-900 text-sm">{item.title}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">{item.meta}</p>
                               </div>
+                              {/* Assignment submission status & score */}
+                              {activeTab === 'assignments' && (() => {
+                                const sub = assignmentSubmissions[item.id];
+                                if (sub?.status === 'GRADED') {
+                                  return (
+                                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                      <span className="text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider" style={{ background: '#D1FAE5', color: '#065F46' }}>
+                                        Sudah Dinilai
+                                      </span>
+                                      <span className="text-sm font-bold" style={{ color: (sub.score ?? 0) >= 80 ? '#059669' : '#D97706' }}>
+                                        {sub.score}/100
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                if (sub?.status === 'PENDING') {
+                                  return (
+                                    <span className="text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider flex-shrink-0" style={{ background: '#DBEAFE', color: '#1D4ED8' }}>
+                                      Menunggu Penilaian
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span className="text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider flex-shrink-0" style={{ background: '#FEF3C7', color: '#92400E' }}>
+                                    Belum Dikerjakan
+                                  </span>
+                                );
+                              })()}
                               {item.isCompleted && (
                                 <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-blue-600" />
                               )}
@@ -356,6 +445,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
                           <QuizRow
                             key={quiz.id}
                             quiz={quiz}
+                            completedAttemptId={completedQuizAttempts[quiz.id] || getCompletedAttemptId(quiz.id)}
                             onStart={handleStartQuiz}
                             onReview={handleReview}
                           />
@@ -375,7 +465,7 @@ export function CourseDetailView({ course }: CourseDetailViewProps) {
                 <EmptyState text="Belum ada kuis untuk course ini." />
               ) : (
                 courseQuizzes.map((quiz) => {
-                  const completedAttemptId = getCompletedAttemptId(quiz.id);
+                  const completedAttemptId = completedQuizAttempts[quiz.id] || getCompletedAttemptId(quiz.id);
                   const isCompleted = Boolean(completedAttemptId);
                   return (
                     <div

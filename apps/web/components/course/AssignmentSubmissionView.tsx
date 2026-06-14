@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { CourseContentItem, CourseDetail } from '@/lib/types/course';
+import { uploadFileApi, submitAssignmentApi } from '@/lib/api/courseApi';
 import {
   buildAssignmentHref,
   buildCourseDetailHref,
@@ -23,6 +24,7 @@ interface AssignmentActionBarProps {
   previousHref?: string;
   nextHref?: string;
   onSubmit?: () => void;
+  submitting?: boolean;
 }
 
 interface AssignmentNavButtonProps {
@@ -65,6 +67,85 @@ export function AssignmentSubmissionView({
     ? buildAssignmentHref(course.id, nextAssignment.id, source)
     : undefined;
 
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+
+  // Form states
+  const [file, setFile] = useState<File | null>(null);
+  const [textResponse, setTextResponse] = useState('');
+  const [linkResponse, setLinkResponse] = useState('');
+  const [studentNote, setStudentNote] = useState('');
+  
+  // Status states
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const requirement = assignment.submissionRequirement || 'File Upload (PDF, DOCX, ZIP)';
+
+  const handleSubmit = async () => {
+    if (!token) {
+      setError('Sesi berakhir, silakan login kembali.');
+      return;
+    }
+
+    const isText = requirement.includes('Text');
+    const isLink = requirement.includes('Link') || requirement.includes('External');
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      setSuccess(null);
+
+      let fileUrl = '';
+
+      if (isText) {
+        if (!textResponse.trim()) {
+          setError('Harap ketik jawaban teks Anda.');
+          setSubmitting(false);
+          return;
+        }
+        fileUrl = 'text-submission'; // Dummy indicator for text submission
+      } else if (isLink) {
+        if (!linkResponse.trim()) {
+          setError('Harap masukkan tautan / link jawaban Anda.');
+          setSubmitting(false);
+          return;
+        }
+        fileUrl = linkResponse;
+      } else {
+        // File Upload
+        if (!file) {
+          setError('Harap pilih file tugas terlebih dahulu.');
+          setSubmitting(false);
+          return;
+        }
+        const uploadResult = await uploadFileApi(file, token);
+        fileUrl = uploadResult.url;
+      }
+
+      // Submit assignment
+      // Note is passed as studentNote. If it is Text submission, we prepend the text content to the note
+      const finalNote = isText 
+        ? `[Teks Jawaban]: ${textResponse}\n\n[Catatan]: ${studentNote}`.trim()
+        : studentNote;
+
+      await submitAssignmentApi(assignment.id, { fileUrl, note: finalNote }, token);
+
+      setSuccess('Tugas berhasil dikumpulkan!');
+      setIsSubmitted(true);
+      setFile(null);
+      setTextResponse('');
+      setLinkResponse('');
+      setStudentNote('');
+    } catch (err: any) {
+      console.error('Submit error:', err);
+      setError(err.message || 'Terjadi kesalahan saat mengumpulkan tugas.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex min-h-full flex-col">
       <div className="mx-auto w-full max-w-[1280px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -76,18 +157,47 @@ export function AssignmentSubmissionView({
           showParent={source === 'my-courses'}
         />
 
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-800 border border-red-200">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 rounded-xl bg-green-50 p-4 text-sm font-semibold text-green-800 border border-green-200">
+            {success}
+          </div>
+        )}
+
         <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
           <main className="space-y-7">
             <AssignmentHero assignment={assignment} />
             <AssignmentBrief assignment={assignment} />
-            <SubmissionBox />
+            <SubmissionBox
+              requirement={requirement}
+              file={file}
+              setFile={setFile}
+              textResponse={textResponse}
+              setTextResponse={setTextResponse}
+              linkResponse={linkResponse}
+              setLinkResponse={setLinkResponse}
+              studentNote={studentNote}
+              setStudentNote={setStudentNote}
+              isSubmitted={isSubmitted}
+              submitting={submitting}
+            />
           </main>
 
-          <AssignmentStatusCard assignment={assignment} />
+          <AssignmentStatusCard assignment={assignment} isSubmitted={isSubmitted} />
         </div>
       </div>
 
-      <AssignmentActionBar previousHref={previousHref} nextHref={nextHref} onSubmit={() => alert('Assignment Submitted!')} />
+      <AssignmentActionBar 
+        previousHref={previousHref} 
+        nextHref={nextHref} 
+        onSubmit={handleSubmit} 
+        submitting={submitting || isSubmitted}
+      />
     </div>
   );
 }
@@ -127,10 +237,10 @@ function AssignmentBreadcrumbs({
         {course.breadcrumbLabel ?? course.title}
       </Link>
       <span>&rsaquo;</span>
-      <span>Module 1</span>
+      <span>Tugas</span>
       <span>&rsaquo;</span>
       <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        Assignment
+        Pengumpulan
       </span>
     </nav>
   );
@@ -143,7 +253,7 @@ function AssignmentHero({ assignment }: { assignment: CourseContentItem }) {
         {assignment.title}
       </h1>
       <p className="mt-3 text-base leading-7 sm:text-lg" style={{ color: 'var(--color-text-secondary)' }}>
-        Demonstrate your foundational understanding of neural networks.
+        Kerjakan tugas ini sesuai dengan petunjuk yang diberikan di bawah.
       </p>
     </AssignmentSection>
   );
@@ -172,8 +282,33 @@ function AssignmentBrief({ assignment }: { assignment: CourseContentItem }) {
   );
 }
 
-function SubmissionBox() {
-  const [file, setFile] = React.useState<File | null>(null);
+function SubmissionBox({
+  requirement,
+  file,
+  setFile,
+  textResponse,
+  setTextResponse,
+  linkResponse,
+  setLinkResponse,
+  studentNote,
+  setStudentNote,
+  isSubmitted,
+  submitting,
+}: {
+  requirement: string;
+  file: File | null;
+  setFile: (file: File | null) => void;
+  textResponse: string;
+  setTextResponse: (val: string) => void;
+  linkResponse: string;
+  setLinkResponse: (val: string) => void;
+  studentNote: string;
+  setStudentNote: (val: string) => void;
+  isSubmitted: boolean;
+  submitting: boolean;
+}) {
+  const isText = requirement.includes('Text') || requirement === 'Text Entry';
+  const isLink = requirement.includes('Link') || requirement.includes('External');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -181,32 +316,96 @@ function SubmissionBox() {
     }
   };
 
+  if (isSubmitted) {
+    return (
+      <AssignmentSection>
+        <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          Submission Box
+        </h2>
+        <div className="mt-5 rounded-2xl border border-green-200 bg-green-50 p-6 text-center text-green-800">
+          <p className="font-semibold text-lg">✓ Jawaban Anda Telah Dikumpulkan</p>
+          <p className="text-sm mt-1">Tugas ini siap dinilai oleh Dosen/Admin.</p>
+        </div>
+      </AssignmentSection>
+    );
+  }
+
   return (
     <AssignmentSection>
-      <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-        Submission Box
+      <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+        Submission Box ({requirement})
       </h2>
-      <div className="mt-5 rounded-[24px] border-2 border-dashed px-5 py-10 text-center relative" style={{ borderColor: '#BFC7DA', background: '#FBFCFE' }}>
-        <input 
-          type="file" 
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-          onChange={handleFileChange}
-          accept=".pdf,.py,.ipynb"
-        />
-        <UploadIcon />
-        <h3 className="mt-4 text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          {file ? file.name : 'Drag and drop your files here'}
-        </h3>
-        <p className="mt-3 text-base" style={{ color: 'var(--color-text-secondary)' }}>
-          Supported formats: PDF, .py, .ipynb (Max 50MB)
-        </p>
-        <button
-          type="button"
-          className="mt-7 inline-flex h-12 items-center justify-center rounded-xl border bg-white px-7 text-base font-semibold transition-opacity hover:opacity-80"
-          style={{ borderColor: 'var(--color-border)', color: 'var(--color-brand-primary)' }}
-        >
-          {file ? 'Change File' : 'Browse Files'}
-        </button>
+
+      <div className="space-y-5">
+        {isText ? (
+          <div>
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              Ketik Jawaban Anda:
+            </label>
+            <textarea
+              className="w-full min-h-[160px] p-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+              style={{ borderColor: 'var(--color-border)' }}
+              placeholder="Tuliskan jawaban lengkap Anda di sini..."
+              value={textResponse}
+              onChange={(e) => setTextResponse(e.target.value)}
+              disabled={submitting}
+            />
+          </div>
+        ) : isLink ? (
+          <div>
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              Masukkan Link Jawaban:
+            </label>
+            <input
+              type="url"
+              className="w-full p-3.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+              style={{ borderColor: 'var(--color-border)' }}
+              placeholder="https://github.com/username/project atau tautan tugas Anda"
+              value={linkResponse}
+              onChange={(e) => setLinkResponse(e.target.value)}
+              disabled={submitting}
+            />
+          </div>
+        ) : (
+          <div className="rounded-[24px] border-2 border-dashed px-5 py-10 text-center relative" style={{ borderColor: '#BFC7DA', background: '#FBFCFE' }}>
+            <input 
+              type="file" 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              onChange={handleFileChange}
+              accept=".pdf,.py,.ipynb,.docx,.zip"
+              disabled={submitting}
+            />
+            <UploadIcon />
+            <h3 className="mt-4 text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {file ? file.name : 'Drag and drop your files here'}
+            </h3>
+            <p className="mt-3 text-xs sm:text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              Supported formats: PDF, DOCX, ZIP, PY, IPYNB (Max 50MB)
+            </p>
+            <button
+              type="button"
+              className="mt-7 inline-flex h-12 items-center justify-center rounded-xl border bg-white px-7 text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-brand-primary)' }}
+            >
+              {file ? 'Change File' : 'Browse Files'}
+            </button>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+            Catatan Tambahan (Opsional):
+          </label>
+          <input
+            type="text"
+            className="w-full p-3.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+            style={{ borderColor: 'var(--color-border)' }}
+            placeholder="Tulis catatan atau pesan singkat untuk dosen..."
+            value={studentNote}
+            onChange={(e) => setStudentNote(e.target.value)}
+            disabled={submitting}
+          />
+        </div>
       </div>
     </AssignmentSection>
   );
@@ -220,7 +419,13 @@ function AssignmentSection({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AssignmentStatusCard({ assignment }: { assignment: CourseContentItem }) {
+function AssignmentStatusCard({ 
+  assignment, 
+  isSubmitted 
+}: { 
+  assignment: CourseContentItem;
+  isSubmitted: boolean;
+}) {
   const metaParts = assignment.meta ? assignment.meta.split(' • ') : [];
   const points = metaParts.length > 0 ? metaParts[0] : '100 Points';
   const dueDate = metaParts.length > 1 ? metaParts[1] : 'No Due Date';
@@ -246,7 +451,7 @@ function AssignmentStatusCard({ assignment }: { assignment: CourseContentItem })
         <StatusRow
           icon={<ClipboardStatusIcon />}
           label="Submission Status"
-          primaryText="Not Submitted"
+          primaryText={isSubmitted ? 'Submitted' : 'Not Submitted'}
           badge
         />
       </div>
@@ -290,15 +495,9 @@ function StatusRow({
   );
 }
 
-interface AssignmentActionBarProps {
-  previousHref?: string;
-  nextHref?: string;
-  onSubmit?: () => void;
-}
-
-function AssignmentActionBar({ previousHref, nextHref, onSubmit }: AssignmentActionBarProps) {
+function AssignmentActionBar({ previousHref, nextHref, onSubmit, submitting }: AssignmentActionBarProps) {
   return (
-    <div className="border-t bg-white px-4 py-4 sm:px-6 lg:px-8" style={{ borderColor: 'var(--color-border)' }}>
+    <div className="border-t bg-white px-4 py-4 sm:px-6 lg:px-8 mt-6" style={{ borderColor: 'var(--color-border)' }}>
       <div className="mx-auto grid w-full max-w-[1280px] gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <AssignmentNavButton href={previousHref} label="Previous" direction="previous" />
@@ -308,9 +507,10 @@ function AssignmentActionBar({ previousHref, nextHref, onSubmit }: AssignmentAct
           <button
             type="button"
             onClick={onSubmit}
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[#86A2D5] px-8 text-base font-semibold text-white transition-opacity hover:opacity-90"
+            disabled={submitting}
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-[#004AC6] px-8 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit Assignment
+            {submitting ? 'Submitting...' : 'Submit Assignment'}
           </button>
         </div>
       </div>
@@ -401,7 +601,7 @@ function TrophyIcon() {
   return (
     <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
       <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 12v4M9 20h6M10 16h4v4h-4v-4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 6H5a3 3 0 0 0 3 3M16 6h3a3 3 0 0 1-3 3M12 12v4M9 20h6M10 16h4v4h-4v-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -410,8 +610,7 @@ function ClipboardStatusIcon() {
   return (
     <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
       <path d="M9 4h6l1 2h3v16H5V6h3l1-2Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M9 12h4M9 16h3M16 15l2 2 3-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 12h4M9 16h3M16 15l2 2 3-4" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
-

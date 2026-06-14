@@ -19,8 +19,11 @@ export class CourseService {
     credits?: number;
     department?: string;
     semester?: string;
+    teachingFormat?: string;
     enrollmentCap?: number;
     status?: string;
+    targetSemester?: number;
+    targetAngkatan?: number;
   }): Promise<Course> {
     // 1. check if instructor exists
     const instructor = await this.prisma.user.findUnique({
@@ -44,9 +47,12 @@ export class CourseService {
         credits: this.normalizeCourseCredits(data.credits),
         department: this.normalizeCourseText(data.department, 'Computer Science'),
         semester: this.normalizeCourseText(data.semester, 'Fall Semester 2026'),
+        teachingFormat: data.teachingFormat || 'Teori dan Praktikum',
         enrollmentCap: this.normalizeEnrollmentCap(data.enrollmentCap),
         status: this.normalizeCourseStatus(data.status),
         instructorId: data.instructorId,
+        targetSemester: data.targetSemester ?? 1,
+        targetAngkatan: data.targetAngkatan ?? null,
       },
     });
 
@@ -93,10 +99,10 @@ export class CourseService {
     });
   }
 
-  async enrollStudentByEmail(courseId: string, email: string, instructorId: string) {
+  async enrollStudentByEmail(courseId: string, email: string, instructorId: string, userRole?: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can enroll students');
+    if (course.instructorId !== instructorId && userRole !== 'ADMIN') throw new ForbiddenException('Only the instructor can enroll students');
 
     const student = await this.prisma.user.findUnique({ where: { email } });
     if (!student) throw new NotFoundException('Student not found');
@@ -118,10 +124,10 @@ export class CourseService {
     });
   }
 
-  async removeEnrollment(courseId: string, studentId: string, instructorId: string) {
+  async removeEnrollment(courseId: string, studentId: string, instructorId: string, userRole?: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can remove students');
+    if (course.instructorId !== instructorId && userRole !== 'ADMIN') throw new ForbiddenException('Only the instructor can remove students');
 
     const existingEnrollment = await this.prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: studentId, courseId } },
@@ -133,10 +139,10 @@ export class CourseService {
     });
   }
 
-  async getEnrollments(courseId: string, instructorId: string) {
+  async getEnrollments(courseId: string, instructorId: string, userRole?: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (course.instructorId !== instructorId) throw new ForbiddenException('Only the instructor can view enrollments');
+    if (course.instructorId !== instructorId && userRole !== 'ADMIN') throw new ForbiddenException('Only the instructor can view enrollments');
 
     return this.prisma.enrollment.findMany({
       where: { courseId },
@@ -155,7 +161,7 @@ export class CourseService {
         where: { instructorId: userId },
         include: {
           instructor: { select: { id: true, name: true, email: true } },
-          _count: { select: { enrollments: true } },
+          _count: { select: { enrollments: true, modules: true } },
         },
       });
     }
@@ -177,7 +183,38 @@ export class CourseService {
     return enrollments.map((e) => e.course);
   }
 
-  async findAll() {
+  async findAll(userId?: string, userRole?: string) {
+    if (userRole === 'STUDENT' && userId) {
+      const student = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (student) {
+        return this.prisma.course.findMany({
+          where: {
+            targetSemester: student.semester || 1,
+            OR: [
+              { targetAngkatan: null },
+              { targetAngkatan: student.angkatan || undefined },
+            ],
+          },
+          include: {
+            instructor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                xp: true,
+              },
+            },
+            _count: {
+              select: { enrollments: true, modules: true },
+            },
+          },
+        });
+      }
+    }
+
     return this.prisma.course.findMany({
       include: {
         instructor: {
@@ -190,7 +227,7 @@ export class CourseService {
           },
         },
         _count: {
-          select: { enrollments: true },
+          select: { enrollments: true, modules: true },
         },
       },
     });
@@ -200,11 +237,29 @@ export class CourseService {
     const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
+        instructor: { select: { id: true, name: true, email: true } },
+        _count: { select: { enrollments: true } },
+        enrollments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        },
         modules: {
           include: {
             materials: true,
             quizzes: true,
-            assignments: true,
+            assignments: {
+              include: {
+                _count: { select: { submissions: true } },
+              },
+            },
             labs: true,
           },
         },
@@ -226,10 +281,12 @@ export class CourseService {
       credits?: number;
       department?: string;
       semester?: string;
+      teachingFormat?: string;
       enrollmentCap?: number;
       status?: string;
     },
     userId: string,
+    userRole?: string,
   ) {
     const course = await this.prisma.course.findUnique({
       where: { id },
@@ -239,7 +296,7 @@ export class CourseService {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
 
-    if (course.instructorId !== userId) {
+    if (course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException('You are not the instructor of this course');
     }
 
@@ -259,6 +316,9 @@ export class CourseService {
         ...(data.semester !== undefined && {
           semester: this.normalizeCourseText(data.semester, course.semester),
         }),
+        ...(data.teachingFormat !== undefined && {
+          teachingFormat: data.teachingFormat,
+        }),
         ...(data.enrollmentCap !== undefined && {
           enrollmentCap: this.normalizeEnrollmentCap(data.enrollmentCap),
         }),
@@ -269,7 +329,7 @@ export class CourseService {
     });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole?: string) {
     const course = await this.prisma.course.findUnique({
       where: { id },
     });
@@ -278,7 +338,7 @@ export class CourseService {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
 
-    if (course.instructorId !== userId) {
+    if (course.instructorId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException('You are not the instructor of this course');
     }
 

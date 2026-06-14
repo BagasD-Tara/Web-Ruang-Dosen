@@ -9,6 +9,7 @@ interface UpdateCourseSettingsPayload {
   department: string;
   semester: string;
   credits: number;
+  teachingFormat: string;
   enrollmentCap: number;
   description: string;
   status: 'Active' | 'Draft' | 'Archived';
@@ -42,6 +43,7 @@ export async function updateCourseSettingsAction(
         credits: payload.credits,
         department: payload.department.trim(),
         semester: payload.semester.trim(),
+        teachingFormat: payload.teachingFormat.trim(),
         enrollmentCap: payload.enrollmentCap,
         status: payload.status,
       },

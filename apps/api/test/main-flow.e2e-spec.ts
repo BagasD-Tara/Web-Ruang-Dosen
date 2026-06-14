@@ -18,6 +18,7 @@ describe('Main Flow Integration (e2e)', () => {
   let studentToken: string;
   let studentId: string;
   let courseId: string;
+  let moduleId: string;
   let quizId: string;
   let assignmentId: string;
   let submissionId: string;
@@ -104,6 +105,19 @@ describe('Main Flow Integration (e2e)', () => {
     expect(res.body.title).toBe('E2E Fullstack Course');
   });
 
+  it('1.5 Lecturer should be able to create a Module', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/courses/${courseId}/modules`)
+      .set('Authorization', `Bearer ${lecturerToken}`)
+      .send({
+        title: 'Module 1: E2E',
+        description: 'Module testing',
+      })
+      .expect(201);
+    moduleId = res.body.id;
+    expect(res.body.title).toBe('Module 1: E2E');
+  });
+
   it('2. Student should be able to enroll in the Course', async () => {
     await request(app.getHttpServer())
       .post(`/courses/${courseId}/enroll`)
@@ -116,7 +130,7 @@ describe('Main Flow Integration (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/quizzes')
       .set('Authorization', `Bearer ${lecturerToken}`)
-      .send({ title: 'E2E Quiz', courseId, xpReward: 150, passingScore: 50 })
+      .send({ title: 'E2E Quiz', moduleId, xpReward: 150, passingScore: 50 })
       .expect(201);
     quizId = res.body.id;
     expect(res.body.xpReward).toBe(150);
@@ -124,12 +138,14 @@ describe('Main Flow Integration (e2e)', () => {
 
   it('4. Lecturer should be able to add Questions', async () => {
     await request(app.getHttpServer())
-      .post('/quiz-questions')
+      .post(`/quizzes/${quizId}/questions`)
       .set('Authorization', `Bearer ${lecturerToken}`)
       .send({
-        quizId,
         question: '1+1?',
-        options: { A: '1', B: '2', C: '3', D: '4' },
+        optionA: '1',
+        optionB: '2',
+        optionC: '3',
+        optionD: '4',
         correctAnswer: 'B',
       })
       .expect(201);
@@ -144,7 +160,7 @@ describe('Main Flow Integration (e2e)', () => {
         title: 'E2E Task',
         description: 'Do it',
         deadline: new Date().toISOString(),
-        courseId,
+        moduleId,
       })
       .expect(201);
     assignmentId = res.body.id;

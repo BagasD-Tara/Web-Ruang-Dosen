@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
       { source: '/schedule', destination: '/labs', permanent: true },
     ];
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '500mb',
+    },
+  },
 };
 
 export default nextConfig;

@@ -4,12 +4,20 @@ import { getDemoStudentAccessToken } from '@/lib/api/demoStudentSession';
 import { ApiRequestError } from '@/lib/api/httpClient';
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { courseId } = await context.params;
-    const accessToken = await getDemoStudentAccessToken();
+    
+    // Read the authorization header
+    const authHeader = request.headers.get('Authorization');
+    let accessToken = '';
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.substring(7);
+    } else {
+      accessToken = await getDemoStudentAccessToken();
+    }
 
     await enrollInCourse(courseId, accessToken);
 

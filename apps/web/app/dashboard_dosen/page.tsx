@@ -20,13 +20,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           router.push("/login");
           return;
         }
 
-        let currentUser = JSON.parse(localStorage.getItem("user") || "null");
+        let currentUser = JSON.parse(sessionStorage.getItem("user") || "null");
         if (currentUser) setUser(currentUser);
 
         try {
@@ -125,6 +125,18 @@ export default function DashboardPage() {
               </svg>
               Lihat Kelas
             </Link>
+            <Link
+              href="/labs"
+              className="btn-outline-white"
+              id="view-labs-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              Practical Lab
+            </Link>
           </div>
         </section>
 
@@ -214,18 +226,18 @@ export default function DashboardPage() {
                         <span className="course-meta-dot"></span>
                         <span>{course._count?.enrollments || 0} Mahasiswa</span>
                       </div>
-                      <div className="progress-section">
-                        <div className="progress-label">
-                          <span className="progress-text">Penyelesaian Silabus</span>
-                          <span className="progress-pct">{isPurple ? "40%" : "65%"}</span>
+                      <div className="progress-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          <span>Total Modul</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{course._count?.modules || 0} Modul</span>
                         </div>
-                        <div className="progress-track">
-                          <div className={`progress-fill ${isPurple ? "purple" : "blue"}`} style={{ width: isPurple ? "40%" : "65%" }}></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          <span>Kapasitas & SKS</span>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{course.enrollmentCap} Siswa · {course.credits} SKS</span>
                         </div>
                       </div>
                       <div className="course-actions">
-                        <Link href={`/dosen/courses/${course.id}`} className="btn-outline" style={{ textDecoration: 'none', textAlign: 'center' }}>Kelola Modul</Link>
-                        <Link href={`/dosen/courses/${course.id}`} className="btn-filled" style={{ textDecoration: 'none', textAlign: 'center' }}>Detail</Link>
+                        <Link href={`/dosen/courses/${course.id}`} className="btn-filled" style={{ textDecoration: 'none', textAlign: 'center', width: '100%' }}>Kelola Mata Kuliah</Link>
                       </div>
                     </div>
                   );

@@ -75,7 +75,7 @@ function CreateQuizContent() {
       }
 
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/courses/${formState.courseId}/modules`,
           { headers: token ? { Authorization: `Bearer ${token}` } : {} }

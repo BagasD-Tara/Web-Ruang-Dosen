@@ -229,6 +229,15 @@ function MaterialHero({ material }: { material: CourseContentItem }) {
   );
 }
 
+import { getApiBaseUrl } from '@/lib/api/apiConfig';
+
+const resolveFileUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const baseUrl = getApiBaseUrl().replace(/\/$/, '');
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 function DocumentDownloadCard({ material }: { material: CourseContentItem }) {
   return (
     <section
@@ -245,7 +254,7 @@ function DocumentDownloadCard({ material }: { material: CourseContentItem }) {
           </p>
         </div>
         <a
-          href={material.content?.downloadUrl}
+          href={resolveFileUrl(material.content?.downloadUrl || '')}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center justify-center rounded-[16px] bg-[#0F4BB6] px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"

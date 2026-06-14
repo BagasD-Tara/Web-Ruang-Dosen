@@ -5,10 +5,10 @@ import { PrismaService } from '../prisma.service';
 export class ModuleService {
   constructor(private prisma: PrismaService) {}
 
-  async create(courseId: string, title: string, description: string | undefined, instructorId: string) {
+  async create(courseId: string, title: string, description: string | undefined, instructorId: string, role: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
+    if (role !== 'ADMIN' && course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
 
     const lastModule = await this.prisma.courseModule.findFirst({
       where: { courseId },
@@ -48,10 +48,10 @@ export class ModuleService {
     return mod;
   }
 
-  async update(id: string, title: string, description: string | undefined, instructorId: string) {
+  async update(id: string, title: string, description: string | undefined, instructorId: string, role: string) {
     const mod = await this.prisma.courseModule.findUnique({ where: { id }, include: { course: true } });
     if (!mod) throw new NotFoundException('Module not found');
-    if (mod.course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
+    if (role !== 'ADMIN' && mod.course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
 
     return this.prisma.courseModule.update({
       where: { id },
@@ -59,10 +59,10 @@ export class ModuleService {
     });
   }
 
-  async remove(id: string, instructorId: string) {
+  async remove(id: string, instructorId: string, role: string) {
     const mod = await this.prisma.courseModule.findUnique({ where: { id }, include: { course: true } });
     if (!mod) throw new NotFoundException('Module not found');
-    if (mod.course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
+    if (role !== 'ADMIN' && mod.course.instructorId !== instructorId) throw new ForbiddenException('Not authorized');
 
     return this.prisma.courseModule.delete({ where: { id } });
   }

@@ -6,6 +6,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { ChoiceButton } from "@/app/components/quiz/ChoiceButton";
 import { QuizNavGrid } from "@/app/components/quiz/QuizNavGrid";
 import type { QuizResult } from "@/app/types/quiz";
+import { getQuizSubmissionResult } from "@/app/lib/api/quiz";
 
 function QuizReviewContent() {
   const router = useRouter();
@@ -18,11 +19,23 @@ function QuizReviewContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (!attemptId) return;
-    // Baca dari sessionStorage yang disimpan halaman quiz
-    const stored = sessionStorage.getItem(`quiz-result-${attemptId}`);
-    if (stored) setResult(JSON.parse(stored));
-  }, [attemptId]);
+    const loadResult = async () => {
+      if (attemptId && !attemptId.startsWith("attempt-")) {
+        const stored = sessionStorage.getItem(`quiz-result-${attemptId}`);
+        if (stored) {
+          setResult(JSON.parse(stored));
+          return;
+        }
+      }
+
+      // Fetch from database directly
+      const res = await getQuizSubmissionResult(quizId);
+      if (res) {
+        setResult(res);
+      }
+    };
+    loadResult();
+  }, [attemptId, quizId]);
 
   if (!result) {
     return (

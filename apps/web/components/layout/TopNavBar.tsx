@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { COURSE_CATALOG_HREF } from '@/lib/courseNavigation';
 import { BrandLogo } from './BrandLogo';
+import { buildApiUrl } from '@/lib/api/apiConfig';
 
 interface TopNavBarProps {
   onToggleSidebar: () => void;
@@ -16,6 +17,14 @@ interface StoredUser {
   role?: string;
 }
 
+const parseSender = (msg: string) => {
+  const match = msg.match(/^\[([\s\S]*?)\]\n\n([\s\S]*)/);
+  if (match) {
+    return { sender: match[1], body: match[2] };
+  }
+  return { sender: null, body: msg };
+};
+
 export const TopNavBar: React.FC<TopNavBarProps> = ({
   onToggleSidebar,
   brandHref = '/courses',
@@ -26,13 +35,67 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get('q') ?? '';
   const [topNavUser, setTopNavUser] = useState<StoredUser | null>(null);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [showNotifForm, setShowNotifForm] = useState(false);
+  const [notifForm, setNotifForm] = useState({ title: '', message: '' });
+  const [selectedNotif, setSelectedNotif] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('user');
+      const stored = sessionStorage.getItem('user');
       if (stored) setTopNavUser(JSON.parse(stored));
     } catch { /* ignore */ }
   }, []);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(buildApiUrl('/notifications'), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+        setUnreadCount(data.filter((n: any) => !n.isRead).length);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    if (topNavUser) loadNotifications();
+  }, [topNavUser, loadNotifications]);
+
+  const handleCreateNotif = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = sessionStorage.getItem('token');
+      await fetch(buildApiUrl('/notifications/global'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(notifForm)
+      });
+      setShowNotifForm(false);
+      setNotifForm({ title: '', message: '' });
+      loadNotifications();
+    } catch { /* ignore */ }
+  };
+
+  const handleNotifClick = async (n: any) => {
+    setSelectedNotif(n);
+    if (!n.isRead) {
+      try {
+        const token = sessionStorage.getItem('token');
+        await fetch(buildApiUrl(`/notifications/${n.id}/read`), {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        loadNotifications();
+      } catch { /* ignore */ }
+    }
+  };
 
   const getAvatarInitials = (name?: string) => {
     if (!name) return 'U';
@@ -44,7 +107,6 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
     if (role === 'STUDENT') {
       router.push('/dashboard_mahasiswa/profile');
     }
-    // Dosen/Admin tidak punya halaman profil khusus yet
   };
 
   const applySearch = (value: string) => {
@@ -72,56 +134,104 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           <BrandLogo href={brandHref} hideTextOnMobile />
         </div>
 
-        {/* Center: Search — sembunyikan di mobile */}
+        {/* Center: Search */}
         <div className="hidden flex-1 justify-center px-6 sm:flex">
           <div
             className="flex h-11 w-full max-w-[420px] items-center rounded-2xl border px-5 transition-all focus-within:border-[#2563EB] focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
-            style={{
-              background: '#F1F5F9',
-              borderColor: 'var(--color-border)',
-            }}
+            style={{ background: '#F1F5F9', borderColor: 'var(--color-border)' }}
           >
             <input
               type="text"
               placeholder="Cari sesuatu..."
               value={currentQuery}
-              onChange={(event) => {
-                applySearch(event.target.value);
-              }}
+              onChange={(event) => applySearch(event.target.value)}
               className="h-full min-w-0 flex-1 bg-transparent text-center text-sm outline-none placeholder:text-slate-400"
-              style={{
-                color: 'var(--color-text-primary)',
-              }}
+              style={{ color: 'var(--color-text-primary)' }}
             />
           </div>
         </div>
 
-        {/* Right: Search icon mobile + Notif + Avatar */}
+        {/* Right: Search icon mobile + Theme + Notif + Avatar */}
         <div className="flex items-center gap-2">
-
-          {/* Search icon hanya di mobile */}
-          <button className="flex sm:hidden items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100"
-            aria-label="Search">
+          <button className="flex sm:hidden items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100" aria-label="Search">
             <SearchIcon />
           </button>
 
-          <button
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Toggle dark or light mode"
-            title="Dark / Light Mode"
-            type="button"
-          >
+          <button className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors" aria-label="Toggle dark or light mode" title="Dark / Light Mode" type="button">
             <ThemeModeIcon />
           </button>
 
-          <button
-            className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Notifications"
-          >
-            <BellIcon />
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-white"
-              style={{ background: 'var(--color-danger)' }} />
-          </button>
+          {/* Notification Bell + Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Notifications"
+            >
+              <BellIcon />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white"
+                  style={{ background: 'var(--color-danger, #EF4444)' }}>{unreadCount}</span>
+              )}
+            </button>
+
+            {isNotifOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                  <h3 className="font-bold text-sm text-gray-800">Notifikasi</h3>
+                  <div className="flex items-center gap-2">
+                    {(topNavUser?.role?.toUpperCase() === 'ADMIN' || topNavUser?.role?.toUpperCase() === 'LECTURER') && (
+                      <button onClick={() => setShowNotifForm(!showNotifForm)} className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition font-medium">
+                        {showNotifForm ? 'Batal' : '+ Buat'}
+                      </button>
+                    )}
+                    <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600">
+                      <XIcon />
+                    </button>
+                  </div>
+                </div>
+                {showNotifForm ? (
+                  <form onSubmit={handleCreateNotif} className="p-4 flex flex-col gap-3">
+                    <input required type="text" placeholder="Judul Pengumuman" value={notifForm.title} onChange={e => setNotifForm({...notifForm, title: e.target.value})}
+                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-400" />
+                    <textarea required placeholder="Isi Pengumuman..." value={notifForm.message} onChange={e => setNotifForm({...notifForm, message: e.target.value})}
+                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-400 resize-none h-16" />
+                    <div className="flex gap-2 justify-end">
+                      <button type="button" onClick={() => setShowNotifForm(false)} className="px-3 py-1.5 text-xs bg-gray-100 rounded-md hover:bg-gray-200 transition">Batal</button>
+                      <button type="submit" className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium">Kirim</button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-400 text-xs font-medium">Tidak ada notifikasi</div>
+                    ) : (
+                      notifications.map((n: any) => {
+                        const { sender, body } = parseSender(n.message);
+                        return (
+                          <div key={n.id} onClick={() => handleNotifClick(n)} className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-blue-50/30' : ''}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className={`text-sm ${!n.isRead ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>{n.title}</h4>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">{new Date(n.createdAt).toLocaleDateString('id-ID')}</span>
+                            </div>
+                            {sender && (
+                              <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1.5" style={{
+                                background: sender.startsWith('Admin') ? '#EDE9FE' : '#DBEAFE',
+                                color: sender.startsWith('Admin') ? '#7C3AED' : '#2563EB',
+                              }}>
+                                {sender}
+                              </span>
+                            )}
+                            <p className="text-xs text-gray-500 leading-relaxed" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{body}</p>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             className="flex items-center justify-center w-10 h-10 rounded-full border overflow-hidden transition-all hover:scale-105 hover:shadow-md"
@@ -142,6 +252,55 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
         </div>
 
       </div>
+
+      {/* Notification Detail Modal */}
+      {selectedNotif && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedNotif(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <BellIcon />
+                Detail Notifikasi
+              </h3>
+              <button onClick={() => setSelectedNotif(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                <XIcon />
+              </button>
+            </div>
+            <div className="p-6">
+              <h4 className="text-lg font-bold text-gray-900 mb-2">{selectedNotif.title}</h4>
+              <p className="text-xs text-gray-400 mb-6 flex items-center gap-1.5">
+                <ClockIcon />
+                {new Date(selectedNotif.createdAt).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}
+              </p>
+              <div className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                {(() => {
+                  const { sender, body } = parseSender(selectedNotif.message);
+                  return (
+                    <>
+                      {sender && (
+                        <div className="mb-3">
+                          <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full" style={{
+                            background: sender.startsWith('Admin') ? '#EDE9FE' : '#DBEAFE',
+                            color: sender.startsWith('Admin') ? '#7C3AED' : '#2563EB',
+                          }}>
+                            {sender}
+                          </span>
+                        </div>
+                      )}
+                      <div className="whitespace-pre-line">{body}</div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button onClick={() => setSelectedNotif(null)} className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
@@ -224,6 +383,20 @@ const UserAvatarIcon: React.FC = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
     <circle cx="10" cy="7" r="3" fill="#003594" />
     <path d="M3 17c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#003594" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const XIcon: React.FC = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const ClockIcon: React.FC = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 

@@ -37,8 +37,15 @@ export function CoursesCatalogView({ courses, searchQuery }: CoursesCatalogViewP
     setEnrollError(null);
 
     try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/api/student/courses/${course.id}/enroll`, {
         method: 'POST',
+        headers,
       });
 
       if (!response.ok) {

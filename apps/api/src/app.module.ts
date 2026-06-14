@@ -13,6 +13,8 @@ import { MaterialModule } from './material/material.module';
 import { LabSubmissionModule } from './lab-submission/lab-submission.module';
 import { LabModule } from './lab/lab.module';
 import { UploadModule } from './upload/upload.module';
+import { NotificationModule } from './notification/notification.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { UploadModule } from './upload/upload.module';
     LabSubmissionModule,
     LabModule,
     UploadModule,
+    NotificationModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -22,6 +22,7 @@ export class AuthService {
     password: string,
     role: 'STUDENT' | 'LECTURER' | 'ADMIN',
     angkatan?: number,
+    semester?: number,
   ) {
     // Cek apakah email sudah terdaftar
     const existingUser = await this.prisma.user.findUnique({
@@ -44,8 +45,27 @@ export class AuthService {
         role,
         // Hanya simpan angkatan jika role adalah STUDENT
         angkatan: role === 'STUDENT' ? (angkatan ?? null) : null,
+        semester: role === 'STUDENT' ? (semester ?? 1) : null,
       },
     });
+
+    // Notify all ADMIN users about new registration
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true }
+    });
+
+    if (admins.length > 0) {
+      const notifData = admins.map(a => ({
+        userId: a.id,
+        title: 'Pengguna Baru Terdaftar',
+        message: `Pengguna baru bernama ${name} (${email}) dengan peran ${role} telah mendaftar.`,
+        isRead: false
+      }));
+      await this.prisma.notification.createMany({
+        data: notifData
+      });
+    }
 
     // Kembalikan data user tanpa password
     const { password: _, ...userWithoutPassword } = user;
@@ -84,6 +104,36 @@ export class AuthService {
         maxCredits: user.maxCredits,
         angkatan: user.angkatan,
       },
+    };
+  }
+
+  // === FORGOT PASSWORD: Simulasi pengiriman email reset password ===
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Untuk alasan keamanan, biasanya kita tidak memberitahu bahwa email tidak ditemukan.
+      // Namun untuk simulasi ini kita lempar error.
+      throw new NotFoundException('Email tidak terdaftar di sistem.');
+    }
+
+    // SIMULASI: Generate reset token dan "kirim email"
+    const mockResetToken = `RESET-${user.id}-${Date.now()}`;
+    
+    console.log(`\n======================================================`);
+    console.log(`[SIMULASI EMAIL] - LUPA PASSWORD`);
+    console.log(`Ke: ${email}`);
+    console.log(`Subjek: Reset Password Ruang Dosen`);
+    console.log(`Halo ${user.name},`);
+    console.log(`Klik link berikut untuk mereset password Anda:`);
+    console.log(`http://localhost:3000/reset-password?token=${mockResetToken}`);
+    console.log(`======================================================\n`);
+
+    return {
+      message: 'Simulasi email reset password telah dikirim.',
+      status: 'success'
     };
   }
 

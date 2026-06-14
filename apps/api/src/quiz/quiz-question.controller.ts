@@ -52,9 +52,9 @@ export class QuizQuestionController {
       correctAnswer: string;
       quizId: string;
     },
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.quizService.createQuestion(req.user.id, data);
+    return this.quizService.createQuestion(req.user.id, req.user.role, data);
   }
 
   @Put(':id')
@@ -82,13 +82,13 @@ export class QuizQuestionController {
       optionD?: string;
       correctAnswer?: string;
     },
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.quizService.updateQuestion(id, req.user.id, data);
+    return this.quizService.updateQuestion(id, req.user.id, req.user.role, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.quizService.deleteQuestion(id, req.user.id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string; role: string } }) {
+    return this.quizService.deleteQuestion(id, req.user.id, req.user.role);
   }
 }

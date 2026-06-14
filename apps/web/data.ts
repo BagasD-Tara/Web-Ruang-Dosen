@@ -160,7 +160,7 @@ export const INITIAL_QUIZZES: Quiz[] = [
           'Menggunakan setState() langsung dari komponen anak',
           'Menggunakan Context API secara wajib untuk semua data',
           'Meneruskan data melalui props ke komponen anak',
-          'Menyimpan data di localStorage dan mengambilnya di komponen anak'
+          'Menyimpan data di sessionStorage dan mengambilnya di komponen anak'
         ],
         correctOptionIndex: 2,
         explanation: 'Props adalah mekanisme utama untuk meneruskan data dari komponen induk (parent) ke komponen anak (child) di React. Data mengalir satu arah, dari atas ke bawah (unidirectional data flow).'

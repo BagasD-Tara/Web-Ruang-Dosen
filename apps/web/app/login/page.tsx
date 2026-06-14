@@ -32,8 +32,8 @@ export default function LoginPage() {
         throw new Error(data.message || "Gagal login. Periksa email dan password Anda.");
       }
 
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("token", data.access_token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
       document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
 
       router.replace(getDashboardPathByRole(data.user?.role));
@@ -53,9 +53,9 @@ export default function LoginPage() {
       <header className="navbar">
         <div className="brand">Ruang Dosen</div>
         <nav className="nav-links">
-          <Link href="#">Help</Link>
-          <Link href="#">About</Link>
-          <button className="btn-support">Contact Support</button>
+          <button onClick={() => alert("Pusat Bantuan:\n\n1. Hubungi admin@ruangdosen.ac.id untuk kendala akun.\n2. Baca panduan penggunaan di halaman dashboard masing-masing setelah login.\n3. Laporkan bug ke Tim IT Support.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>Help</button>
+          <button onClick={() => alert("Tentang Ruang Dosen:\n\nRuang Dosen adalah Platform Learning Management System (LMS) Terpadu untuk mahasiswa dan dosen dalam mengelola kelas, praktikum (Practical Lab), tugas, kuis, dan materi kuliah secara interaktif.")} style={{ background: 'none', border: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', padding: 0 }}>About</button>
+          <button className="btn-support" onClick={() => alert("Hubungi Support:\n\nEmail: support@ruangdosen.ac.id\nWhatsApp: +62 812-3456-7890\nJam Operasional: Senin - Jumat, 08.00 - 17.00 WIB")}>Contact Support</button>
         </nav>
       </header>
 
@@ -148,9 +148,14 @@ export default function LoginPage() {
                 <label className="remember-me">
                   <input type="checkbox" /> Ingat Saya
                 </label>
-                <Link href="#" className="forgot-password">
+                <button 
+                  type="button" 
+                  onClick={() => alert("Silakan hubungi administrator via email di admin@ruangdosen.ac.id atau kunjungi unit IT kampus untuk mereset kata sandi Anda.")}
+                  className="forgot-password"
+                  style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                >
                   Lupa Password?
-                </Link>
+                </button>
               </div>
 
               <button type="submit" className="btn-login" disabled={loading}>

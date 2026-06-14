@@ -18,6 +18,7 @@ export interface ApiCourseListItem {
   credits?: number;
   department?: string | null;
   semester?: string | null;
+  teachingFormat?: string | null;
   enrollmentCap?: number | null;
   status?: string | null;
   instructorId: string;
@@ -39,7 +40,6 @@ export interface ApiMaterial {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface ApiAssignment {
   id: string;
   title: string;
@@ -47,10 +47,15 @@ export interface ApiAssignment {
   status?: string;
   deadline: string;
   moduleId: string;
+  submissionRequirement?: string;
+  templateName?: string;
+  templateUrl?: string;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    submissions?: number;
+  };
 }
-
 export interface ApiQuiz {
   id: string;
   title: string;
@@ -88,8 +93,13 @@ export interface ApiCourseDetail extends ApiCourseListItem {
   modules: ApiCourseModule[];
 }
 
-export function fetchCourses() {
+export function fetchCourses(accessToken?: string) {
+  const headers: HeadersInit = {};
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
   return apiRequest<ApiCourseListItem[]>('/courses', {
+    headers,
     next: { revalidate: 0, tags: ['courses'] },
   });
 }
@@ -131,6 +141,7 @@ export function createCourseApi(
     credits?: number;
     department?: string;
     semester?: string;
+    teachingFormat?: string;
     enrollmentCap?: number;
     status?: string;
   },
@@ -153,6 +164,7 @@ export function updateCourseApi(
     credits?: number;
     department?: string;
     semester?: string;
+    teachingFormat?: string;
     enrollmentCap?: number;
     status?: string;
   },
@@ -194,6 +206,9 @@ export function createAssignmentApi(
     status?: string;
     deadline: string;
     moduleId: string;
+    templateUrl?: string;
+    templateName?: string;
+    submissionRequirement?: string;
   },
   accessToken: string
 ) {
@@ -213,6 +228,9 @@ export function updateAssignmentApi(
     description?: string;
     status?: string;
     deadline?: string;
+    templateUrl?: string;
+    templateName?: string;
+    submissionRequirement?: string;
   },
   accessToken: string
 ) {
@@ -231,6 +249,20 @@ export function deleteAssignmentApi(id: string, accessToken: string) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+  });
+}
+
+export function submitAssignmentApi(
+  assignmentId: string,
+  data: { fileUrl: string; note?: string },
+  accessToken: string
+) {
+  return apiRequest<any>(`/assignments/${assignmentId}/submit`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
   });
 }
 
@@ -361,3 +393,24 @@ export async function uploadFileApi(file: File, accessToken: string) {
   return response.json() as Promise<{ url: string; fileName: string; size: number }>;
 }
 
+export function fetchAssignmentSubmissionsApi(assignmentId: string, accessToken: string) {
+  return apiRequest<any[]>(`/assignments/${assignmentId}/submissions`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    next: { revalidate: 0 },
+  });
+}
+
+export function fetchMyAssignmentSubmissionApi(assignmentId: string, accessToken: string) {
+  return apiRequest<{
+    id: string;
+    status: string;
+    score?: number | null;
+    feedback?: string | null;
+    fileUrl?: string | null;
+    note?: string | null;
+    createdAt: string;
+  } | null>(`/assignments/${assignmentId}/my-submission`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    next: { revalidate: 0 },
+  });
+}

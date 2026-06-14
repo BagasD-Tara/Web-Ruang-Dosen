@@ -10,11 +10,13 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
+@ApiTags('Quizzes')
+@ApiBearerAuth('JWT-auth')
 @Controller('quizzes')
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
@@ -43,8 +45,9 @@ export class QuizController {
       timeLimit?: number;
       status?: string;
     },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.quizService.create(data);
+    return this.quizService.create(req.user.id, req.user.role, data);
   }
 
   @Get()
@@ -80,14 +83,14 @@ export class QuizController {
       passingScore?: number;
       status?: string;
     },
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.quizService.update(id, req.user.id, data);
+    return this.quizService.update(id, req.user.id, req.user.role, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.quizService.remove(id, req.user.id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string; role: string } }) {
+    return this.quizService.remove(id, req.user.id, req.user.role);
   }
 
   @Post(':id/submit')
@@ -121,11 +124,87 @@ export class QuizController {
     return this.quizService.getQuestionsForQuiz(id);
   }
 
+  @Post(':id/questions')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        question: { type: 'string' },
+        optionA: { type: 'string' },
+        optionB: { type: 'string' },
+        optionC: { type: 'string' },
+        optionD: { type: 'string' },
+        correctAnswer: { type: 'string' },
+      },
+    },
+  })
+  createQuestion(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      question: string;
+      optionA: string;
+      optionB: string;
+      optionC: string;
+      optionD: string;
+      correctAnswer: string;
+    },
+    @Request() req: { user: { id: string; role: string } },
+  ) {
+    return this.quizService.createQuestion(req.user.id, req.user.role, { ...data, quizId: id });
+  }
+
+  @Patch('questions/:questionId')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        question: { type: 'string' },
+        optionA: { type: 'string' },
+        optionB: { type: 'string' },
+        optionC: { type: 'string' },
+        optionD: { type: 'string' },
+        correctAnswer: { type: 'string' },
+      },
+    },
+  })
+  updateQuestion(
+    @Param('questionId') questionId: string,
+    @Body()
+    data: {
+      question?: string;
+      optionA?: string;
+      optionB?: string;
+      optionC?: string;
+      optionD?: string;
+      correctAnswer?: string;
+    },
+    @Request() req: { user: { id: string; role: string } },
+  ) {
+    return this.quizService.updateQuestion(questionId, req.user.id, req.user.role, data);
+  }
+
+  @Delete('questions/:questionId')
+  removeQuestion(
+    @Param('questionId') questionId: string,
+    @Request() req: { user: { id: string; role: string } },
+  ) {
+    return this.quizService.deleteQuestion(questionId, req.user.id, req.user.role);
+  }
+
   @Get(':id/submission')
   getSubmission(
     @Param('id') id: string,
     @Request() req: { user: { id: string } },
   ) {
     return this.quizService.getSubmission(id, req.user.id);
+  }
+
+  @Get(':id/submissions')
+  getSubmissionsList(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string; role: string } },
+  ) {
+    return this.quizService.getSubmissionsList(id, req.user.id, req.user.role);
   }
 }

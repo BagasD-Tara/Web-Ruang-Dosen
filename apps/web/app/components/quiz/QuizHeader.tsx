@@ -56,10 +56,10 @@ export default function QuizHeader({ children }: { children: ReactNode }) {
             </p>
           </div>
           <div className="flex gap-5 text-xs text-slate-500">
-            <a href="#" className="hover:text-slate-700">Privacy Policy</a>
-            <a href="#" className="hover:text-slate-700">Terms of Service</a>
-            <a href="#" className="hover:text-slate-700">Help Center</a>
-            <a href="#" className="hover:text-slate-700">Contact Support</a>
+            <button onClick={() => alert("Privacy Policy:\n\nSemua data Anda terlindungi dengan enkripsi SSL. Kami tidak membagikan data pribadi atau riwayat nilai Anda kepada pihak ketiga mana pun tanpa persetujuan Anda.")} className="hover:text-slate-700" style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', padding: 0 }}>Privacy Policy</button>
+            <button onClick={() => alert("Terms of Service:\n\nDengan menggunakan Ruang Dosen, Anda setuju untuk menjaga kerahasiaan kredensial login Anda, tidak melakukan kecurangan akademik, dan mematuhi tata tertib kampus.")} className="hover:text-slate-700" style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', padding: 0 }}>Terms of Service</button>
+            <button onClick={() => alert("Help Center:\n\nJika menemui kendala teknis atau kesalahan data, silakan buat laporan ke support@ruangdosen.ac.id atau hubungi helpdesk IT kampus.")} className="hover:text-slate-700" style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', padding: 0 }}>Help Center</button>
+            <button onClick={() => alert("Contact Support:\n\nEmail: support@ruangdosen.ac.id\nJam Operasional: Senin - Jumat, 08.00 - 17.00 WIB")} className="hover:text-slate-700" style={{ background: 'none', border: 'none', font: 'inherit', cursor: 'pointer', padding: 0 }}>Contact Support</button>
           </div>
         </div>
       </footer>

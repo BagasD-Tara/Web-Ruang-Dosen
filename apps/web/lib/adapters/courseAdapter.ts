@@ -157,6 +157,7 @@ export function mapApiCoursesToLecturerCourses(courses: ApiCourseListItem[]): Le
     department: course.department ?? DEFAULT_COURSE_CATEGORY,
     semester: course.semester ?? DEFAULT_TERM_LABEL,
     credits: course.credits ?? DEFAULT_CREDIT_HOURS,
+    teachingFormat: course.teachingFormat ?? undefined,
     enrollmentCap: course.enrollmentCap ?? undefined,
     studentCount: course._count?.enrollments ?? 0,
     moduleCount: 1,
@@ -174,8 +175,9 @@ export function mapApiCourseDetailToLecturerManageCourse(course: ApiCourseDetail
   const modules: LecturerCourseModule[] = (course.modules || []).map((apiModule, index) => {
     const materials = mapApiMaterialsToLecturerMaterials(apiModule.materials || []);
     const assignments = mapApiAssignmentsToLecturerAssessments(apiModule.assignments || []);
+    const labs = mapApiLabsToLecturerAssessments(apiModule.labs || []);
     
-    totalAssignments += assignments.length;
+    totalAssignments += assignments.length + labs.length;
 
     return {
       id: apiModule.id,
@@ -185,7 +187,7 @@ export function mapApiCourseDetailToLecturerManageCourse(course: ApiCourseDetail
       status: 'Published',
       durationWeeks: 1,
       materials,
-      assessments: assignments,
+      assessments: [...assignments, ...labs],
       defaultExpanded: index === 0,
     };
   });
@@ -202,6 +204,21 @@ export function mapApiCourseDetailToLecturerManageCourse(course: ApiCourseDetail
     weeklyGrowth: 0,
     modules,
   };
+}
+
+function mapApiLabsToLecturerAssessments(labs: ApiLab[]): LecturerModuleAssessment[] {
+  return labs.map((lab) => ({
+    id: lab.id,
+    title: lab.title,
+    kind: 'lab' as any,
+    meta: 'Practical Lab',
+    description: lab.instructions,
+    status: 'Active',
+    submittedCount: 0,
+    studentCount: 0,
+    badgeLabel: 'Practical Lab',
+    badgeTone: 'brand',
+  }));
 }
 
 function mapMaterialsToContentItems(materials: ApiMaterial[]): CourseContentItem[] {
@@ -237,20 +254,26 @@ function mapApiMaterialsToLecturerMaterials(materials: ApiMaterial[]): LecturerM
 function mapApiAssignmentsToLecturerAssessments(
   assignments: ApiAssignment[]
 ): LecturerModuleAssessment[] {
-  return assignments.map((assignment) => ({
-    id: assignment.id,
-    title: assignment.title,
-    kind: 'assignment',
-    meta: `Due ${formatDate(assignment.deadline)}`,
-    description: assignment.description,
-    status: mapAssignmentStatus(assignment.status),
-    deadline: assignment.deadline,
-    submissionRequirement: 'File Upload',
-    submittedCount: 0,
-    studentCount: 0,
-    badgeLabel: '0 Submissions',
-    badgeTone: 'brand',
-  }));
+  return assignments.map((assignment) => {
+    const submittedCount = assignment._count?.submissions ?? 0;
+    return {
+      id: assignment.id,
+      title: assignment.title,
+      kind: 'assignment',
+      meta: `Due ${formatDate(assignment.deadline)}`,
+      description: assignment.description,
+      status: mapAssignmentStatus(assignment.status),
+      deadline: assignment.deadline,
+      submissionRequirement: assignment.submissionRequirement ?? 'File Upload (PDF, DOCX, ZIP)',
+      templateName: assignment.templateName ?? undefined,
+      templateUrl: assignment.templateUrl ?? undefined,
+      templateMeta: assignment.templateUrl ? 'Template Attached' : undefined,
+      submittedCount,
+      studentCount: 0,
+      badgeLabel: `${submittedCount} Submission${submittedCount !== 1 ? 's' : ''}`,
+      badgeTone: submittedCount > 0 ? 'success' : 'brand',
+    };
+  });
 }
 
 function mapAssignmentStatus(status?: string) {
@@ -295,6 +318,9 @@ function mapAssignmentsToContentItems(assignments: ApiAssignment[]): CourseConte
     type: 'assignment',
     meta: `Due ${formatDate(assignment.deadline)}`,
     summary: assignment.description,
+    submissionRequirement: assignment.submissionRequirement,
+    templateName: assignment.templateName ?? undefined,
+    templateUrl: assignment.templateUrl ?? undefined,
   }));
 }
 

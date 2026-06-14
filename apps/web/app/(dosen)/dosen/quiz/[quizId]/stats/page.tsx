@@ -6,7 +6,7 @@ import {
   Users, BarChart2, TrendingUp, TrendingDown,
   Download, RefreshCw, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { getQuizById } from "@/app/lib/api/quiz";
+import { getQuizById, getQuizStats } from "@/app/lib/api/quiz";
 import type { Quiz } from "@/app/types/quiz";
 import { LecturerBreadcrumbs } from "@/components/lecturer/LecturerBreadcrumbs";
 
@@ -58,9 +58,12 @@ export default function QuizStatsPage() {
     async function load() {
       setError(null);
       try {
-        const quizData = await getQuizById(quizId);
+        const [quizData, statsData] = await Promise.all([
+          getQuizById(quizId),
+          getQuizStats(quizId),
+        ]);
         setQuiz(quizData);
-        setStats(createEmptyQuizStats());
+        setStats(statsData);
       } catch (err) {
         console.error(err);
         setError("Gagal memuat statistik kuis.");

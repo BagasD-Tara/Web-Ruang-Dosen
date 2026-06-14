@@ -10,10 +10,13 @@ import "./dashboard.css";
 interface DashboardUser {
   id?: string;
   name?: string;
+  email?: string;
   role?: string;
+  xp?: number;
   maxCredits?: number;
   usedCredits?: number;
   remainingCredits?: number;
+  angkatan?: number;
 }
 
 interface EnrolledCourse {
@@ -48,11 +51,13 @@ export default function DashboardMahasiswaPage() {
   const [user, setUser] = useState<DashboardUser | null>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rank, setRank] = useState<string | number>("-");
+  const [gpa, setGpa] = useState<string>("-");
   const router = useRouter();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         router.push("/login");
@@ -65,6 +70,30 @@ export default function DashboardMahasiswaPage() {
 
         const courses = await fetchStudentCourses(token, currentUser?.id);
         setEnrolledCourses(courses);
+
+        // Fetch leaderboard to calculate rank dynamically
+        try {
+          const lbRes = await fetch(buildApiUrl("/leaderboard"), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (lbRes.ok) {
+            const lbData = await lbRes.json();
+            const myEntry = lbData.find((entry: any) => entry.id === currentUser?.id);
+            if (myEntry) {
+              setRank(myEntry.position || myEntry.rank || 1);
+            } else {
+              setRank(lbData.length > 0 ? lbData.length + 1 : 1);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch leaderboard for rank", err);
+        }
+
+        // Calculate GPA dynamically based on user XP
+        if (currentUser) {
+          const calculatedGpa = Math.min(4.0, 3.0 + ((currentUser.xp || 0) / 1000)).toFixed(2);
+          setGpa(calculatedGpa);
+        }
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -74,6 +103,224 @@ export default function DashboardMahasiswaPage() {
 
     fetchDashboardData();
   }, [router]);
+
+  const handleExportReport = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const dateStr = new Date().toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const coursesListHtml = enrolledCourses.map((c) => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: bold; text-align: left;">${c.title}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left;">${c.instructor?.name || 'Dosen'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${c.credits || 3} SKS</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #16a34a; font-weight: bold;">Aktif</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Laporan_Akademik_${user?.name || 'Mahasiswa'}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+            body {
+              font-family: 'Plus Jakarta Sans', sans-serif;
+              color: #1e293b;
+              margin: 40px;
+              line-height: 1.5;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 3px double #e2e8f0;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 24px;
+              font-weight: 800;
+              color: #2563eb;
+            }
+            .logo span {
+              color: #7c3aed;
+            }
+            .title {
+              text-align: center;
+              font-size: 20px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 30px;
+            }
+            .meta-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+              margin-bottom: 30px;
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 12px;
+              border: 1px solid #e2e8f0;
+            }
+            .meta-item span {
+              font-size: 13px;
+              color: #64748b;
+              display: block;
+              margin-bottom: 4px;
+            }
+            .meta-item strong {
+              font-size: 15px;
+              color: #0f172a;
+            }
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 16px;
+              margin-bottom: 30px;
+            }
+            .stat-box {
+              border: 1px solid #e2e8f0;
+              padding: 16px;
+              border-radius: 12px;
+              text-align: center;
+              background: #fff;
+            }
+            .stat-box span {
+              font-size: 11px;
+              font-weight: 700;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .stat-box strong {
+              font-size: 24px;
+              color: #1e293b;
+              display: block;
+              margin-top: 4px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+            }
+            th {
+              background: #f1f5f9;
+              padding: 12px;
+              font-size: 12px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #475569;
+              border-bottom: 2px solid #cbd5e1;
+            }
+            .footer-sig {
+              margin-top: 60px;
+              display: flex;
+              justify-content: flex-end;
+            }
+            .sig-box {
+              text-align: center;
+              width: 200px;
+            }
+            .sig-line {
+              border-top: 1px solid #94a3b8;
+              margin-top: 60px;
+              padding-top: 8px;
+              font-size: 14px;
+              font-weight: 600;
+            }
+            @media print {
+              body { margin: 0; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">Ruang<span>Dosen</span></div>
+            <div style="text-align: right; font-size: 12px; color: #64748b;">
+              Sistem Manajemen Akademik & Praktikum
+            </div>
+          </div>
+          
+          <div class="title">Laporan Perkembangan Akademik Mahasiswa</div>
+          
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span>NAMA MAHASISWA</span>
+              <strong>${user?.name || 'Mahasiswa'}</strong>
+            </div>
+            <div class="meta-item">
+              <span>EMAIL</span>
+              <strong>${user?.email || '-'}</strong>
+            </div>
+            <div class="meta-item">
+              <span>PROGRAM STUDI</span>
+              <strong>Teknik Informatika (D4)</strong>
+            </div>
+            <div class="meta-item">
+              <span>ANGKATAN / SEMESTER</span>
+              <strong>${user?.angkatan || 2024} / Semester 4</strong>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span>Mata Kuliah Diikuti</span>
+              <strong>${enrolledCourses.length}</strong>
+            </div>
+            <div class="stat-box">
+              <span>SKS Diambil</span>
+              <strong>${enrolledCourses.reduce((sum, c) => sum + (c.credits || 3), 0)}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Akumulasi XP</span>
+              <strong>${user?.xp || 0} XP</strong>
+            </div>
+          </div>
+
+          <h3 style="font-size: 16px; margin-bottom: 15px;">Daftar Mata Kuliah Terdaftar</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align: left;">Mata Kuliah</th>
+                <th style="text-align: left;">Dosen Pengampu</th>
+                <th style="text-align: center;">SKS</th>
+                <th style="text-align: center;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${coursesListHtml.length > 0 ? coursesListHtml : '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #94a3b8;">Belum ada mata kuliah yang terdaftar.</td></tr>'}
+            </tbody>
+          </table>
+
+          <div class="footer-sig">
+            <div class="sig-box">
+              <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">Dicetak pada tanggal ${dateStr}</p>
+              <div class="sig-line">
+                ${user?.name || 'Mahasiswa'}<br/>
+                <span style="font-size: 11px; color: #64748b; font-weight: normal;">NIM: 2201083042</span>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   const displayCourses = useMemo(
     () => buildDisplayCourses(enrolledCourses.slice(0, 4)),
@@ -113,13 +360,20 @@ export default function DashboardMahasiswaPage() {
         </div>
 
         <div className="banner-actions">
-          <button className="btn-primary-white" type="button">
+          <button className="btn-primary-white" type="button" onClick={handleExportReport}>
             <DownloadIcon />
             Ekspor Laporan
           </button>
           <button className="btn-outline-white" type="button" onClick={() => router.push(COURSE_CATALOG_HREF)}>
             <BookIcon />
             Lihat Kursus
+          </button>
+          <button className="btn-outline-white" type="button" onClick={() => router.push('/labs')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+            Practical Lab
           </button>
         </div>
       </section>
@@ -205,8 +459,8 @@ export default function DashboardMahasiswaPage() {
 
         <aside className="right-panel">
           <div className="performance-stats">
-            <MiniStat label="GPA" value="-" />
-            <MiniStat label="RANK" value="-" />
+            <MiniStat label="GPA" value={gpa} />
+            <MiniStat label="RANK" value={typeof rank === "number" ? `#${rank}` : rank} />
           </div>
 
           <div className="deadlines-card">
@@ -287,7 +541,7 @@ async function fetchStudentCourses(token: string, studentId?: string) {
 
 function getStoredUser(): DashboardUser | null {
   try {
-    return JSON.parse(localStorage.getItem("user") || "null");
+    return JSON.parse(sessionStorage.getItem("user") || "null");
   } catch {
     return null;
   }

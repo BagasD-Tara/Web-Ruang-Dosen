@@ -10,11 +10,12 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBody, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AssignmentService } from './assignment.service';
 import { Assignment } from '@prisma/client';
 
+@ApiTags('Assignments')
 @ApiBearerAuth('JWT-auth')
 @Controller('assignments')
 export class AssignmentController {
@@ -30,7 +31,10 @@ export class AssignmentController {
         description: { type: 'string' },
         status: { type: 'string', enum: ['DRAFT', 'ACTIVE'] },
         deadline: { type: 'string', format: 'date-time' },
-        courseId: { type: 'string' },
+        templateUrl: { type: 'string' },
+        templateName: { type: 'string' },
+        submissionRequirement: { type: 'string' },
+        moduleId: { type: 'string' },
       },
     },
   })
@@ -41,18 +45,22 @@ export class AssignmentController {
       description: string;
       status?: string;
       deadline: string;
+      templateUrl?: string;
+      templateName?: string;
+      submissionRequirement?: string;
       moduleId: string;
     },
+    @Request() req: { user: { id: string; role: string } },
   ): Promise<Assignment> {
-    return this.assignmentService.create({
+    return this.assignmentService.create(req.user.id, req.user.role, {
       ...data,
       deadline: new Date(data.deadline),
     });
   }
 
   @Get()
-  async findAll(@Query('courseId') courseId?: string) {
-    return this.assignmentService.findAll(courseId);
+  async findAll(@Query('moduleId') moduleId?: string) {
+    return this.assignmentService.findAll(moduleId);
   }
 
   @Get(':id')
@@ -70,15 +78,27 @@ export class AssignmentController {
         description: { type: 'string' },
         status: { type: 'string', enum: ['DRAFT', 'ACTIVE'] },
         deadline: { type: 'string', format: 'date-time' },
+        templateUrl: { type: 'string' },
+        templateName: { type: 'string' },
+        submissionRequirement: { type: 'string' },
       },
     },
   })
   async update(
     @Param('id') id: string,
-    @Body() data: { title?: string; description?: string; deadline?: string; status?: string },
+    @Body()
+    data: {
+      title?: string;
+      description?: string;
+      status?: string;
+      deadline?: string;
+      templateUrl?: string;
+      templateName?: string;
+      submissionRequirement?: string;
+    },
     @Request() req: any,
   ) {
-    return this.assignmentService.update(id, req.user.id, {
+    return this.assignmentService.update(id, req.user.id, req.user.role, {
       ...data,
       deadline: data.deadline ? new Date(data.deadline) : undefined,
     });
@@ -87,7 +107,7 @@ export class AssignmentController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Request() req: any) {
-    return this.assignmentService.remove(id, req.user.id);
+    return this.assignmentService.remove(id, req.user.id, req.user.role);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -101,14 +121,20 @@ export class AssignmentController {
   async submit(
     @Param('id') id: string,
     @Body() data: { fileUrl: string; note?: string },
-    @Request() req: any,
+    @Request() req: { user: { id: string; role: string } },
   ) {
     return this.assignmentService.submit(id, req.user.id, data);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/submissions')
-  async getSubmissions(@Param('id') id: string, @Request() req: any) {
-    return this.assignmentService.getSubmissions(id, req.user.id);
+  async getSubmissions(@Param('id') id: string, @Request() req: { user: { id: string; role: string } }) {
+    return this.assignmentService.getSubmissions(id, req.user.id, req.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/my-submission')
+  async getMySubmission(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.assignmentService.getMySubmission(id, req.user.id);
   }
 }

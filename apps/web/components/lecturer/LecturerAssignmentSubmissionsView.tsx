@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import type {
   AssignmentSubmission,
   AssignmentSubmissionsData,
 } from '@/lib/types/course';
 import { LecturerBreadcrumbs } from './LecturerBreadcrumbs';
+import { gradeSubmission } from '@/app/lib/api/assignment';
 
 type AssignmentSubmissionStatus = 'Pending' | 'Graded' | 'Late';
 
@@ -24,9 +26,40 @@ export function LecturerAssignmentSubmissionsView({
   assignment,
   submissions,
 }: LecturerAssignmentSubmissionsViewProps) {
+  const router = useRouter();
   const [selectedSubmission, setSelectedSubmission] =
     React.useState<AssignmentSubmission | null>(null);
+  const [localSubmissions, setLocalSubmissions] =
+    React.useState<AssignmentSubmission[]>(submissions);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setLocalSubmissions(submissions);
+  }, [submissions]);
+
   const returnHref = `/dosen/courses/${course.id}/assignments`;
+
+  const handleSaveGrade = async (score: number, feedback: string) => {
+    if (!selectedSubmission) return;
+    setIsSaving(true);
+    try {
+      await gradeSubmission(selectedSubmission.id, score, feedback);
+      setLocalSubmissions((prev) =>
+        prev.map((sub) =>
+          sub.id === selectedSubmission.id
+            ? { ...sub, score, feedback, status: 'Graded' }
+            : sub
+        )
+      );
+      setSelectedSubmission(null);
+      router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Gagal menyimpan nilai.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
@@ -47,9 +80,9 @@ export function LecturerAssignmentSubmissionsView({
           assignmentTitle={assignment.title}
         />
 
-        {submissions.length > 0 ? (
+        {localSubmissions.length > 0 ? (
           <SubmissionList
-            submissions={submissions}
+            submissions={localSubmissions}
             onGrade={setSelectedSubmission}
           />
         ) : (
@@ -61,6 +94,8 @@ export function LecturerAssignmentSubmissionsView({
         submission={selectedSubmission}
         assignmentTitle={assignment.title}
         onClose={() => setSelectedSubmission(null)}
+        onSave={handleSaveGrade}
+        isSaving={isSaving}
       />
     </>
   );
@@ -247,14 +282,37 @@ function GradeSubmissionDialog({
   submission,
   assignmentTitle,
   onClose,
+  onSave,
+  isSaving,
 }: {
   submission: AssignmentSubmission | null;
   assignmentTitle: string;
   onClose: () => void;
+  onSave: (score: number, feedback: string) => void;
+  isSaving: boolean;
 }) {
+  const [score, setScore] = React.useState<string>('');
+  const [feedback, setFeedback] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (submission) {
+      setScore(submission.score !== undefined ? String(submission.score) : '');
+      setFeedback(submission.feedback || '');
+    }
+  }, [submission]);
+
   if (!submission) {
     return null;
   }
+
+  const handleSave = () => {
+    const parsed = Number(score);
+    if (score === '' || isNaN(parsed) || parsed < 0 || parsed > 100) {
+      alert("Masukkan nilai yang valid (0 - 100)!");
+      return;
+    }
+    onSave(parsed, feedback);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
@@ -280,7 +338,8 @@ function GradeSubmissionDialog({
               type="number"
               min="0"
               max="100"
-              defaultValue={submission.score ?? ''}
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
               placeholder="0 - 100"
               className="h-12 w-full rounded-[14px] border px-4 text-base outline-none"
               style={{ borderColor: 'var(--color-border)' }}
@@ -292,7 +351,8 @@ function GradeSubmissionDialog({
               Feedback
             </span>
             <textarea
-              defaultValue={submission.feedback ?? ''}
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
               placeholder="Write brief feedback for the student..."
               className="min-h-[120px] w-full resize-none rounded-[14px] border px-4 py-3 text-base outline-none"
               style={{ borderColor: 'var(--color-border)' }}
@@ -314,10 +374,14 @@ function GradeSubmissionDialog({
           </button>
           <button
             type="button"
-            onClick={onClose}
-            className="h-11 rounded-[12px] px-5 text-base font-semibold text-white"
+            disabled={isSaving}
+            onClick={handleSave}
+            className="h-11 rounded-[12px] px-5 text-base font-semibold text-white flex items-center justify-center gap-2 animate-[pulse_2s_infinite]"
             style={{ background: 'var(--color-brand-primary)' }}
           >
+            {isSaving ? (
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : null}
             Save Grade
           </button>
         </div>

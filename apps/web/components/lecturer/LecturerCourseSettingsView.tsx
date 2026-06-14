@@ -19,6 +19,7 @@ interface CourseSettingsFormState {
   department: string;
   semester: string;
   credits: string;
+  teachingFormat: string;
   enrollmentCap: string;
   description: string;
   status: CourseStatusOption;
@@ -28,25 +29,8 @@ interface LecturerCourseSettingsViewProps {
   data: LecturerManageCourseData;
 }
 
-const SEMESTER_OPTIONS = [
-  'Spring Semester 2026',
-  'Short Semester 2026',
-  'Fall Semester 2026',
-  'Spring Semester 2027',
-  'Short Semester 2027',
-  'Fall Semester 2027',
-] as const;
 const CREDIT_OPTIONS = ['1', '2', '3', '4', '5'] as const;
-const DEPARTMENT_OPTIONS = [
-  'Computer Science',
-  'Data Science',
-  'Information Technology',
-  'Software Engineering',
-  'Cybersecurity',
-  'Information Systems',
-  'Artificial Intelligence',
-  'Business Analytics',
-];
+const TEACHING_FORMAT_OPTIONS = ['Teori dan Praktikum', 'Teori', 'Lainnya'] as const;
 
 export function LecturerCourseSettingsView({
   data,
@@ -82,6 +66,7 @@ export function LecturerCourseSettingsView({
         department: formState.department,
         semester: formState.semester,
         credits: normalizedCredits,
+        teachingFormat: formState.teachingFormat,
         enrollmentCap: normalizedEnrollmentCap,
         description: formState.description,
         status: formState.status,
@@ -160,18 +145,11 @@ export function LecturerCourseSettingsView({
                       placeholder="Enter course title"
                     />
                   </FormField>
-                  <FormField label="Department">
-                    <SelectInput
-                      value={formState.department}
-                      onChange={(value) => updateFormField('department', value, setFormState)}
-                      options={DEPARTMENT_OPTIONS}
-                    />
-                  </FormField>
                   <FormField label="Semester">
-                    <SelectInput
+                    <TextInput
                       value={formState.semester}
                       onChange={(value) => updateFormField('semester', value, setFormState)}
-                      options={SEMESTER_OPTIONS}
+                      placeholder="Contoh: Ganjil 2026/2027"
                     />
                   </FormField>
                   <FormField label="Credits">
@@ -179,6 +157,13 @@ export function LecturerCourseSettingsView({
                       value={formState.credits}
                       onChange={(value) => updateFormField('credits', value, setFormState)}
                       options={CREDIT_OPTIONS}
+                    />
+                  </FormField>
+                  <FormField label="Teaching Format">
+                    <SelectInput
+                      value={formState.teachingFormat}
+                      onChange={(value) => updateFormField('teachingFormat', value, setFormState)}
+                      options={TEACHING_FORMAT_OPTIONS}
                     />
                   </FormField>
                 </div>
@@ -576,6 +561,7 @@ function createInitialSettingsState(
     department: data.course.department,
     semester: data.course.semester ?? data.termLabel,
     credits: String(data.credits),
+    teachingFormat: data.course.teachingFormat ?? 'Teori dan Praktikum',
     enrollmentCap: String(data.course.enrollmentCap ?? Math.max(data.enrolledStudents + 12, 60)),
     description: createCourseDescription(data),
     status: data.course.status,
@@ -596,6 +582,7 @@ function canSaveSettings(formState: CourseSettingsFormState) {
       formState.department.trim() &&
       formState.semester.trim() &&
       formState.credits.trim() &&
+      formState.teachingFormat.trim() &&
       formState.enrollmentCap.trim() &&
       formState.description.trim()
   );

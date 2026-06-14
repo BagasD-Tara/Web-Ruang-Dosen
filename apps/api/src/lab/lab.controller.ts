@@ -27,9 +27,11 @@ export class LabController {
       properties: {
         title: { type: 'string' },
         instructions: { type: 'string' },
-        courseId: { type: 'string' },
+        moduleId: { type: 'string' },
+        fileUrl: { type: 'string' },
+        fileName: { type: 'string' },
       },
-      required: ['title', 'instructions', 'courseId'],
+      required: ['title', 'instructions', 'moduleId'],
     },
   })
   async create(
@@ -38,11 +40,12 @@ export class LabController {
       title: string;
       instructions: string;
       moduleId: string;
+      fileUrl?: string;
+      fileName?: string;
     },
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    const userId = req.user.id;
-    return this.labService.create(userId, data);
+    return this.labService.create(req.user.id, req.user.role, data);
   }
 
   @Get()
@@ -63,6 +66,8 @@ export class LabController {
       properties: {
         title: { type: 'string' },
         instructions: { type: 'string' },
+        fileUrl: { type: 'string' },
+        fileName: { type: 'string' },
       },
     },
   })
@@ -72,18 +77,20 @@ export class LabController {
     data: {
       title?: string;
       instructions?: string;
+      fileUrl?: string;
+      fileName?: string;
     },
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.labService.update(id, req.user.id, data);
+    return this.labService.update(id, req.user.id, req.user.role, data);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(
     @Param('id') id: string,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.labService.remove(id, req.user.id);
+    return this.labService.remove(id, req.user.id, req.user.role);
   }
 }

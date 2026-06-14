@@ -9,7 +9,7 @@ export default function LabsLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     setMounted(true);
-    const userStr = localStorage.getItem("user");
+    const userStr = sessionStorage.getItem("user");
     if (userStr) {
       try {
         const user = JSON.parse(userStr);

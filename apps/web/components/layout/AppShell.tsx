@@ -1,10 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import React, { createContext, useContext, useMemo, useState, useSyncExternalStore, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { TopNavBar } from './TopNavBar';
 import { SideNavBar } from './SideNavBar';
 import { Footer } from './Footer';
+import { useEnrollmentStore } from '@/lib/stores/useEnrollmentStore';
+import { buildApiUrl } from '@/lib/api/apiConfig';
 
 const TOP_NAV_HEIGHT_PX = 73;
 const DESKTOP_SIDEBAR_WIDTH_PX = 256;
@@ -35,6 +37,35 @@ export const AppShell: React.FC<AppShellProps> = ({ children, mode = 'student' }
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const sidebarOpen = isMobile ? mobileSidebarOpen : !desktopSidebarCollapsed;
+
+  const setEnrollments = useEnrollmentStore((state) => state.setEnrollments);
+
+  useEffect(() => {
+    if (mode !== 'student') return;
+
+    const syncEnrollments = async () => {
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+          setEnrollments([]);
+          return;
+        }
+
+        const res = await fetch(buildApiUrl('/courses/my'), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const enrolledCourses = await res.json();
+          const enrolledIds = enrolledCourses.map((c: any) => c.id);
+          setEnrollments(enrolledIds);
+        }
+      } catch (err) {
+        console.error('Failed to sync student enrollments:', err);
+      }
+    };
+
+    syncEnrollments();
+  }, [mode, setEnrollments, pathname]); // Re-sync when page path changes or store/mode changes
 
   const contextValue = useMemo<AppShellContextValue>(
     () => ({

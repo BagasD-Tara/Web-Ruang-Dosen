@@ -45,7 +45,7 @@ export class LabSubmissionController {
   async submit(
     @Param('id') labId: string,
     @Body() data: { fileUrl: string; note?: string },
-    @Request() req: any,
+    @Request() req: { user: { id: string; role: string } },
   ) {
     return this.labSubmissionService.submit(labId, req.user.id, data);
   }
@@ -57,8 +57,8 @@ export class LabSubmissionController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('labs/:id/submissions')
-  async getSubmissions(@Param('id') labId: string, @Request() req: any) {
-    return this.labSubmissionService.getSubmissions(labId, req.user.id);
+  async getSubmissions(@Param('id') labId: string, @Request() req: { user: { id: string; role: string } }) {
+    return this.labSubmissionService.getSubmissions(labId, req.user.id, req.user.role);
   }
 
   /**
@@ -84,8 +84,14 @@ export class LabSubmissionController {
   async grade(
     @Param('id') submissionId: string,
     @Body() data: { score: number; feedback?: string },
-    @Request() req: any,
+    @Request() req: { user: { id: string; role: string } },
   ) {
-    return this.labSubmissionService.grade(submissionId, req.user.id, data);
+    return this.labSubmissionService.grade(submissionId, req.user.id, data, req.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('labs/:id/my-submission')
+  async getMySubmission(@Param('id') labId: string, @Request() req: { user: { id: string } }) {
+    return this.labSubmissionService.getMySubmission(labId, req.user.id);
   }
 }
