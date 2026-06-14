@@ -1,6 +1,7 @@
 {
   "name": "ruang-dosen",
   "private": true,
+  "packageManager": "npm@11.12.1",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,6 +12,17 @@
     "lint": "turbo lint"
   },
   "devDependencies": {
-    "turbo": "^2.0.0"
+    "chardet": "^2.1.1",
+    "cli-width": "^4.1.0",
+    "dotenv": "^17.4.2",
+    "prisma": "^6.19.3",
+    "turbo": "^2.0.0",
+    "wrap-ansi": "^10.0.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "is-promise": "^4.0.0",
+    "lucide-react": "^1.17.0",
+    "tailwind-merge": "^3.6.0"
   }
 }
